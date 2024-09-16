@@ -58,8 +58,8 @@ class Triangulation(Node):
             # Plotar a posição
             ax.scatter(pos[0], pos[1], color='b')
         
-        camera_angles = [msg.angle_image_0 + camera_rotations[0], msg.angle_image_1 + camera_rotations[1], 
-                         msg.angle_image_2 + camera_rotations[2], msg.angle_image_3 + camera_rotations[3]]
+        camera_angles = [camera_rotations[0] - msg.angle_image_0,camera_rotations[1] - msg.angle_image_1, 
+                         camera_rotations[2] - msg.angle_image_2, camera_rotations[3] - msg.angle_image_3]
 
         # Plotar cada ponto e vetor das imagens
         for pos, angle in zip(camera_position, camera_angles):
