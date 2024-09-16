@@ -43,6 +43,7 @@ class Triangulation(Node):
                      self.yaw_rotation(self.camera3_rot[0], self.camera3_rot[1], self.camera3_rot[2])]
 
         fig, ax = plt.subplots()
+        #print('Angle image 1: ', msg.angle_image_1, 'Angle image 2: ', msg.angle_image_2, 'Angle image 3: ', msg.angle_image_3, 'Angle image 4: ', msg.angle_image_4)
 
         # Plotar cada ponto e vetor da camera
         for pos, angle in zip(camera_position, rotations):
@@ -74,7 +75,6 @@ def main(args=None):
     node = Triangulation()
     rclpy.spin(node)
     node.destroy_node()
-    #cv2.destroyAllWindows()
     rclpy.shutdown()    
 
 if __name__ == '__main__':
