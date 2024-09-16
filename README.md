@@ -16,3 +16,17 @@ https://github.com/gazebosim/ros_gz/tree/ros2/ros_gz_bridge
 
 ### Colocar isso no bashrc:
 export GZ_SIM_RESOURCE_PATH=/home/gdaniel/mestrado_ws/models
+
+## Rodar simulacao:
+
+colcon build --packages-select guided_navigation
+
+source install/local_setup.bash
+
+ros2 launch guided_navigation guided_simulation.launch.py
+
+## Rodar triangulacao:
+
+source install/local_setup.bash
+
+ros2 run guided_navigation triangulation.py
