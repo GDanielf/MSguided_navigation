@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="urban_room_2way">
+    <static>true</static>
+    <link name="base">
+      <collision name="collision">
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>/home/gdaniel/ros2_ws/src/guided_navigation/models/room/meshes/room_2way.dae</uri>
+          </mesh>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>/home/gdaniel/ros2_ws/src/guided_navigation/models/room/meshes/room_2way.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>
