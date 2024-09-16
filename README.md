@@ -15,7 +15,7 @@ sudo apt-get install ros-humble-ros-ign-bridge
 https://github.com/gazebosim/ros_gz/tree/ros2/ros_gz_bridge
 
 ### Colocar isso no bashrc:
-export GZ_SIM_RESOURCE_PATH=/home/gdaniel/mestrado_ws/models
+export GZ_SIM_RESOURCE_PATH=~/ros2_wc/src/guided_navigation/models
 
 ## Rodar simulacao:
 
