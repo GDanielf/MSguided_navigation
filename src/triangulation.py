@@ -10,14 +10,14 @@ class Triangulation(Node):
         super().__init__('triangulation')
 
         #Posicoes e rotacoes das cameras no mundo
-        self.camera1_pos = np.array([9.7764, -7.4141])
-        self.camera1_rot = np.array([0.90103212642953279])
-        self.camera2_pos = np.array([-9.80918, -7.36591])
-        self.camera2_rot = np.array([0.28941120545221088])
-        self.camera3_pos = np.array([9.9253, 7.43722])
-        self.camera3_rot = np.array([-0.937840950144712])
-        self.camera4_pos = np.array([-9.9422, 7.4141])
-        self.camera4_rot = np.array([-0.38974484286365219])
+        self.camera0_pos = np.array([9.7764, -7.4141])
+        self.camera0_rot = np.array([-0.170718217990764, 0.0742291662230543, 0.90103212642953279])
+        self.camera1_pos = np.array([-9.80918, -7.36591])
+        self.camera1_rot = np.array([-0.053561496744893217, 0.17391950331266406, 0.28941120545221088])
+        self.camera2_pos = np.array([9.9253, 7.43722])
+        self.camera2_rot = np.array([0.15519983539502044, 0.050682763922531189, -0.937840950144712])
+        self.camera3_pos = np.array([-9.9422, 7.4141])
+        self.camera3_rot = np.array([0.064117097027054454, 0.14912927654399707, -0.38974484286365219])
 
         self.subscription = self.create_subscription(
             ImagesAngles,
@@ -29,18 +29,25 @@ class Triangulation(Node):
         # Desativar mensagens de retorno de chamada não utilizadas
         self.subscription
 
+    def yaw_rotation(self,x,y,z):
+        w = np.sqrt(1 - x**2 - y**2 - z**2)
+        return np.arctan2(2 * (w * z + x * y), 1 - 2 * (y**2 + z**2))
+    
 
     def triangulation_callback(self, msg):
         camera_angles = [msg.angle_image_1, msg.angle_image_2, msg.angle_image_3, msg.angle_image_4]
-        positions = [self.camera1_pos, self.camera2_pos, self.camera3_pos, self.camera4_pos]
-        rotations = [self.camera1_rot, self.camera2_rot, self.camera3_rot, self.camera4_rot]
+        camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos]
+        rotations = [self.yaw_rotation(self.camera0_rot[0], self.camera0_rot[1], self.camera0_rot[2]), 
+                     self.yaw_rotation(self.camera1_rot[0], self.camera1_rot[1], self.camera1_rot[2]),
+                     self.yaw_rotation(self.camera2_rot[0], self.camera2_rot[1], self.camera2_rot[2]),
+                     self.yaw_rotation(self.camera3_rot[0], self.camera3_rot[1], self.camera3_rot[2])]
 
         fig, ax = plt.subplots()
 
         # Plotar cada ponto e vetor da camera
-        for pos, angle in zip(positions, rotations):
+        for pos, angle in zip(camera_position, rotations):
             # Calcular o vetor unitário
-            unit_vector = np.array([np.cos(angle), np.sin(angle)])
+            unit_vector = np.array([2*np.cos(angle), 2*np.sin(angle)])
             
             # Adicionar o vetor unitário à posição
             end_pos = pos + unit_vector
