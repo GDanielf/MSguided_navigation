@@ -35,18 +35,17 @@ class Triangulation(Node):
     
 
     def triangulation_callback(self, msg):
-        camera_angles = [msg.angle_image_1, msg.angle_image_2, msg.angle_image_3, msg.angle_image_4]
         camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos]
-        rotations = [self.yaw_rotation(self.camera0_rot[0], self.camera0_rot[1], self.camera0_rot[2]), 
+        camera_rotations = [self.yaw_rotation(self.camera0_rot[0], self.camera0_rot[1], self.camera0_rot[2]), 
                      self.yaw_rotation(self.camera1_rot[0], self.camera1_rot[1], self.camera1_rot[2]),
                      self.yaw_rotation(self.camera2_rot[0], self.camera2_rot[1], self.camera2_rot[2]),
                      self.yaw_rotation(self.camera3_rot[0], self.camera3_rot[1], self.camera3_rot[2])]
 
         fig, ax = plt.subplots()
-        #print('Angle image 1: ', msg.angle_image_1, 'Angle image 2: ', msg.angle_image_2, 'Angle image 3: ', msg.angle_image_3, 'Angle image 4: ', msg.angle_image_4)
+        print('Angle image 0: ', msg.angle_image_0, 'Angle image 1: ', msg.angle_image_1, 'Angle image 2: ', msg.angle_image_2, 'Angle image 3: ', msg.angle_image_3)
 
         # Plotar cada ponto e vetor da camera
-        for pos, angle in zip(camera_position, rotations):
+        for pos, angle in zip(camera_position, camera_rotations):
             # Calcular o vetor unitário
             unit_vector = np.array([2*np.cos(angle), 2*np.sin(angle)])
             
@@ -55,6 +54,23 @@ class Triangulation(Node):
 
             # Plotar a linha do vetor unitário
             ax.quiver(pos[0], pos[1], unit_vector[0], unit_vector[1], angles='xy', scale_units='xy', scale=1, color='r')
+
+            # Plotar a posição
+            ax.scatter(pos[0], pos[1], color='b')
+        
+        camera_angles = [msg.angle_image_0 + camera_rotations[0], msg.angle_image_1 + camera_rotations[1], 
+                         msg.angle_image_2 + camera_rotations[2], msg.angle_image_3 + camera_rotations[3]]
+
+        # Plotar cada ponto e vetor das imagens
+        for pos, angle in zip(camera_position, camera_angles):
+            # Calcular o vetor unitário
+            unit_vector = np.array([3*np.cos(angle), 3*np.sin(angle)])
+            
+            # Adicionar o vetor unitário à posição
+            end_pos = pos + unit_vector
+
+            # Plotar a linha do vetor unitário
+            ax.quiver(pos[0], pos[1], unit_vector[0], unit_vector[1], angles='xy', scale_units='xy', scale=1, color='g')
 
             # Plotar a posição
             ax.scatter(pos[0], pos[1], color='b')
