@@ -33,6 +33,12 @@ class Triangulation(Node):
         w = np.sqrt(1 - x**2 - y**2 - z**2)
         return np.arctan2(2 * (w * z + x * y), 1 - 2 * (y**2 + z**2))
     
+    def intersecao_retas(self, A1, B1, C1, A2, B2, C2):
+            A = np.array([[A1, B1],
+                        [A2, B2]])
+            C = np.array([-C1, -C2])
+            return np.linalg.solve(A, C)        
+ 
 
     def triangulation_callback(self, msg):
         camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos]
@@ -42,7 +48,7 @@ class Triangulation(Node):
                      self.yaw_rotation(self.camera3_rot[0], self.camera3_rot[1], self.camera3_rot[2])]
 
         fig, ax = plt.subplots()
-        print('Angle image 0: ', msg.angle_image_0, 'Angle image 1: ', msg.angle_image_1, 'Angle image 2: ', msg.angle_image_2, 'Angle image 3: ', msg.angle_image_3)
+        #print('Angle image 0: ', msg.angle_image_0, 'Angle image 1: ', msg.angle_image_1, 'Angle image 2: ', msg.angle_image_2, 'Angle image 3: ', msg.angle_image_3)
 
         # Plotar cada ponto e vetor da camera
         for pos, angle in zip(camera_position, camera_rotations):
@@ -58,13 +64,13 @@ class Triangulation(Node):
             # Plotar a posição
             ax.scatter(pos[0], pos[1], color='b')
         
-        camera_angles = [camera_rotations[0] - msg.angle_image_0,camera_rotations[1] - msg.angle_image_1, 
+        image_angles = [camera_rotations[0] - msg.angle_image_0,camera_rotations[1] - msg.angle_image_1, 
                          camera_rotations[2] - msg.angle_image_2, camera_rotations[3] - msg.angle_image_3]
 
         # Plotar cada ponto e vetor das imagens
-        for pos, angle in zip(camera_position, camera_angles):
+        for pos, angle in zip(camera_position, image_angles):
             # Calcular o vetor unitário
-            unit_vector = np.array([3*np.cos(angle), 3*np.sin(angle)])
+            unit_vector = np.array([30*np.cos(angle), 30*np.sin(angle)])
             
             # Adicionar o vetor unitário à posição
             end_pos = pos + unit_vector
@@ -74,18 +80,53 @@ class Triangulation(Node):
 
             # Plotar a posição
             ax.scatter(pos[0], pos[1], color='b')
+
+        # Cada reta pode ser representada pela equação da forma geral: Ax+By+C=0
+        # A equação da reta em termos de um ponto (x0,y0)(x0​,y0​) e o ângulo θθ seria: y−y0=tan⁡(θ)(x−x0)
+        # Ou: tan(θ)x−y+(y0​−tan(θ)x0​)=0
+        # A= tan(θ), B=−1, e C = y0 − tan⁡(θ)*x0
+        # Encontrando as interseccoes:
+        B = -1
+        theta_0 = image_angles[0]
+        A0 = np.tan(theta_0)
+        C0 = camera_position[0][1] - A0*camera_position[0][0]
+        theta_1 = image_angles[1]
+        A1 = np.tan(theta_1)
+        C1 = camera_position[1][1] - A1*camera_position[1][0]
+        theta_2 = image_angles[2]
+        A2 = np.tan(theta_2)
+        C2 = camera_position[2][1] - A2*camera_position[2][0]
+        theta_3 = image_angles[3]
+        A3 = np.tan(theta_3)
+        C3 = camera_position[3][1] - A3*camera_position[3][0]  
+
+        retas = [(A0, B, C0), (A1, B, C1), (A2, B, C2), (A3, B, C3)]
+        pontos_interseccao = []
+        for i in range(len(retas)):
+            for j in range(i + 1, len(retas)):
+                A1, B1, C1 = retas[i]
+                A2, B2, C2 = retas[j]
+                ponto = self.intersecao_retas(A1, B1, C1, A2, B2, C2)
+                pontos_interseccao.append(ponto)  
+
+        # Plotar os pontos de interseccao
+        #for ponton in pontos_interseccao:           
+
+            # Plotar a posição
+            #ax.scatter(ponton[0], ponton[1], color='y')   
         
         # Configurar o gráfico
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
+        ax.set_xlim([-18, 18])
+        ax.set_ylim([-18, 18])
         ax.legend()
         ax.grid(True)
         plt.title('Posições e Vetores')
-        plt.show()
+        plt.show()  
 
-
-
-
+        print(f"Ponto de interseção : {pontos_interseccao}")
+        
 def main(args=None):
     rclpy.init(args=args)
     node = Triangulation()
