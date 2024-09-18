@@ -100,6 +100,8 @@ class Triangulation(Node):
         A3 = np.tan(theta_3)
         C3 = camera_position[3][1] - A3*camera_position[3][0]  
 
+        xlimit = [-18, 18]
+        ylimit = [-8, 8]
         retas = [(A0, B, C0), (A1, B, C1), (A2, B, C2), (A3, B, C3)]
         pontos_interseccao = []
         for i in range(len(retas)):
@@ -107,19 +109,20 @@ class Triangulation(Node):
                 A1, B1, C1 = retas[i]
                 A2, B2, C2 = retas[j]
                 ponto = self.intersecao_retas(A1, B1, C1, A2, B2, C2)
-                pontos_interseccao.append(ponto)  
+                if(xlimit[0] < ponto[0] and xlimit[1] > ponto[0] and ylimit[0] < ponto[1] and ylimit[1] > ponto[1]):
+                    pontos_interseccao.append(ponto)  
 
         # Plotar os pontos de interseccao
-        #for ponton in pontos_interseccao:           
+        for ponton in pontos_interseccao:           
 
             # Plotar a posição
-            #ax.scatter(ponton[0], ponton[1], color='y')   
+            ax.scatter(ponton[0], ponton[1], color='y')   
         
         # Configurar o gráfico
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
-        ax.set_xlim([-18, 18])
-        ax.set_ylim([-18, 18])
+        ax.set_xlim(xlimit)
+        ax.set_ylim(ylimit)
         ax.legend()
         ax.grid(True)
         plt.title('Posições e Vetores')
