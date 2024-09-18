@@ -118,6 +118,8 @@ class Triangulation(Node):
             # Plotar a posição
             ax.scatter(ponton[0], ponton[1], color='y')   
         
+        # centro
+        ax.scatter(0, 0, color='black')   
         # Configurar o gráfico
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
