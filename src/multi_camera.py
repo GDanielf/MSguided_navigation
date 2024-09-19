@@ -22,6 +22,8 @@ class MultiCamera(Node):
         self.font_size = 1.5
         self.font_color = (0, 0, 255)
         self.font_thickness = 2
+        self.image_width = 640
+        self.image_height = 480
 
         # Configuração do Modelo
         self.model = inference.get_model("husky_test/3")
@@ -96,31 +98,36 @@ class MultiCamera(Node):
         # Processamento da imagem da câmera 1
         cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
         predict = self.model.infer(image = cv_image)
-        #print(predict)
-        for prediction in predict[0].predictions:
-            # Extrai as coordenadas e dimensões da caixa delimitadora
-            x = int(prediction.x)
-            y = int(prediction.y)
-            width = int(prediction.width)
-            height = int(prediction.height)
-            self.angle0 = self.angulo_centro(x,y)
-            #print('Camera 1 - x: ', x, 'y: ', y, 'angle: ', self.angle0)
+        #print('Camera 0 prediction: ', predict)
+        if not predict[0].predictions:
+            self.angle0 = float('nan')       
+        else:
+            for prediction in predict[0].predictions:
+                # Extrai as coordenadas e dimensões da caixa delimitadora
+                #print('Camera 0 prediction: ', prediction)
+                x = int(prediction.x)
+                y = int(prediction.y)
+                width = int(prediction.width)
+                height = int(prediction.height)
+                self.angle0 = self.angulo_centro(x,y)
+                #print('Camera 0 - x: ', x, 'y: ', y, 'angle: ', self.angle0)
 
-            # Calcula as coordenadas dos cantos da caixa
-            top_left = (abs(int(width/2) - x), abs(int(height/2) - y))
-            bottom_right = (int(width/2) + x, int(height/2) + y)
+                # Calcula as coordenadas dos cantos da caixa
+                top_left = (abs(int(width/2) - x), abs(int(height/2) - y))
+                bottom_right = (int(width/2) + x, int(height/2) + y)
+                
+                # Desenha a caixa delimitadora na imagem
+                cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)  # Verde, espessura 2
+
+                # Prepara o texto com o nome da classe e a confiança
+                label = f"{prediction.class_name}: {prediction.confidence:.5f}"
+                            
+                # Desenha o texto na imagem
+                cv2.putText(cv_image, label, top_left, 
+                            cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
             
-            # Desenha a caixa delimitadora na imagem
-            cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)  # Verde, espessura 2
-
-            # Prepara o texto com o nome da classe e a confiança
-            label = f"{prediction.class_name}: {prediction.confidence:.5f}"
-                        
-            # Desenha o texto na imagem
-            cv2.putText(cv_image, label, top_left, 
-                        cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
         
-        resized_image = cv2.resize(cv_image, (640, 480))
+        resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
         cv2.imshow('Camera 0', resized_image)
         cv2.waitKey(1)       
 
@@ -130,30 +137,35 @@ class MultiCamera(Node):
         cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
         predict = self.model.infer(image = cv_image)
         #print(predict)
-        for prediction in predict[0].predictions:
-            # Extrai as coordenadas e dimensões da caixa delimitadora
-            x = int(prediction.x)
-            y = int(prediction.y)
-            width = int(prediction.width)
-            height = int(prediction.height)
-            self.angle1 = self.angulo_centro(x,y)
-            #print('Camera 2 - x: ', x, 'y: ', y, 'angle: ', self.angle1)
+        if not predict[0].predictions:
+            self.angle1 = float('nan')
+        else:
+            for prediction in predict[0].predictions:
+                # Extrai as coordenadas e dimensões da caixa delimitadora
+                x = int(prediction.x)
+                y = int(prediction.y)
+                width = int(prediction.width)
+                height = int(prediction.height)
+                self.angle1 = self.angulo_centro(x,y)
+                #print('Camera 2 - x: ', x, 'y: ', y, 'angle: ', self.angle1)
 
-            # Calcula as coordenadas dos cantos da caixa
-            top_left = (abs(int(width/2) - x), abs(int(height/2) - y))
-            bottom_right = (int(width/2) + x, int(height/2) + y)
+                # Calcula as coordenadas dos cantos da caixa
+                top_left = (abs(int(width/2) - x), abs(int(height/2) - y))
+                bottom_right = (int(width/2) + x, int(height/2) + y)
+                
+                # Desenha a caixa delimitadora na imagem
+                cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)  # Verde, espessura 2
+
+                # Prepara o texto com o nome da classe e a confiança
+                label = f"{prediction.class_name}: {prediction.confidence:.5f}"
+                            
+                # Desenha o texto na imagem
+                cv2.putText(cv_image, label, top_left, 
+                            cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
             
-            # Desenha a caixa delimitadora na imagem
-            cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)  # Verde, espessura 2
 
-            # Prepara o texto com o nome da classe e a confiança
-            label = f"{prediction.class_name}: {prediction.confidence:.5f}"
-                        
-            # Desenha o texto na imagem
-            cv2.putText(cv_image, label, top_left, 
-                        cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
         
-        resized_image = cv2.resize(cv_image, (640, 480))
+        resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
         cv2.imshow('Camera 1', resized_image)
         cv2.waitKey(1) 
 
@@ -163,30 +175,34 @@ class MultiCamera(Node):
         cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
         predict = self.model.infer(image = cv_image)
         #print(predict)
-        for prediction in predict[0].predictions:
-            # Extrai as coordenadas e dimensões da caixa delimitadora
-            x = int(prediction.x)
-            y = int(prediction.y)
-            width = int(prediction.width)
-            height = int(prediction.height)
-            self.angle2 = self.angulo_centro(x,y)
-            #print('Camera 3 - x: ', x, 'y: ', y, 'angle: ', self.angle2)
+        if not predict[0].predictions:
+            self.angle2 = float('nan')
+        else:
+            for prediction in predict[0].predictions:
+                # Extrai as coordenadas e dimensões da caixa delimitadora
+                x = int(prediction.x)
+                y = int(prediction.y)
+                width = int(prediction.width)
+                height = int(prediction.height)
+                self.angle2 = self.angulo_centro(x,y)
+                #print('Camera 3 - x: ', x, 'y: ', y, 'angle: ', self.angle2)
 
-            # Calcula as coordenadas dos cantos da caixa
-            top_left = (abs(int(width/2) - x), abs(int(height/2) - y))
-            bottom_right = (int(width/2) + x, int(height/2) + y)
-            
-            # Desenha a caixa delimitadora na imagem
-            cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)  # Verde, espessura 2
+                # Calcula as coordenadas dos cantos da caixa
+                top_left = (abs(int(width/2) - x), abs(int(height/2) - y))
+                bottom_right = (int(width/2) + x, int(height/2) + y)
+                
+                # Desenha a caixa delimitadora na imagem
+                cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)  # Verde, espessura 2
 
-            # Prepara o texto com o nome da classe e a confiança
-            label = f"{prediction.class_name}: {prediction.confidence:.5f}"
-                        
-            # Desenha o texto na imagem
-            cv2.putText(cv_image, label, top_left, 
-                        cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
+                # Prepara o texto com o nome da classe e a confiança
+                label = f"{prediction.class_name}: {prediction.confidence:.5f}"
+                            
+                # Desenha o texto na imagem
+                cv2.putText(cv_image, label, top_left, 
+                            cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
+                
         
-        resized_image = cv2.resize(cv_image, (640, 480))
+        resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
         cv2.imshow('Camera 2', resized_image)
         cv2.waitKey(1) 
 
@@ -196,30 +212,32 @@ class MultiCamera(Node):
         cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
         predict = self.model.infer(image = cv_image)
         #print(predict)
-        for prediction in predict[0].predictions:
-            
-            # Extrai as coordenadas e dimensões da caixa delimitadora
-            x = int(prediction.x)
-            y = int(prediction.y)
-            width = int(prediction.width)
-            height = int(prediction.height)
-            self.angle3 = self.angulo_centro(x,y)
-            #print('Camera 4 - x: ', x, 'y: ', y, 'angle: ', self.angle3)            
-            # Calcula as coordenadas dos cantos da caixa
-            top_left = (abs(int(width/2) - x), abs(int(height/2) - y))
-            bottom_right = (int(width/2) + x, int(height/2) + y)
-            
-            # Desenha a caixa delimitadora na imagem
-            cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)  # Verde, espessura 2
-            
-            # Prepara o texto com o nome da classe e a confiança
-            label = f"{prediction.class_name}: {prediction.confidence:.5f}"
-                        
-            # Desenha o texto na imagem
-            cv2.putText(cv_image, label, top_left, 
-                        cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
-        
-        resized_image = cv2.resize(cv_image, (640, 480))
+        if not predict[0].predictions:
+            self.angle3 = self.float('nan')
+        else: 
+            for prediction in predict[0].predictions:
+                # Extrai as coordenadas e dimensões da caixa delimitadora
+                x = int(prediction.x)
+                y = int(prediction.y)
+                width = int(prediction.width)
+                height = int(prediction.height)
+                self.angle3 = self.angulo_centro(x,y)
+                #print('Camera 4 - x: ', x, 'y: ', y, 'angle: ', self.angle3)            
+                # Calcula as coordenadas dos cantos da caixa
+                top_left = (abs(int(width/2) - x), abs(int(height/2) - y))
+                bottom_right = (int(width/2) + x, int(height/2) + y)
+                
+                # Desenha a caixa delimitadora na imagem
+                cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)  # Verde, espessura 2
+                
+                # Prepara o texto com o nome da classe e a confiança
+                label = f"{prediction.class_name}: {prediction.confidence:.5f}"
+                            
+                # Desenha o texto na imagem
+                cv2.putText(cv_image, label, top_left, 
+                            cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
+                
+        resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
         cv2.imshow('Camera 3', resized_image)
         cv2.waitKey(1) 
 
