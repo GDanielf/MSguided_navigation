@@ -213,7 +213,7 @@ class MultiCamera(Node):
         predict = self.model.infer(image = cv_image)
         #print(predict)
         if not predict[0].predictions:
-            self.angle3 = self.float('nan')
+            self.angle3 = float('nan')
         else: 
             for prediction in predict[0].predictions:
                 # Extrai as coordenadas e dimensões da caixa delimitadora

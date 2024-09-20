@@ -17,6 +17,7 @@ install(
   PROGRAMS
     src/multi_camera.py
     src/triangulation.py
+    src/mapa.py
   DESTINATION lib/${PROJECT_NAME}  
 )
 install(DIRECTORY launch/

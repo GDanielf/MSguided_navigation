@@ -5,6 +5,7 @@ from guided_navigation.msg import ImagesAngles
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+from mapa import Mapa
 
 class Triangulation(Node):
     def __init__(self):
@@ -21,8 +22,8 @@ class Triangulation(Node):
         self.camera3_rot = np.array([0.064117097027054454, 0.14912927654399707, -0.38974484286365219])
         self.camera_position_vec = 2
         self.image_position_vec = 30        
-        self.xlimit = [-18, 18]
-        self.ylimit = [-8, 8]
+        self.xlimit = [-25, 25]
+        self.ylimit = [-15, 15]
         self.subscription = self.create_subscription(
             ImagesAngles,
             '/image_angles',
@@ -47,6 +48,17 @@ class Triangulation(Node):
         vetor_intersecao = ponto - origem
         produto_escalar = np.dot(vetor_intersecao, direcao)
         return produto_escalar > 0   
+    
+    def baricentro(self, lista_pontos_interseccao):
+        x = 0
+        y = 0
+        for i in range(len(lista_pontos_interseccao)):
+            x = x + lista_pontos_interseccao[i][0]
+            y = y + lista_pontos_interseccao[i][1]
+        
+        x = x/(len(lista_pontos_interseccao))
+        y = y/(len(lista_pontos_interseccao))
+        return x,y
          
     def triangulation_callback(self, msg):
         camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos]
@@ -133,8 +145,15 @@ class Triangulation(Node):
         for ponto in pontos_interseccao:       
             # Plotar a posição
             ax.scatter(ponto[0], ponto[1], color='y')  
+
+        #plotando
+        mapa = Mapa()
+        bar_x, bar_y = self.baricentro(pontos_interseccao)
+        #print(type(bar_x), type(bar_y))
+        ax.scatter(float(bar_x), float(bar_y), color='c')
+        mapa.desenhar_mapa(ax)
         # centro
-        ax.scatter(0, 0, color='black')   
+        ax.scatter(0, 0, color='black')          
         # Configurar o gráfico
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
