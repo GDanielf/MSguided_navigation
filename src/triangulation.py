@@ -20,10 +20,11 @@ class Triangulation(Node):
         self.camera2_rot = np.array([0.15519983539502044, 0.050682763922531189, -0.937840950144712])
         self.camera3_pos = np.array([-9.9422, 7.4141])
         self.camera3_rot = np.array([0.064117097027054454, 0.14912927654399707, -0.38974484286365219])
+        self.hfov = 1.0469999999999999
         self.camera_position_vec = 2
         self.image_position_vec = 30        
-        self.xlimit = [-25, 25]
-        self.ylimit = [-15, 15]
+        self.xlimit = [-100, 100]
+        self.ylimit = [-50, 50]
         self.subscription = self.create_subscription(
             ImagesAngles,
             '/image_angles',
@@ -97,6 +98,31 @@ class Triangulation(Node):
             ax.quiver(pos[0], pos[1], unit_vector[0], unit_vector[1], angles='xy', scale_units='xy', scale=1, color= 'r')
 
             # Plotar a posição
+            ax.scatter(pos[0], pos[1], color='b')
+
+        up_hfov = 0
+        down_hfov = 0
+        hfov_limit = []
+        for i in range(len(camera_rotations)):
+            up_hfov = camera_rotations[i] + self.hfov
+            down_hfov = camera_rotations[i] - self.hfov
+            hfov_limit.append([up_hfov, down_hfov])
+        print('hfov limite: ', hfov_limit)
+
+        #plotando os limites de hfov
+        for pos, angle in zip(camera_position, hfov_limit):
+            # Calcular o vetor unitário
+            unit_vector = np.array([self.camera_position_vec*np.cos(angle[0]), self.camera_position_vec*np.sin(angle[0])])
+            unit_vector_1 = np.array([self.camera_position_vec*np.cos(angle[1]), self.camera_position_vec*np.sin(angle[1])])
+            
+            # Adicionar o vetor unitário à posição
+            end_pos = pos + unit_vector
+
+            # Plotar a linha do vetor unitário
+            ax.quiver(pos[0], pos[1], unit_vector[0], unit_vector[1], angles='xy', scale_units='xy', scale=1, color= 'k')
+            ax.quiver(pos[0], pos[1], unit_vector_1[0], unit_vector_1[1], angles='xy', scale_units='xy', scale=1, color= 'k')
+
+            # Plotar a posição
             ax.scatter(pos[0], pos[1], color='b') 
         
         image_angles = [msg.angle_image_0, msg.angle_image_1, msg.angle_image_2, msg.angle_image_3]
@@ -107,7 +133,7 @@ class Triangulation(Node):
             if math.isnan(image_angles[i]):
                 image_angles_res.append(float('nan'))
             else:
-                image_angles_res.append(camera_rotations[i] - image_angles[i])
+                image_angles_res.append(np.clip(camera_rotations[i] - image_angles[i], hfov_limit[i][1], hfov_limit[i][0]))
 
         # Cada reta pode ser representada pela equação da forma geral: Ax+By+C=0
         # A equação da reta em termos de um ponto (x0,y0)(x0​,y0​) e o ângulo θθ seria: y−y0=tan⁡(θ)(x−x0)
@@ -117,6 +143,9 @@ class Triangulation(Node):
         B = -1 
         Ax = []
         Cx = []  
+
+        #teste
+        #image_angles_res = np.array([1.0469999999999999, -1.0469999999999999, 1.0469999999999999, -1.0469999999999999])
 
         for i in range(len(image_angles_res)):
             if not math.isnan(image_angles_res[i]):
@@ -130,7 +159,7 @@ class Triangulation(Node):
         
         #print('ang: ', image_angles)
         print('ang tratado: ', image_angles_res)
-        print('pos tratado: ', camera_position[0])
+        #print('pos tratado: ', camera_rotations)
         # Plotar cada ponto e vetor das imagens
         for pos, angle in zip(camera_position, image_angles_res):
             if not math.isnan(angle):

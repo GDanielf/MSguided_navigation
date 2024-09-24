@@ -26,7 +26,7 @@ class Mapa:
         y_vals = [p[1] for p in self.pontos] + [self.pontos[0][1]]
         
         # Desenha o polígono no gráfico
-        ax.plot(x_vals, y_vals, 'k-', label='Mapa')  # Linha azul para o mapa
+        ax.plot(x_vals, y_vals, 'k-', label='Mapa')
 
     def __repr__(self):
         return f'MapaComLimites(pontos={self.pontos})'
