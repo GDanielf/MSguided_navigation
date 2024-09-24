@@ -66,10 +66,10 @@ class MultiCamera(Node):
         self.subscription3
         
         # angulos de cada camera para enviar (float)
-        self.angle0 = 0
-        self.angle1 = 0
-        self.angle2 = 0
-        self.angle3 = 0        
+        self.angle0 = float('nan')
+        self.angle1 = float('nan')
+        self.angle2 = float('nan')
+        self.angle3 = float('nan')
 
     def timer_callback(self):
         msg = ImagesAngles()

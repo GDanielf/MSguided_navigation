@@ -52,15 +52,29 @@ class Triangulation(Node):
     def baricentro(self, lista_pontos_interseccao):
         x = 0
         y = 0
-        for i in range(len(lista_pontos_interseccao)):
-            x = x + lista_pontos_interseccao[i][0]
-            y = y + lista_pontos_interseccao[i][1]
-        
-        x = x/(len(lista_pontos_interseccao))
-        y = y/(len(lista_pontos_interseccao))
+        if(lista_pontos_interseccao != []):
+            for i in range(len(lista_pontos_interseccao)):
+                x = x + lista_pontos_interseccao[i][0]
+                y = y + lista_pontos_interseccao[i][1]        
+            x = x/(len(lista_pontos_interseccao))
+            y = y/(len(lista_pontos_interseccao))
         return x,y
+    
+    def ponto_intersec_valid(self, angle_result, ponto_inicial, ponto_intersec):
+        result = False
+        if angle_result >= 0 and ponto_inicial != [] and ponto_intersec != []:
+            result = (ponto_intersec[0] >= ponto_inicial[0] and ponto_intersec[1] >= ponto_inicial[1] or 
+                      ponto_intersec[0] <= ponto_inicial[0] and ponto_intersec[1] >= ponto_inicial[1])
+                   
+        elif angle_result < 0 and ponto_inicial != [] and ponto_intersec != []:
+            result = (ponto_intersec[0] < ponto_inicial[0] and ponto_intersec[1] < ponto_inicial[1] or 
+                    (ponto_intersec[0] >= ponto_inicial[0] and ponto_intersec[1] < ponto_inicial[1]))
+
+        return result
+
          
     def triangulation_callback(self, msg):
+        mapa = Mapa()
         camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos]
         camera_rotations = [self.yaw_rotation(self.camera0_rot[0], self.camera0_rot[1], self.camera0_rot[2]), 
                      self.yaw_rotation(self.camera1_rot[0], self.camera1_rot[1], self.camera1_rot[2]),
@@ -107,15 +121,16 @@ class Triangulation(Node):
         for i in range(len(image_angles_res)):
             if not math.isnan(image_angles_res[i]):
                 Ax.append(np.tan(image_angles_res[i]))
-                Cx.append(camera_position[i][1] - np.tan(image_angles_res[i])*camera_position[i][0])                    
-
-        if len(Ax) == len(Cx) and len(Ax) > 0:
-            retas = [(Ax[i], B, Cx[i]) for i in range(len(Ax))]
-        else:
-            retas = []
-        #print('ang: ', image_angles)
-        #print('ang tratado: ', image_angles_res)
+                Cx.append(camera_position[i][1] - np.tan(image_angles_res[i])*camera_position[i][0])
+            else:
+                Ax.append(float('nan'))
+                Cx.append(float('nan'))
         
+        retas = [(Ax[i], B, Cx[i]) for i in range(len(Ax))]
+        
+        #print('ang: ', image_angles)
+        print('ang tratado: ', image_angles_res)
+        print('pos tratado: ', camera_position[0])
         # Plotar cada ponto e vetor das imagens
         for pos, angle in zip(camera_position, image_angles_res):
             if not math.isnan(angle):
@@ -133,12 +148,15 @@ class Triangulation(Node):
         
         
         pontos_interseccao = []
+        ponto = []
         for i in range(len(retas)):
             for j in range(i + 1, len(retas)):
-                A1, B1, C1 = retas[i]
-                A2, B2, C2 = retas[j]
-                ponto = self.intersecao_retas(A1, B1, C1, A2, B2, C2)
-                if(self.xlimit[0] < ponto[0] and self.xlimit[1] > ponto[0] and self.ylimit[0] < ponto[1] and self.ylimit[1] > ponto[1]):
+                if not math.isnan(retas[i][0]): #se Ax nao for 'nan'
+                    A1, B1, C1 = retas[i]
+                    A2, B2, C2 = retas[j]
+                    ponto = self.intersecao_retas(A1, B1, C1, A2, B2, C2)                    
+                if(self.ponto_intersec_valid(image_angles_res[i], camera_position[i], ponto) and 
+                   self.ponto_intersec_valid(image_angles_res[j], camera_position[j], ponto) and mapa.verifica_ponto_dentro(ponto)):
                     pontos_interseccao.append(ponto)  
 
         # Plotar os pontos de interseccao
@@ -147,7 +165,7 @@ class Triangulation(Node):
             ax.scatter(ponto[0], ponto[1], color='y')  
 
         #plotando
-        mapa = Mapa()
+        
         bar_x, bar_y = self.baricentro(pontos_interseccao)
         #print(type(bar_x), type(bar_y))
         ax.scatter(float(bar_x), float(bar_y), color='c')
