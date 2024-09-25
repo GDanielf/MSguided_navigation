@@ -25,6 +25,14 @@ class MultiCamera(Node):
         self.image_width = 640
         self.image_height = 480
 
+        #dividir a imagem ao meio
+        self.thickness = 0.5
+        self.mid_x = self.image_width // 2
+        self.start_point = (self.mid_x, 0)  # Ponto de início (meio da imagem, topo)
+        self.end_point = (self.mid_x, self.image_height)
+        self.line_color = (0, 0, 0)
+        self.thickness = 2        
+
         # Configuração do Modelo
         self.model = inference.get_model("husky_test/3")
 
@@ -69,7 +77,7 @@ class MultiCamera(Node):
         self.angle0 = float('nan')
         self.angle1 = float('nan')
         self.angle2 = float('nan')
-        self.angle3 = float('nan')
+        self.angle3 = float('nan')    
 
     def timer_callback(self):
         msg = ImagesAngles()
@@ -114,7 +122,7 @@ class MultiCamera(Node):
 
                 # Calcula as coordenadas dos cantos da caixa
                 top_left = (abs(int(width/2) - x), abs(int(height/2) - y))
-                bottom_right = (int(width/2) + x, int(height/2) + y)
+                bottom_right = (int(width/2) + x, int(height/2) + y)                
                 
                 # Desenha a caixa delimitadora na imagem
                 cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)  # Verde, espessura 2
@@ -128,6 +136,8 @@ class MultiCamera(Node):
             
         
         resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
+        #desenha linha no meio
+        cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
         cv2.imshow('Camera 0', resized_image)
         cv2.waitKey(1)       
 
@@ -166,6 +176,8 @@ class MultiCamera(Node):
 
         
         resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
+        #desenha linha no meio
+        cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
         cv2.imshow('Camera 1', resized_image)
         cv2.waitKey(1) 
 
@@ -190,7 +202,7 @@ class MultiCamera(Node):
                 # Calcula as coordenadas dos cantos da caixa
                 top_left = (abs(int(width/2) - x), abs(int(height/2) - y))
                 bottom_right = (int(width/2) + x, int(height/2) + y)
-                
+
                 # Desenha a caixa delimitadora na imagem
                 cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)  # Verde, espessura 2
 
@@ -203,6 +215,8 @@ class MultiCamera(Node):
                 
         
         resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
+        #desenha linha no meio
+        cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
         cv2.imshow('Camera 2', resized_image)
         cv2.waitKey(1) 
 
@@ -238,6 +252,8 @@ class MultiCamera(Node):
                             cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
                 
         resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
+        #desenha linha no meio
+        cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
         cv2.imshow('Camera 3', resized_image)
         cv2.waitKey(1) 
 

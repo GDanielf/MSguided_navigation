@@ -23,8 +23,8 @@ class Triangulation(Node):
         self.hfov = 1.0469999999999999
         self.camera_position_vec = 2
         self.image_position_vec = 30        
-        self.xlimit = [-100, 100]
-        self.ylimit = [-50, 50]
+        self.xlimit = [-250, 250]
+        self.ylimit = [-150, 150]
         self.subscription = self.create_subscription(
             ImagesAngles,
             '/image_angles',
@@ -84,7 +84,10 @@ class Triangulation(Node):
 
         
         #print('Angle image 0: ', msg.angle_image_0, 'Angle image 1: ', msg.angle_image_1, 'Angle image 2: ', msg.angle_image_2, 'Angle image 3: ', msg.angle_image_3)
-
+        labels = ['Cam 0', 'Cam 1', 'Cam 2', 'Cam 3']
+        cameras = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos]
+        tex_pos_01 = 2
+        tex_pos_23 = 1
         # Plotar cada ponto e vetor da camera
         fig, ax = plt.subplots()
         for pos, angle in zip(camera_position, camera_rotations):
@@ -100,6 +103,12 @@ class Triangulation(Node):
             # Plotar a posição
             ax.scatter(pos[0], pos[1], color='b')
 
+        plt.text(cameras[0][0] - tex_pos_01, cameras[0][1] - tex_pos_01, labels[0], fontsize=12)
+        plt.text(cameras[1][0] - tex_pos_01, cameras[1][1] - tex_pos_01, labels[1], fontsize=12)
+        plt.text(cameras[2][0] - tex_pos_23, cameras[2][1] + tex_pos_23, labels[2], fontsize=12)
+        plt.text(cameras[3][0] - tex_pos_23, cameras[3][1] + tex_pos_23, labels[3], fontsize=12)
+            
+
         up_hfov = 0
         down_hfov = 0
         hfov_limit = []
@@ -107,7 +116,11 @@ class Triangulation(Node):
             up_hfov = camera_rotations[i] + self.hfov
             down_hfov = camera_rotations[i] - self.hfov
             hfov_limit.append([up_hfov, down_hfov])
-        print('hfov limite: ', hfov_limit)
+        #print('hfov limite: ', hfov_limit)
+        hfov_limit[0] = [3.1416, 1.57]
+        hfov_limit[1] = [1.57, 0]
+        hfov_limit[2] = [-1.57, -3.1416]
+        hfov_limit[3] = [0, -1.57]
 
         #plotando os limites de hfov
         for pos, angle in zip(camera_position, hfov_limit):
@@ -151,14 +164,11 @@ class Triangulation(Node):
             if not math.isnan(image_angles_res[i]):
                 Ax.append(np.tan(image_angles_res[i]))
                 Cx.append(camera_position[i][1] - np.tan(image_angles_res[i])*camera_position[i][0])
-            else:
-                Ax.append(float('nan'))
-                Cx.append(float('nan'))
         
         retas = [(Ax[i], B, Cx[i]) for i in range(len(Ax))]
         
         #print('ang: ', image_angles)
-        print('ang tratado: ', image_angles_res)
+        #print('ang tratado: ', image_angles_res)
         #print('pos tratado: ', camera_rotations)
         # Plotar cada ponto e vetor das imagens
         for pos, angle in zip(camera_position, image_angles_res):
@@ -173,30 +183,29 @@ class Triangulation(Node):
                 ax.quiver(pos[0], pos[1], unit_vector[0], unit_vector[1], angles='xy', scale_units='xy', scale=1, color= 'g')
 
                 # Plotar a posição
-                ax.scatter(pos[0], pos[1], color='b') 
-        
+                ax.scatter(pos[0], pos[1], color='b')         
         
         pontos_interseccao = []
         ponto = []
+        print(retas)
         for i in range(len(retas)):
             for j in range(i + 1, len(retas)):
-                if not math.isnan(retas[i][0]): #se Ax nao for 'nan'
+                if not math.isnan(retas[i][0]) or not math.isnan(retas[i][2]): #se Ax nao for 'nan'
                     A1, B1, C1 = retas[i]
                     A2, B2, C2 = retas[j]
-                    ponto = self.intersecao_retas(A1, B1, C1, A2, B2, C2)                    
-                if(self.ponto_intersec_valid(image_angles_res[i], camera_position[i], ponto) and 
-                   self.ponto_intersec_valid(image_angles_res[j], camera_position[j], ponto) and mapa.verifica_ponto_dentro(ponto)):
-                    pontos_interseccao.append(ponto)  
+                    ponto.append(self.intersecao_retas(A1, B1, C1, A2, B2, C2))
+                    #pontos_interseccao.append(ponto)  
 
         # Plotar os pontos de interseccao
-        for ponto in pontos_interseccao:       
+        for j in ponto:       
             # Plotar a posição
-            ax.scatter(ponto[0], ponto[1], color='y')  
+            ax.scatter(j[0], j[1], color='y')  
 
         #plotando
         
-        bar_x, bar_y = self.baricentro(pontos_interseccao)
-        #print(type(bar_x), type(bar_y))
+        bar_x, bar_y = self.baricentro(ponto)
+        print('pontos de intersec: ', ponto)
+        print('baricentro: ', [bar_x, bar_y])
         ax.scatter(float(bar_x), float(bar_y), color='c')
         mapa.desenhar_mapa(ax)
         # centro
@@ -212,6 +221,8 @@ class Triangulation(Node):
         plt.show()  
         #pontos_insterseccao = pos_list()
         #print(f"Ponto de interseção : {pontos_interseccao}")
+        for i in range(len(camera_rotations)):
+            print('Limites Camera ', i, hfov_limit[i][0], camera_rotations[i], hfov_limit[i][1])
         
 def main(args=None):
     rclpy.init(args=args)
