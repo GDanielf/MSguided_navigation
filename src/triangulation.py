@@ -40,10 +40,24 @@ class Triangulation(Node):
         return np.arctan2(2 * (w * z + x * y), 1 - 2 * (y**2 + z**2))
     
     def intersecao_retas(self, A1, B1, C1, A2, B2, C2):
+        try:
+            # Montagem das matrizes
             A = np.array([[A1, B1],
                         [A2, B2]])
             C = np.array([-C1, -C2])
-            return np.linalg.solve(A, C)   
+
+            # Verificar se as retas são paralelas
+            det = np.linalg.det(A)
+            if det == 0:
+                print("As retas são paralelas ou coincidentes. Não há interseção única.")
+                return None
+
+            # Resolver a equação para encontrar a interseção
+            ponto = np.linalg.solve(A, C)
+            return ponto
+        except np.linalg.LinAlgError:
+            print("Erro: Matriz singular. Não é possível calcular a interseção.")
+            return None
 
     def verificar_direcao(self, ponto, origem, direcao):
         vetor_intersecao = ponto - origem
@@ -196,9 +210,10 @@ class Triangulation(Node):
                     A1, B1, C1 = retas[i]
                     A2, B2, C2 = retas[j]
                     ponto = self.intersecao_retas(A1, B1, C1, A2, B2, C2)
-                    check.append(ponto)
-                    if(mapa.verifica_ponto_dentro(ponto)):
-                        pontos_interseccao.append(ponto)
+                    #check.append(ponto)
+                    if(ponto is not None):
+                        if(mapa.verifica_ponto_dentro(ponto)):
+                            pontos_interseccao.append(ponto)
 
         # Plotar os pontos de interseccao
         for j in pontos_interseccao:       
