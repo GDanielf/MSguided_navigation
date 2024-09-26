@@ -23,8 +23,8 @@ class Triangulation(Node):
         self.hfov = 1.0469999999999999
         self.camera_position_vec = 2
         self.image_position_vec = 30        
-        self.xlimit = [-250, 250]
-        self.ylimit = [-150, 150]
+        self.xlimit = [-25, 25]
+        self.ylimit = [-15, 15]
         self.subscription = self.create_subscription(
             ImagesAngles,
             '/image_angles',
@@ -61,15 +61,16 @@ class Triangulation(Node):
             y = y/(len(lista_pontos_interseccao))
         return x,y
     
-    def ponto_intersec_valid(self, angle_result, ponto_inicial, ponto_intersec):
+    def ponto_intersec_valid(self, camera, ponto):
         result = False
-        if angle_result >= 0 and ponto_inicial != [] and ponto_intersec != []:
-            result = (ponto_intersec[0] >= ponto_inicial[0] and ponto_intersec[1] >= ponto_inicial[1] or 
-                      ponto_intersec[0] <= ponto_inicial[0] and ponto_intersec[1] >= ponto_inicial[1])
-                   
-        elif angle_result < 0 and ponto_inicial != [] and ponto_intersec != []:
-            result = (ponto_intersec[0] < ponto_inicial[0] and ponto_intersec[1] < ponto_inicial[1] or 
-                    (ponto_intersec[0] >= ponto_inicial[0] and ponto_intersec[1] < ponto_inicial[1]))
+        if camera == 0:
+            result = (ponto[0] <= self.camera0_pos[0]) and (ponto[1] >= self.camera0_pos[1])
+        elif camera == 1:
+            result = (ponto[0] >= self.camera1_pos[0]) and (ponto[1] >= self.camera1_pos[1])
+        elif camera == 2:
+            result = (ponto[0] <= self.camera2_pos[0]) and (ponto[1] <= self.camera2_pos[1])
+        elif camera == 3:
+            result = (ponto[0] >= self.camera3_pos[0]) and (ponto[1] <= self.camera3_pos[1])
 
         return result
 
@@ -187,25 +188,29 @@ class Triangulation(Node):
         
         pontos_interseccao = []
         ponto = []
+        check = []
         print(retas)
         for i in range(len(retas)):
             for j in range(i + 1, len(retas)):
-                if not math.isnan(retas[i][0]) or not math.isnan(retas[i][2]): #se Ax nao for 'nan'
+                if (not math.isnan(retas[i][0]) or not math.isnan(retas[i][2]) and not math.isnan(retas[j][0]) or not math.isnan(retas[j][2])): #se Ax nao for 'nan'
                     A1, B1, C1 = retas[i]
                     A2, B2, C2 = retas[j]
-                    ponto.append(self.intersecao_retas(A1, B1, C1, A2, B2, C2))
-                    #pontos_interseccao.append(ponto)  
+                    ponto = self.intersecao_retas(A1, B1, C1, A2, B2, C2)
+                    check.append(ponto)
+                    if(mapa.verifica_ponto_dentro(ponto)):
+                        pontos_interseccao.append(ponto)
 
         # Plotar os pontos de interseccao
-        for j in ponto:       
+        for j in pontos_interseccao:       
             # Plotar a posição
             ax.scatter(j[0], j[1], color='y')  
 
         #plotando
         
-        bar_x, bar_y = self.baricentro(ponto)
-        print('pontos de intersec: ', ponto)
-        print('baricentro: ', [bar_x, bar_y])
+        bar_x, bar_y = self.baricentro(pontos_interseccao)
+        print('pontos: ', check)
+        print('pontos de intersec: ', pontos_interseccao)
+        #print('baricentro: ', [bar_x, bar_y])
         ax.scatter(float(bar_x), float(bar_y), color='c')
         mapa.desenhar_mapa(ax)
         # centro
