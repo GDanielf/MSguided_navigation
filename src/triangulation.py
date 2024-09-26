@@ -12,14 +12,14 @@ class Triangulation(Node):
         super().__init__('triangulation')
 
         #Posicoes e rotacoes das cameras no mundo
-        self.camera0_pos = np.array([9.7764, -7.4141])
-        self.camera0_rot = np.array([-0.170718217990764, 0.0742291662230543, 0.90103212642953279])
-        self.camera1_pos = np.array([-9.80918, -7.36591])
-        self.camera1_rot = np.array([-0.053561496744893217, 0.17391950331266406, 0.28941120545221088])
+        self.camera0_pos = np.array([9.9253, -7.43722])
+        self.camera0_rot = np.array([-0.15493676217535018, 0.051481367426355791, 0.93625125233565687])
+        self.camera1_pos = np.array([-9.9253, -7.43722])
+        self.camera1_rot = np.array([-0.052132214164251366, 0.1547189830363459, 0.315024337110333])
         self.camera2_pos = np.array([9.9253, 7.43722])
-        self.camera2_rot = np.array([0.15519983539502044, 0.050682763922531189, -0.937840950144712])
-        self.camera3_pos = np.array([-9.9422, 7.4141])
-        self.camera3_rot = np.array([0.064117097027054454, 0.14912927654399707, -0.38974484286365219])
+        self.camera2_rot = np.array([0.15493676217535018, 0.051481367426355791, -0.93625125233565687])
+        self.camera3_pos = np.array([-9.9253, 7.43722])
+        self.camera3_rot = np.array([0.052132214164251366, 0.1547189830363459, -0.315024337110333])
         self.hfov = 1.0469999999999999
         self.camera_position_vec = 2
         self.image_position_vec = 30        

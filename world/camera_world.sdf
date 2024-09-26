@@ -728,7 +728,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>9.7764 -7.4141 4.907 -0 0.3745 2.3213</pose>
+      <pose>9.9253 -7.4372 4.907 0 0.328 2.5</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>
@@ -812,7 +812,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>-9.80918 -7.36591 4.907 0 0.366 0.5975</pose>
+      <pose>-9.9253 -7.4372 4.907 0 0.328 0.65</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>
@@ -891,7 +891,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>9.9253 7.43722 4.907 0 0.328 -2.5103</pose>
+      <pose>9.9253 7.4372 4.907 0 0.328 -2.5</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>
@@ -970,7 +970,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>-9.9422 7.4141 4.907 0 0.3261 -0.8121</pose>
+      <pose>-9.9253 7.4372 4.907 0 0.328 -0.65</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>
