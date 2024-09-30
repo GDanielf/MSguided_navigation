@@ -13,10 +13,12 @@ find_package(ament_cmake REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(rclpy REQUIRED)
+find_package(message_filters REQUIRED)
 install(
   PROGRAMS
     src/multi_camera.py
     src/triangulation.py
+    src/stereo_camera.py
     src/mapa.py
   DESTINATION lib/${PROJECT_NAME}  
 )

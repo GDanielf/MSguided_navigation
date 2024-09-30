@@ -64,7 +64,31 @@ class MultiCamera(Node):
             Image,
             '/world/empty/model/rgbd_camera_3/link/link_3/sensor/camera_sensor_3/image',
             self.camera3_callback,
-            10)       
+            10)   
+           
+        self.subscription4 = self.create_subscription(
+            Image,
+            '/world/empty/model/rgbd_camera_4/link/link_4/sensor/camera_sensor_4/image',
+            self.camera4_callback,
+            10)     
+        
+        self.subscription5 = self.create_subscription(
+            Image,
+            '/world/empty/model/rgbd_camera_5/link/link_5/sensor/camera_sensor_5/image',
+            self.camera5_callback,
+            10)    
+        
+        self.subscription6 = self.create_subscription(
+            Image,
+            '/world/empty/model/rgbd_camera_6/link/link_6/sensor/camera_sensor_6/image',
+            self.camera6_callback,
+            10)    
+        
+        self.subscription7 = self.create_subscription(
+            Image,
+            '/world/empty/model/rgbd_camera_7/link/link_7/sensor/camera_sensor_7/image',
+            self.camera7_callback,
+            10)    
 
         self.image = None
         # Desativar mensagens de retorno de chamada não utilizadas
@@ -72,12 +96,20 @@ class MultiCamera(Node):
         self.subscription1
         self.subscription2
         self.subscription3
+        self.subscription4
+        self.subscription5
+        self.subscription6
+        self.subscription7
         
         # angulos de cada camera para enviar (float)
         self.angle0 = float('nan')
         self.angle1 = float('nan')
         self.angle2 = float('nan')
-        self.angle3 = float('nan')    
+        self.angle3 = float('nan')
+        self.angle4 = float('nan')
+        self.angle5 = float('nan')
+        self.angle6 = float('nan')
+        self.angle7 = float('nan')    
 
     def timer_callback(self):
         msg = ImagesAngles()
@@ -85,6 +117,10 @@ class MultiCamera(Node):
         msg.angle_image_1 = float(self.angle1)
         msg.angle_image_2 = float(self.angle2)
         msg.angle_image_3 = float(self.angle3)
+        msg.angle_image_4 = float(self.angle4)
+        msg.angle_image_5 = float(self.angle5)
+        msg.angle_image_6 = float(self.angle6)
+        msg.angle_image_7 = float(self.angle7)
         self.publisher.publish(msg)
         #self.get_logger().info(f'Published angles: {msg.angle_image_0}, {msg.angle_image_1}, {msg.angle_image_2}, {msg.angle_image_3}')
 
@@ -104,8 +140,14 @@ class MultiCamera(Node):
     def camera0_callback(self, msg):
         #self.get_logger().info('Recebida imagem da câmera 1')
         # Processamento da imagem da câmera 1
-        cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+        cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')        
+        pts = np.array([[0, 0], [0, 270], [959, 170], [959,0]], np.int32)
+        pts = pts.reshape((-1, 1, 2))
+        cv2.fillPoly(cv_image, [pts], (0, 0, 0))
+        #cv2.rectangle(cv_image, (xb1, yb1), (xb2, yb2), (0, 0, 0), -1)  # -1 preenche o retângulo
         predict = self.model.infer(image = cv_image)
+        #tampar parte do corredor para a camera nao ver        
+        
         #print('Camera 0 prediction: ', predict)
         if not predict[0].predictions:
             self.angle0 = float('nan')       
@@ -145,6 +187,9 @@ class MultiCamera(Node):
         #self.get_logger().info('Recebida imagem da câmera 2')
         # Processamento da imagem da câmera 2
         cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+        xb1, yb1 = 959,0
+        xb2, yb2 = 1919, 270
+        cv2.rectangle(cv_image, (xb1, yb1), (xb2, yb2), (0, 0, 0), -1)  # -1 preenche o retângulo
         predict = self.model.infer(image = cv_image)
         #print(predict)
         if not predict[0].predictions:
@@ -185,6 +230,9 @@ class MultiCamera(Node):
         #self.get_logger().info('Recebida imagem da câmera 3')
         # Processamento da imagem da câmera 3
         cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+        xb1, yb1 = 959,0
+        xb2, yb2 = 1919, 270
+        cv2.rectangle(cv_image, (xb1, yb1), (xb2, yb2), (0, 0, 0), -1)  # -1 preenche o retângulo
         predict = self.model.infer(image = cv_image)
         #print(predict)
         if not predict[0].predictions:
@@ -224,6 +272,9 @@ class MultiCamera(Node):
         #self.get_logger().info('Recebida imagem da câmera 4')
         # Processamento da imagem da câmera 4
         cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+        xb1, yb1 = 0,0
+        xb2, yb2 = 959, 270
+        cv2.rectangle(cv_image, (xb1, yb1), (xb2, yb2), (0, 0, 0), -1) 
         predict = self.model.infer(image = cv_image)
         #print(predict)
         if not predict[0].predictions:
@@ -255,6 +306,154 @@ class MultiCamera(Node):
         #desenha linha no meio
         cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
         cv2.imshow('Camera 3', resized_image)
+        cv2.waitKey(1) 
+
+    def camera4_callback(self, msg):
+        #self.get_logger().info('Recebida imagem da câmera 4')
+        # Processamento da imagem da câmera 4
+        cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+        predict = self.model.infer(image = cv_image)
+        #print(predict)
+        if not predict[0].predictions:
+            self.angle4 = float('nan')
+        else: 
+            for prediction in predict[0].predictions:
+                # Extrai as coordenadas e dimensões da caixa delimitadora
+                x = int(prediction.x)
+                y = int(prediction.y)
+                width = int(prediction.width)
+                height = int(prediction.height)
+                self.angle4 = self.angulo_centro(x,y)
+                #print('Camera 4 - x: ', x, 'y: ', y, 'angle: ', self.angle3)            
+                # Calcula as coordenadas dos cantos da caixa
+                top_left = (abs(int(width/2) - x), abs(int(height/2) - y))
+                bottom_right = (int(width/2) + x, int(height/2) + y)
+                
+                # Desenha a caixa delimitadora na imagem
+                cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)  # Verde, espessura 2
+                
+                # Prepara o texto com o nome da classe e a confiança
+                label = f"{prediction.class_name}: {prediction.confidence:.5f}"
+                            
+                # Desenha o texto na imagem
+                cv2.putText(cv_image, label, top_left, 
+                            cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
+                
+        resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
+        #desenha linha no meio
+        cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
+        cv2.imshow('Camera 4', resized_image)
+        cv2.waitKey(1) 
+
+    def camera5_callback(self, msg):
+        #self.get_logger().info('Recebida imagem da câmera 4')
+        # Processamento da imagem da câmera 4
+        cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+        predict = self.model.infer(image = cv_image)
+        #print(predict)
+        if not predict[0].predictions:
+            self.angle5 = float('nan')
+        else: 
+            for prediction in predict[0].predictions:
+                # Extrai as coordenadas e dimensões da caixa delimitadora
+                x = int(prediction.x)
+                y = int(prediction.y)
+                width = int(prediction.width)
+                height = int(prediction.height)
+                self.angle5 = self.angulo_centro(x,y)
+                #print('Camera 4 - x: ', x, 'y: ', y, 'angle: ', self.angle3)            
+                # Calcula as coordenadas dos cantos da caixa
+                top_left = (abs(int(width/2) - x), abs(int(height/2) - y))
+                bottom_right = (int(width/2) + x, int(height/2) + y)
+                
+                # Desenha a caixa delimitadora na imagem
+                cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)  # Verde, espessura 2
+                
+                # Prepara o texto com o nome da classe e a confiança
+                label = f"{prediction.class_name}: {prediction.confidence:.5f}"
+                            
+                # Desenha o texto na imagem
+                cv2.putText(cv_image, label, top_left, 
+                            cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
+                
+        resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
+        #desenha linha no meio
+        cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
+        cv2.imshow('Camera 5', resized_image)
+        cv2.waitKey(1) 
+
+    def camera6_callback(self, msg):
+        #self.get_logger().info('Recebida imagem da câmera 4')
+        # Processamento da imagem da câmera 4
+        cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+        predict = self.model.infer(image = cv_image)
+        #print(predict)
+        if not predict[0].predictions:
+            self.angle6 = float('nan')
+        else: 
+            for prediction in predict[0].predictions:
+                # Extrai as coordenadas e dimensões da caixa delimitadora
+                x = int(prediction.x)
+                y = int(prediction.y)
+                width = int(prediction.width)
+                height = int(prediction.height)
+                self.angle6 = self.angulo_centro(x,y)
+                #print('Camera 4 - x: ', x, 'y: ', y, 'angle: ', self.angle3)            
+                # Calcula as coordenadas dos cantos da caixa
+                top_left = (abs(int(width/2) - x), abs(int(height/2) - y))
+                bottom_right = (int(width/2) + x, int(height/2) + y)
+                
+                # Desenha a caixa delimitadora na imagem
+                cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)  # Verde, espessura 2
+                
+                # Prepara o texto com o nome da classe e a confiança
+                label = f"{prediction.class_name}: {prediction.confidence:.5f}"
+                            
+                # Desenha o texto na imagem
+                cv2.putText(cv_image, label, top_left, 
+                            cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
+                
+        resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
+        #desenha linha no meio
+        cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
+        cv2.imshow('Camera 6', resized_image)
+        cv2.waitKey(1) 
+
+    def camera7_callback(self, msg):
+        #self.get_logger().info('Recebida imagem da câmera 4')
+        # Processamento da imagem da câmera 4
+        cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+        predict = self.model.infer(image = cv_image)
+        #print(predict)
+        if not predict[0].predictions:
+            self.angle7 = float('nan')
+        else: 
+            for prediction in predict[0].predictions:
+                # Extrai as coordenadas e dimensões da caixa delimitadora
+                x = int(prediction.x)
+                y = int(prediction.y)
+                width = int(prediction.width)
+                height = int(prediction.height)
+                self.angle7 = self.angulo_centro(x,y)
+                #print('Camera 4 - x: ', x, 'y: ', y, 'angle: ', self.angle3)            
+                # Calcula as coordenadas dos cantos da caixa
+                top_left = (abs(int(width/2) - x), abs(int(height/2) - y))
+                bottom_right = (int(width/2) + x, int(height/2) + y)
+                
+                # Desenha a caixa delimitadora na imagem
+                cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)  # Verde, espessura 2
+                
+                # Prepara o texto com o nome da classe e a confiança
+                label = f"{prediction.class_name}: {prediction.confidence:.5f}"
+                            
+                # Desenha o texto na imagem
+                cv2.putText(cv_image, label, top_left, 
+                            cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
+                
+        resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
+        #desenha linha no meio
+        cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
+        cv2.imshow('Camera 7', resized_image)
         cv2.waitKey(1) 
 
 def main(args=None):

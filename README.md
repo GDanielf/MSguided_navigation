@@ -30,3 +30,7 @@ ros2 launch guided_navigation guided_simulation.launch.py
 source install/local_setup.bash
 
 ros2 run guided_navigation triangulation.py
+
+## camera stereo
+
+ros2 launch guided_navigation stereo-guided_simulation.launch.py

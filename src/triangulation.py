@@ -20,6 +20,14 @@ class Triangulation(Node):
         self.camera2_rot = np.array([0.15493676217535018, 0.051481367426355791, -0.93625125233565687])
         self.camera3_pos = np.array([-9.9253, 7.43722])
         self.camera3_rot = np.array([0.052132214164251366, 0.1547189830363459, -0.315024337110333])
+        self.camera4_pos = np.array([-17.0401, -2.346])
+        self.camera4_rot = np.array([-0.061575970893211367, 0.27375335566542897, 0.210633344105434])
+        self.camera5_pos = np.array([-17.0401, 2.346])
+        self.camera5_rot = np.array([0.061575970893211367, 0.27375335566542897, -0.210633344105434])
+        self.camera6_pos = np.array([17.0401, 2.346])
+        self.camera6_rot = np.array([0.25796312579162345, 0.076416929303117692, -0.92346145045746275])
+        self.camera7_pos = np.array([17.0401, -2.346])
+        self.camera7_rot = np.array([-0.25796312579162345, 0.076416929303117692, 0.92346145045746275])
         self.hfov = 1.0469999999999999
         self.camera_position_vec = 2
         self.image_position_vec = 30        
@@ -73,36 +81,29 @@ class Triangulation(Node):
                 y = y + lista_pontos_interseccao[i][1]        
             x = x/(len(lista_pontos_interseccao))
             y = y/(len(lista_pontos_interseccao))
-        return x,y
-    
-    def ponto_intersec_valid(self, camera, ponto):
-        result = False
-        if camera == 0:
-            result = (ponto[0] <= self.camera0_pos[0]) and (ponto[1] >= self.camera0_pos[1])
-        elif camera == 1:
-            result = (ponto[0] >= self.camera1_pos[0]) and (ponto[1] >= self.camera1_pos[1])
-        elif camera == 2:
-            result = (ponto[0] <= self.camera2_pos[0]) and (ponto[1] <= self.camera2_pos[1])
-        elif camera == 3:
-            result = (ponto[0] >= self.camera3_pos[0]) and (ponto[1] <= self.camera3_pos[1])
-
-        return result
-
-         
+        return x,y  
+        
     def triangulation_callback(self, msg):
         mapa = Mapa()
-        camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos]
+        camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos,
+                           self.camera4_pos, self.camera5_pos, self.camera6_pos, self.camera7_pos]
         camera_rotations = [self.yaw_rotation(self.camera0_rot[0], self.camera0_rot[1], self.camera0_rot[2]), 
                      self.yaw_rotation(self.camera1_rot[0], self.camera1_rot[1], self.camera1_rot[2]),
                      self.yaw_rotation(self.camera2_rot[0], self.camera2_rot[1], self.camera2_rot[2]),
-                     self.yaw_rotation(self.camera3_rot[0], self.camera3_rot[1], self.camera3_rot[2])]
+                     self.yaw_rotation(self.camera3_rot[0], self.camera3_rot[1], self.camera3_rot[2]),
+                     self.yaw_rotation(self.camera4_rot[0], self.camera4_rot[1], self.camera4_rot[2]),
+                     self.yaw_rotation(self.camera5_rot[0], self.camera5_rot[1], self.camera5_rot[2]),
+                     self.yaw_rotation(self.camera6_rot[0], self.camera6_rot[1], self.camera6_rot[2]),
+                     self.yaw_rotation(self.camera7_rot[0], self.camera7_rot[1], self.camera7_rot[2])]
 
         
         #print('Angle image 0: ', msg.angle_image_0, 'Angle image 1: ', msg.angle_image_1, 'Angle image 2: ', msg.angle_image_2, 'Angle image 3: ', msg.angle_image_3)
-        labels = ['Cam 0', 'Cam 1', 'Cam 2', 'Cam 3']
-        cameras = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos]
+        labels = ['Cam 0', 'Cam 1', 'Cam 2', 'Cam 3', 'Cam 4', 'Cam 5', 'Cam 6', 'Cam 7']
         tex_pos_01 = 2
         tex_pos_23 = 1
+        tex_pos_45 = -2
+        tex_pos_67 = -2
+
         # Plotar cada ponto e vetor da camera
         fig, ax = plt.subplots()
         for pos, angle in zip(camera_position, camera_rotations):
@@ -118,12 +119,16 @@ class Triangulation(Node):
             # Plotar a posição
             ax.scatter(pos[0], pos[1], color='b')
 
-        plt.text(cameras[0][0] - tex_pos_01, cameras[0][1] - tex_pos_01, labels[0], fontsize=12)
-        plt.text(cameras[1][0] - tex_pos_01, cameras[1][1] - tex_pos_01, labels[1], fontsize=12)
-        plt.text(cameras[2][0] - tex_pos_23, cameras[2][1] + tex_pos_23, labels[2], fontsize=12)
-        plt.text(cameras[3][0] - tex_pos_23, cameras[3][1] + tex_pos_23, labels[3], fontsize=12)
+        plt.text(camera_position[0][0] - tex_pos_01, camera_position[0][1] - tex_pos_01, labels[0], fontsize=12)
+        plt.text(camera_position[1][0] - tex_pos_01, camera_position[1][1] - tex_pos_01, labels[1], fontsize=12)
+        plt.text(camera_position[2][0] - tex_pos_23, camera_position[2][1] + tex_pos_23, labels[2], fontsize=12)
+        plt.text(camera_position[3][0] - tex_pos_23, camera_position[3][1] + tex_pos_23, labels[3], fontsize=12)
+        plt.text(camera_position[4][0] - tex_pos_45, camera_position[4][1] + tex_pos_45, labels[4], fontsize=12)
+        plt.text(camera_position[5][0] - tex_pos_45, camera_position[5][1] + tex_pos_45, labels[5], fontsize=12)
+        plt.text(camera_position[6][0] - tex_pos_67, camera_position[6][1] + tex_pos_67, labels[6], fontsize=12)
+        plt.text(camera_position[7][0] - tex_pos_67, camera_position[7][1] + tex_pos_67, labels[7], fontsize=12)
             
-
+        #TODO
         up_hfov = 0
         down_hfov = 0
         hfov_limit = []
@@ -136,6 +141,10 @@ class Triangulation(Node):
         hfov_limit[1] = [1.57, 0]
         hfov_limit[2] = [-1.57, -3.1416]
         hfov_limit[3] = [0, -1.57]
+        hfov_limit[4] = [1.57, 0]
+        hfov_limit[5] = [0, -1.57]
+        hfov_limit[6] = [-1.57, -3.1416]
+        hfov_limit[7] = [3.1416, 1.57]
 
         #plotando os limites de hfov
         for pos, angle in zip(camera_position, hfov_limit):
@@ -153,7 +162,8 @@ class Triangulation(Node):
             # Plotar a posição
             ax.scatter(pos[0], pos[1], color='b') 
         
-        image_angles = [msg.angle_image_0, msg.angle_image_1, msg.angle_image_2, msg.angle_image_3]
+        image_angles = [msg.angle_image_0, msg.angle_image_1, msg.angle_image_2, msg.angle_image_3,
+                         msg.angle_image_4, msg.angle_image_5, msg.angle_image_6, msg.angle_image_7]
 
         image_angles_res = []
 
