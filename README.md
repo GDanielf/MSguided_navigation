@@ -32,5 +32,6 @@ source install/local_setup.bash
 ros2 run guided_navigation triangulation.py
 
 ## camera stereo
+sudo apt-get install ros-humble-camera-calibration
 
 ros2 launch guided_navigation stereo-guided_simulation.launch.py

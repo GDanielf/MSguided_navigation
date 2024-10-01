@@ -141,9 +141,9 @@ class MultiCamera(Node):
         #self.get_logger().info('Recebida imagem da câmera 1')
         # Processamento da imagem da câmera 1
         cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')        
-        pts = np.array([[0, 0], [0, 270], [959, 170], [959,0]], np.int32)
-        pts = pts.reshape((-1, 1, 2))
-        cv2.fillPoly(cv_image, [pts], (0, 0, 0))
+        #pts = np.array([[0, 0], [0, 270], [959, 170], [959,0]], np.int32)
+        #pts = pts.reshape((-1, 1, 2))
+        #cv2.fillPoly(cv_image, [pts], (0, 0, 0))
         #cv2.rectangle(cv_image, (xb1, yb1), (xb2, yb2), (0, 0, 0), -1)  # -1 preenche o retângulo
         predict = self.model.infer(image = cv_image)
         #tampar parte do corredor para a camera nao ver        
@@ -187,9 +187,9 @@ class MultiCamera(Node):
         #self.get_logger().info('Recebida imagem da câmera 2')
         # Processamento da imagem da câmera 2
         cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
-        xb1, yb1 = 959,0
-        xb2, yb2 = 1919, 270
-        cv2.rectangle(cv_image, (xb1, yb1), (xb2, yb2), (0, 0, 0), -1)  # -1 preenche o retângulo
+        #xb1, yb1 = 959,0
+        #xb2, yb2 = 1919, 270
+        #cv2.rectangle(cv_image, (xb1, yb1), (xb2, yb2), (0, 0, 0), -1)  # -1 preenche o retângulo
         predict = self.model.infer(image = cv_image)
         #print(predict)
         if not predict[0].predictions:
@@ -230,9 +230,9 @@ class MultiCamera(Node):
         #self.get_logger().info('Recebida imagem da câmera 3')
         # Processamento da imagem da câmera 3
         cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
-        xb1, yb1 = 959,0
-        xb2, yb2 = 1919, 270
-        cv2.rectangle(cv_image, (xb1, yb1), (xb2, yb2), (0, 0, 0), -1)  # -1 preenche o retângulo
+        #xb1, yb1 = 959,0
+        #xb2, yb2 = 1919, 270
+        #cv2.rectangle(cv_image, (xb1, yb1), (xb2, yb2), (0, 0, 0), -1)  # -1 preenche o retângulo
         predict = self.model.infer(image = cv_image)
         #print(predict)
         if not predict[0].predictions:
@@ -272,9 +272,9 @@ class MultiCamera(Node):
         #self.get_logger().info('Recebida imagem da câmera 4')
         # Processamento da imagem da câmera 4
         cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
-        xb1, yb1 = 0,0
-        xb2, yb2 = 959, 270
-        cv2.rectangle(cv_image, (xb1, yb1), (xb2, yb2), (0, 0, 0), -1) 
+        #xb1, yb1 = 0,0
+        #xb2, yb2 = 959, 270
+        #cv2.rectangle(cv_image, (xb1, yb1), (xb2, yb2), (0, 0, 0), -1) 
         predict = self.model.infer(image = cv_image)
         #print(predict)
         if not predict[0].predictions:
