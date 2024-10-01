@@ -48,22 +48,24 @@ class Triangulation(Node):
         return np.arctan2(2 * (w * z + x * y), 1 - 2 * (y**2 + z**2))
     
     def compara_ponto(self, camera_list, camera_desejada, ponto):
+        a = round(ponto[0],3)
+        b = round(ponto[1],3)
         if camera_desejada == 0:
-            return (ponto[0] <= camera_list[0][0] and ponto[1] >= camera_list[0][1])
+            return (a <= round(camera_list[0][0],3) and b >= round(camera_list[0][1],3))
         elif camera_desejada == 1:
-            return (ponto[0] >= camera_list[1][0] and ponto[1] >= camera_list[1][1])
+            return (a >= round(camera_list[1][0],3) and b >= round(camera_list[1][1],3))
         elif camera_desejada == 2:
-            return (ponto[0] <= camera_list[2][0] and ponto[1] <=camera_list[2][1])
+            return (a <= round(camera_list[2][0],3) and b <= round(camera_list[2][1],3))
         elif camera_desejada == 3:
-            return (ponto[0] >= camera_list[3][0] and ponto[1] <= camera_list[3][1])
+            return (a >= round(camera_list[3][0],3) and b <= round(camera_list[3][1],3))
         elif camera_desejada == 4:
-            return (ponto[0] <= camera_list[4][0] and ponto[1] >= camera_list[4][1])
+            return (a <= round(camera_list[4][0],3) and b >= round(camera_list[4][1],3))
         elif camera_desejada == 5:
-            return (ponto[0] <= camera_list[5][0] and ponto[1] <= camera_list[5][1])
+            return (a <= round(camera_list[5][0],3) and b <= round(camera_list[5][1],3))
         elif camera_desejada == 6:
-            return (ponto[0] >= camera_list[6][0] and ponto[1] <= camera_list[6][1])
+            return (a >= round(camera_list[6][0],3) and b <= round(camera_list[6][1],3))
         elif camera_desejada == 7:
-            return (ponto[0] >= camera_list[7][0] and ponto[1] >= camera_list[7][1])
+            return (a >= round(camera_list[7][0],3) and b >= round(camera_list[7][1],3))
     
     
     def intersecao_retas(self, A1, B1, C1, A2, B2, C2, camera_list, camera1, camera2):
@@ -255,7 +257,7 @@ class Triangulation(Node):
                 ponto = self.intersecao_retas(A1, B1, C1, A2, B2, C2, camera_position, i, j)
                 
                 print('combinacao i j: ', i, j, 'ponto: ', ponto)
-                if(ponto is not None):
+                if(ponto is not None and mapa.verifica_ponto_dentro(ponto)):
                     pontos_interseccao.append(ponto)
 
         # Plotar os pontos de interseccao
