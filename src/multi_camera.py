@@ -14,8 +14,6 @@ import math
 class MultiCamera(Node):
     def __init__(self):
         super().__init__('multi_camera')
-
-        self.image = None
         self.bridge = CvBridge()        
 
         #configuracao da caixa delimitador de deteccao
@@ -41,58 +39,19 @@ class MultiCamera(Node):
         timer_period = 1
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
-        # Subscrições para os 4 tópicos de imagem
-        self.subscription0 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera/link/link/sensor/camera_sensor/image',
-            self.camera0_callback,
-            10)
+        # Subscrições para os tópicos de imagem
         
-        self.subscription1 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_1/link/link_1/sensor/camera_sensor_1/image',
-            self.camera1_callback,
-            10)
+        self.subscription1 = self.create_subscription(Image, '/world/empty/model/rgbd_camera/link/link/sensor/camera_sensor/image', self.camera0_callback, 10)
+        self.subscription2 = self.create_subscription(Image, '/world/empty/model/rgbd_camera_1/link/link_1/sensor/camera_sensor_1/image', self.camera1_callback, 10)
+        self.subscription3 = self.create_subscription(Image, '/world/empty/model/rgbd_camera_2/link/link_2/sensor/camera_sensor_2/image', self.camera2_callback, 10)
+        self.subscription4 = self.create_subscription(Image, '/world/empty/model/rgbd_camera_3/link/link_3/sensor/camera_sensor_3/image', self.camera3_callback, 10)
+        self.subscription5 = self.create_subscription(Image, '/world/empty/model/rgbd_camera_4/link/link_4/sensor/camera_sensor_4/image', self.camera4_callback, 10)
+        self.subscription6 = self.create_subscription(Image, '/world/empty/model/rgbd_camera_5/link/link_5/sensor/camera_sensor_5/image', self.camera5_callback, 10)
+        self.subscription7 = self.create_subscription(Image, '/world/empty/model/rgbd_camera_6/link/link_6/sensor/camera_sensor_6/image', self.camera6_callback, 10)
+        self.subscription8 = self.create_subscription(Image, '/world/empty/model/rgbd_camera_7/link/link_7/sensor/camera_sensor_7/image', self.camera7_callback, 10)
+        self.subscription9 = self.create_subscription(Image, '/world/empty/model/rgbd_camera_8/link/link_8/sensor/camera_sensor_8/image', self.camera8_callback, 10)
+        self.subscription10 = self.create_subscription(Image, '/world/empty/model/rgbd_camera_9/link/link_9/sensor/camera_sensor_9/image', self.camera9_callback, 10)
         
-        self.subscription2 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_2/link/link_2/sensor/camera_sensor_2/image',
-            self.camera2_callback,
-            10)
-        
-        self.subscription3 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_3/link/link_3/sensor/camera_sensor_3/image',
-            self.camera3_callback,
-            10)   
-           
-        self.subscription4 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_4/link/link_4/sensor/camera_sensor_4/image',
-            self.camera4_callback,
-            10)     
-        
-        self.subscription5 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_5/link/link_5/sensor/camera_sensor_5/image',
-            self.camera5_callback,
-            10)    
-        
-        self.subscription6 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_6/link/link_6/sensor/camera_sensor_6/image',
-            self.camera6_callback,
-            10)    
-        
-        self.subscription7 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_7/link/link_7/sensor/camera_sensor_7/image',
-            self.camera7_callback,
-            10)    
-
-        self.image = None
-        # Desativar mensagens de retorno de chamada não utilizadas
-        self.subscription0
         self.subscription1
         self.subscription2
         self.subscription3
@@ -100,6 +59,9 @@ class MultiCamera(Node):
         self.subscription5
         self.subscription6
         self.subscription7
+        self.subscription8
+        self.subscription9
+        self.subscription10
         
         # angulos de cada camera para enviar (float)
         self.angle0 = float('nan')
@@ -109,7 +71,9 @@ class MultiCamera(Node):
         self.angle4 = float('nan')
         self.angle5 = float('nan')
         self.angle6 = float('nan')
-        self.angle7 = float('nan')    
+        self.angle7 = float('nan')
+        self.angle8 = float('nan')
+        self.angle9 = float('nan')    
 
     def timer_callback(self):
         msg = ImagesAngles()
@@ -121,6 +85,8 @@ class MultiCamera(Node):
         msg.angle_image_5 = float(self.angle5)
         msg.angle_image_6 = float(self.angle6)
         msg.angle_image_7 = float(self.angle7)
+        msg.angle_image_8 = float(self.angle8)
+        msg.angle_image_9 = float(self.angle9)
         self.publisher.publish(msg)
         #self.get_logger().info(f'Published angles: {msg.angle_image_0}, {msg.angle_image_1}, {msg.angle_image_2}, {msg.angle_image_3}')
 
@@ -138,7 +104,7 @@ class MultiCamera(Node):
         return angle
 
     def camera0_callback(self, msg):
-        #self.get_logger().info('Recebida imagem da câmera 1')
+        #self.get_logger().info('Recebida imagem da câmera 0')
         # Processamento da imagem da câmera 1
         cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')        
         #pts = np.array([[0, 0], [0, 270], [959, 170], [959,0]], np.int32)
@@ -176,15 +142,14 @@ class MultiCamera(Node):
                 cv2.putText(cv_image, label, top_left, 
                             cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
             
-        
         resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
         #desenha linha no meio
         cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
         cv2.imshow('Camera 0', resized_image)
-        cv2.waitKey(1)       
+        cv2.waitKey(1)   
 
     def camera1_callback(self, msg):
-        #self.get_logger().info('Recebida imagem da câmera 2')
+        #self.get_logger().info('Recebida imagem da câmera 1')
         # Processamento da imagem da câmera 2
         cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
         #xb1, yb1 = 959,0
@@ -219,7 +184,6 @@ class MultiCamera(Node):
                             cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
             
 
-        
         resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
         #desenha linha no meio
         cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
@@ -227,7 +191,7 @@ class MultiCamera(Node):
         cv2.waitKey(1) 
 
     def camera2_callback(self, msg):
-        #self.get_logger().info('Recebida imagem da câmera 3')
+        #self.get_logger().info('Recebida imagem da câmera 2')
         # Processamento da imagem da câmera 3
         cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
         #xb1, yb1 = 959,0
@@ -261,7 +225,6 @@ class MultiCamera(Node):
                 cv2.putText(cv_image, label, top_left, 
                             cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
                 
-        
         resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
         #desenha linha no meio
         cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
@@ -269,7 +232,7 @@ class MultiCamera(Node):
         cv2.waitKey(1) 
 
     def camera3_callback(self, msg):
-        #self.get_logger().info('Recebida imagem da câmera 4')
+        #self.get_logger().info('Recebida imagem da câmera 3')
         # Processamento da imagem da câmera 4
         cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
         #xb1, yb1 = 0,0
@@ -301,7 +264,7 @@ class MultiCamera(Node):
                 # Desenha o texto na imagem
                 cv2.putText(cv_image, label, top_left, 
                             cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
-                
+
         resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
         #desenha linha no meio
         cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
@@ -338,7 +301,7 @@ class MultiCamera(Node):
                 # Desenha o texto na imagem
                 cv2.putText(cv_image, label, top_left, 
                             cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
-                
+
         resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
         #desenha linha no meio
         cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
@@ -454,6 +417,80 @@ class MultiCamera(Node):
         #desenha linha no meio
         cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
         cv2.imshow('Camera 7', resized_image)
+        cv2.waitKey(1) 
+    
+    def camera8_callback(self, msg):
+        #self.get_logger().info('Recebida imagem da câmera 4')
+        # Processamento da imagem da câmera 4
+        cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+        predict = self.model.infer(image = cv_image)
+        #print(predict)
+        if not predict[0].predictions:
+            self.angle8 = float('nan')
+        else: 
+            for prediction in predict[0].predictions:
+                # Extrai as coordenadas e dimensões da caixa delimitadora
+                x = int(prediction.x)
+                y = int(prediction.y)
+                width = int(prediction.width)
+                height = int(prediction.height)
+                self.angle8 = self.angulo_centro(x,y)
+                #print('Camera 4 - x: ', x, 'y: ', y, 'angle: ', self.angle3)            
+                # Calcula as coordenadas dos cantos da caixa
+                top_left = (abs(int(width/2) - x), abs(int(height/2) - y))
+                bottom_right = (int(width/2) + x, int(height/2) + y)
+                
+                # Desenha a caixa delimitadora na imagem
+                cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)  # Verde, espessura 2
+                
+                # Prepara o texto com o nome da classe e a confiança
+                label = f"{prediction.class_name}: {prediction.confidence:.5f}"
+                            
+                # Desenha o texto na imagem
+                cv2.putText(cv_image, label, top_left, 
+                            cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
+                
+        resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
+        #desenha linha no meio
+        cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
+        cv2.imshow('Camera 8', resized_image)
+        cv2.waitKey(1) 
+
+    def camera9_callback(self, msg):
+        #self.get_logger().info('Recebida imagem da câmera 4')
+        # Processamento da imagem da câmera 4
+        cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+        predict = self.model.infer(image = cv_image)
+        #print(predict)
+        if not predict[0].predictions:
+            self.angle9 = float('nan')
+        else: 
+            for prediction in predict[0].predictions:
+                # Extrai as coordenadas e dimensões da caixa delimitadora
+                x = int(prediction.x)
+                y = int(prediction.y)
+                width = int(prediction.width)
+                height = int(prediction.height)
+                self.angle9 = self.angulo_centro(x,y)
+                #print('Camera 4 - x: ', x, 'y: ', y, 'angle: ', self.angle3)            
+                # Calcula as coordenadas dos cantos da caixa
+                top_left = (abs(int(width/2) - x), abs(int(height/2) - y))
+                bottom_right = (int(width/2) + x, int(height/2) + y)
+                
+                # Desenha a caixa delimitadora na imagem
+                cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)  # Verde, espessura 2
+                
+                # Prepara o texto com o nome da classe e a confiança
+                label = f"{prediction.class_name}: {prediction.confidence:.5f}"
+                            
+                # Desenha o texto na imagem
+                cv2.putText(cv_image, label, top_left, 
+                            cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
+                
+        resized_image = cv2.resize(cv_image, (self.image_width, self.image_height))
+        #desenha linha no meio
+        cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
+        cv2.imshow('Camera 9', resized_image)
         cv2.waitKey(1) 
 
 def main(args=None):

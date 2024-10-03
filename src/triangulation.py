@@ -20,14 +20,18 @@ class Triangulation(Node):
         self.camera2_rot = np.array([0.15493676217535018, 0.051481367426355791, -0.93625125233565687])
         self.camera3_pos = np.array([-9.9253, 7.43722])
         self.camera3_rot = np.array([0.052132214164251366, 0.1547189830363459, -0.315024337110333])
-        self.camera4_pos = np.array([-6.8126, -2.3696])
+        self.camera4_pos = np.array([-3.8126, -2.3696])
         self.camera4_rot = np.array([-0.18549626982220258, 0.031907839433870766, 0.96791159620266265])
-        self.camera5_pos = np.array([-6.8126, 2.3696])
+        self.camera5_pos = np.array([-3.8126, 2.3696])
         self.camera5_rot = np.array([0.18549626982220258, 0.031907839433870766, -0.96791159620266265])
-        self.camera6_pos = np.array([6.8126, 2.3696])
+        self.camera6_pos = np.array([3.8126, 2.3696])
         self.camera6_rot = np.array([0.031908520799500469, 0.18549615261691255, -0.16649729576294525])
-        self.camera7_pos = np.array([6.8126, -2.3696])
+        self.camera7_pos = np.array([3.8126, -2.3696])
         self.camera7_rot = np.array([-0.031908520799500469, 0.18549615261691255, 0.16649729576294525])
+        self.camera8_pos = np.array([0, -7.4687])
+        self.camera8_rot = np.array([-0.15452609606586357, 0.15464919835800375, 0.689727136104762])
+        self.camera9_pos = np.array([0, 7.4687])
+        self.camera9_rot = np.array([0.15452609606586357, 0.15464919835800375, -0.689727136104762])
         self.hfov = 1.0469999999999999
         self.camera_position_vec = 2
         self.image_position_vec = 30        
@@ -48,24 +52,28 @@ class Triangulation(Node):
         return np.arctan2(2 * (w * z + x * y), 1 - 2 * (y**2 + z**2))
     
     def compara_ponto(self, camera_list, camera_desejada, ponto):
-        a = round(ponto[0],3)
-        b = round(ponto[1],3)
+        a = round(ponto[0],2)
+        b = round(ponto[1],2)
         if camera_desejada == 0:
-            return (a <= round(camera_list[0][0],3) and b >= round(camera_list[0][1],3))
+            return (a <= round(camera_list[0][0],2) and b >= round(camera_list[0][1],2))
         elif camera_desejada == 1:
-            return (a >= round(camera_list[1][0],3) and b >= round(camera_list[1][1],3))
+            return (a >= round(camera_list[1][0],2) and b >= round(camera_list[1][1],2))
         elif camera_desejada == 2:
-            return (a <= round(camera_list[2][0],3) and b <= round(camera_list[2][1],3))
+            return (a <= round(camera_list[2][0],2) and b <= round(camera_list[2][1],2))
         elif camera_desejada == 3:
-            return (a >= round(camera_list[3][0],3) and b <= round(camera_list[3][1],3))
+            return (a >= round(camera_list[3][0],2) and b <= round(camera_list[3][1],2))
         elif camera_desejada == 4:
-            return (a <= round(camera_list[4][0],3) and b >= round(camera_list[4][1],3))
+            return (a <= round(camera_list[4][0],2) and b >= round(camera_list[4][1],2))
         elif camera_desejada == 5:
-            return (a <= round(camera_list[5][0],3) and b <= round(camera_list[5][1],3))
+            return (a <= round(camera_list[5][0],2) and b <= round(camera_list[5][1],2))
         elif camera_desejada == 6:
-            return (a >= round(camera_list[6][0],3) and b <= round(camera_list[6][1],3))
+            return (a >= round(camera_list[6][0],2) and b <= round(camera_list[6][1],2))
         elif camera_desejada == 7:
-            return (a >= round(camera_list[7][0],3) and b >= round(camera_list[7][1],3))
+            return (a >= round(camera_list[7][0],2) and b >= round(camera_list[7][1],2))
+        elif camera_desejada == 8:
+            return (b >= round(camera_list[8][1],2))
+        elif camera_desejada == 9:
+            return (b <= round(camera_list[9][1],2))
     
     
     def intersecao_retas(self, A1, B1, C1, A2, B2, C2, camera_list, camera1, camera2):
@@ -78,18 +86,18 @@ class Triangulation(Node):
             # Verificar se as retas são paralelas
             det = np.linalg.det(A)
             if det == 0:
-                print("As retas são paralelas ou coincidentes. Não há interseção única.")
+                #print("As retas são paralelas ou coincidentes. Não há interseção única.")
                 return None
 
             # Resolver a equação para encontrar a interseção
             ponto = np.linalg.solve(A, C)
-            print(ponto)
+            #print(ponto)
             if(self.compara_ponto(camera_list, camera1, ponto) and self.compara_ponto(camera_list, camera2, ponto)):
                 return ponto
             else:
                 return None
         except np.linalg.LinAlgError:
-            print("Erro: Matriz singular. Não é possível calcular a interseção.")
+            #print("Erro: Matriz singular. Não é possível calcular a interseção.")
             return None
 
     def verificar_direcao(self, ponto, origem, direcao):
@@ -114,7 +122,8 @@ class Triangulation(Node):
     def triangulation_callback(self, msg):
         mapa = Mapa()
         camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos,
-                           self.camera4_pos, self.camera5_pos, self.camera6_pos, self.camera7_pos]
+                           self.camera4_pos, self.camera5_pos, self.camera6_pos, self.camera7_pos, 
+                           self.camera8_pos, self.camera9_pos]
         camera_rotations = [self.yaw_rotation(self.camera0_rot[0], self.camera0_rot[1], self.camera0_rot[2]), 
                      self.yaw_rotation(self.camera1_rot[0], self.camera1_rot[1], self.camera1_rot[2]),
                      self.yaw_rotation(self.camera2_rot[0], self.camera2_rot[1], self.camera2_rot[2]),
@@ -122,11 +131,13 @@ class Triangulation(Node):
                      self.yaw_rotation(self.camera4_rot[0], self.camera4_rot[1], self.camera4_rot[2]),
                      self.yaw_rotation(self.camera5_rot[0], self.camera5_rot[1], self.camera5_rot[2]),
                      self.yaw_rotation(self.camera6_rot[0], self.camera6_rot[1], self.camera6_rot[2]),
-                     self.yaw_rotation(self.camera7_rot[0], self.camera7_rot[1], self.camera7_rot[2])]
+                     self.yaw_rotation(self.camera7_rot[0], self.camera7_rot[1], self.camera7_rot[2]),
+                     self.yaw_rotation(self.camera8_rot[0], self.camera8_rot[1], self.camera8_rot[2]),
+                     self.yaw_rotation(self.camera9_rot[0], self.camera9_rot[1], self.camera9_rot[2])]
 
         
         #print('Angle image 0: ', msg.angle_image_0, 'Angle image 1: ', msg.angle_image_1, 'Angle image 2: ', msg.angle_image_2, 'Angle image 3: ', msg.angle_image_3)
-        labels = ['Cam 0', 'Cam 1', 'Cam 2', 'Cam 3', 'Cam 4', 'Cam 5', 'Cam 6', 'Cam 7']
+        labels = ['Cam 0', 'Cam 1', 'Cam 2', 'Cam 3', 'Cam 4', 'Cam 5', 'Cam 6', 'Cam 7', 'Cam 8', 'Cam 9']
         tex_pos_01 = 2
         tex_pos_23 = 1
         tex_pos_45 = 0
@@ -172,6 +183,8 @@ class Triangulation(Node):
         hfov_limit[5] = [-1.57, -3.1416]
         hfov_limit[6] = [0, -1.57]
         hfov_limit[7] = [1.57, 0]
+        hfov_limit[8] = [camera_rotations[8] + self.hfov, camera_rotations[8] - self.hfov]
+        hfov_limit[9] = [camera_rotations[9] + self.hfov, camera_rotations[9] - self.hfov]
 
         #plotando os limites de hfov
         for pos, angle in zip(camera_position, hfov_limit):
@@ -190,7 +203,8 @@ class Triangulation(Node):
             ax.scatter(pos[0], pos[1], color='b') 
         
         image_angles = [msg.angle_image_0, msg.angle_image_1, msg.angle_image_2, msg.angle_image_3,
-                         msg.angle_image_4, msg.angle_image_5, msg.angle_image_6, msg.angle_image_7]
+                         msg.angle_image_4, msg.angle_image_5, msg.angle_image_6, msg.angle_image_7,
+                         msg.angle_image_8, msg.angle_image_9]
 
         image_angles_res = []
 
@@ -221,9 +235,9 @@ class Triangulation(Node):
                 Cx.append(float('nan'))
         
         retas = [(Ax[i], B, Cx[i]) for i in range(len(Ax))]
-        print('retas: ', retas)
+        #print('retas: ', retas)
         #print('ang: ', image_angles)
-        print('ang tratado: ', image_angles_res)
+        #print('ang tratado: ', image_angles_res)
         #print('pos tratado: ', camera_rotations)
         # Plotar cada ponto e vetor das imagens
         direcao = []
@@ -247,7 +261,7 @@ class Triangulation(Node):
         
         pontos_interseccao = []
         ponto = []
-        print(len(retas))
+        #print(len(retas))
         #print(direcao)
         #print('direcao', direcao, 'posicao', camera_position)
         for i in range(len(retas)):
@@ -256,7 +270,7 @@ class Triangulation(Node):
                 A2, B2, C2 = retas[j]
                 ponto = self.intersecao_retas(A1, B1, C1, A2, B2, C2, camera_position, i, j)
                 
-                print('combinacao i j: ', i, j, 'ponto: ', ponto)
+                #print('combinacao i j: ', i, j, 'ponto: ', ponto)
                 if(ponto is not None and mapa.verifica_ponto_dentro(ponto)):
                     pontos_interseccao.append(ponto)
 
@@ -268,7 +282,7 @@ class Triangulation(Node):
         #plotando
         
         bar_x, bar_y = self.baricentro(pontos_interseccao)
-        print('pontos de intersec: ', pontos_interseccao)
+        #print('pontos de intersec: ', pontos_interseccao)
         #print('baricentro: ', [bar_x, bar_y])
         ax.scatter(float(bar_x), float(bar_y), color='c')
         mapa.desenhar_mapa(ax)

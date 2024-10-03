@@ -35,3 +35,9 @@ ros2 run guided_navigation triangulation.py
 sudo apt-get install ros-humble-camera-calibration
 
 ros2 launch guided_navigation stereo-guided_simulation.launch.py
+
+### Calibracao 
+ros2 run camera_calibration cameracalibrator --size 8x6 --square 0.024 --approximate 0.1 --ros-args --remap left:=/left/image_raw --remap left_camera:=/left/camera_info --remap right:=/right/image_raw --remap right_camera:=/right/camera_info
+
+##ajuda na simulacao
+

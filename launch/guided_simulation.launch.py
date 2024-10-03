@@ -85,6 +85,22 @@ def generate_launch_description():
         ),
 
         Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='camera_9_bridge',
+            arguments=['/world/empty/model/rgbd_camera_8/link/link_8/sensor/camera_sensor_8/image@sensor_msgs/msg/Image@gz.msgs.Image'],
+            output='screen'
+        ),
+
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='camera_10_bridge',
+            arguments=['/world/empty/model/rgbd_camera_9/link/link_9/sensor/camera_sensor_9/image@sensor_msgs/msg/Image@gz.msgs.Image'],
+            output='screen'
+        ),
+
+        Node(
             package='guided_navigation',
             executable='multi_camera.py',
             name='MultiCamera',
