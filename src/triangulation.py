@@ -13,21 +13,21 @@ class Triangulation(Node):
 
         #Posicoes e rotacoes das cameras no mundo
         self.camera0_pos = np.array([9.9843, -7.4687])
-        self.camera0_rot = np.array([-0.15493676217535018, 0.051481367426355791, 0.93625125233565687])
-        self.camera1_pos = np.array([-9.9253, -7.4687])
-        self.camera1_rot = np.array([-0.052132214164251366, 0.1547189830363459, 0.315024337110333])
-        self.camera2_pos = np.array([9.9253, 7.4372])
-        self.camera2_rot = np.array([0.15493676217535018, 0.051481367426355791, -0.93625125233565687])
+        self.camera0_rot = np.array([-0.12714926898479462, 0.042248323559761047, 0.94042801856994629])
+        self.camera1_pos = np.array([-9.9843, -7.4687])
+        self.camera1_rot = np.array([-0.042786018971024312, 0.12698116605049339, 0.31642922953811214])
+        self.camera2_pos = np.array([9.9843, 7.4687])
+        self.camera2_rot = np.array([0.12715990203020011, 0.042251855185325655, -0.94042658782551269])
         self.camera3_pos = np.array([-9.9843, 7.4687])
-        self.camera3_rot = np.array([0.052132214164251366, 0.1547189830363459, -0.315024337110333])
+        self.camera3_rot = np.array([0.042786018971024312, 0.12698116605049339, -0.31642922953811214])
         self.camera4_pos = np.array([-6.8126, -2.3696])
-        self.camera4_rot = np.array([-0.18549626982220258, 0.031907839433870766, 0.96791159620266265])
+        self.camera4_rot = np.array([-0.24139782186343309, 0.0541831214900349, 0.94539048155147032])
         self.camera5_pos = np.array([-6.8126, 2.3696])
-        self.camera5_rot = np.array([0.18549626982220258, 0.031907839433870766, -0.96791159620266265])
+        self.camera5_rot = np.array([0.24139782186343309, 0.0541831214900349, -0.94539048155147032])
         self.camera6_pos = np.array([6.8126, 2.3696])
-        self.camera6_rot = np.array([0.031908520799500469, 0.18549615261691255, -0.16649729576294525])
+        self.camera6_rot = np.array([0.061208719054813648, 0.2397127693021015, -0.2397127693021015])
         self.camera7_pos = np.array([6.8126, -2.3696])
-        self.camera7_rot = np.array([-0.031908520799500469, 0.18549615261691255, 0.16649729576294525])
+        self.camera7_rot = np.array([-0.061208719054813648, 0.2397127693021015, 0.2397127693021015])
         self.hfov = 1.0469999999999999
         self.camera_position_vec = 2
         self.image_position_vec = 30        
