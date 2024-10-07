@@ -1,5 +1,3 @@
-<?xml version="1.0"?>
-
 <sdf version='1.9'>
   <world name='empty'>
     <physics name='1ms' type='ignored'>
@@ -371,7 +369,7 @@
             <friction>0</friction>
           </dynamics>
         </axis>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>-0 0 -0 0 0 -0</pose>
       </joint>
       <link name='front_right_wheel_link'>
         <pose>0.256 -0.2854 0.03282 -0.000231 1.55973 -0.000229</pose>
@@ -430,7 +428,7 @@
         <child>front_right_wheel_link</child>
         <parent>base_link</parent>
         <axis>
-          <xyz>-0 1 -0</xyz>
+          <xyz>-0 1 0</xyz>
           <limit>
             <lower>-10000000000000000</lower>
             <upper>10000000000000000</upper>
@@ -446,7 +444,7 @@
             <friction>0</friction>
           </dynamics>
         </axis>
-        <pose>0 0 -0 0 -0 0</pose>
+        <pose>-0 0 -0 0 0 0</pose>
       </joint>
       <link name='rear_left_wheel_link'>
         <pose>-0.256 0.2854 0.03282 -1.4e-05 1.39499 -1.7e-05</pose>
@@ -521,7 +519,7 @@
             <friction>0</friction>
           </dynamics>
         </axis>
-        <pose>-0 0 -0 0 -0 0</pose>
+        <pose>-0 0 0 0 0 0</pose>
       </joint>
       <link name='rear_right_wheel_link'>
         <pose>-0.256 -0.2854 0.03282 3.14158 1.33542 3.14158</pose>
@@ -580,7 +578,7 @@
         <child>rear_right_wheel_link</child>
         <parent>base_link</parent>
         <axis>
-          <xyz>-0 1 0</xyz>
+          <xyz>0 1 0</xyz>
           <limit>
             <lower>-10000000000000000</lower>
             <upper>10000000000000000</upper>
@@ -596,9 +594,9 @@
             <friction>0</friction>
           </dynamics>
         </axis>
-        <pose>0 0 -0 0 -0 0</pose>
+        <pose>0 0 0 0 0 -0</pose>
       </joint>
-      <pose>5.91873 -2.05212 0.13228 -0 0 -1.60335</pose>
+      <pose>5.91873 -2.05212 0.13228 0 0 -1.60335</pose>
       <static>false</static>
       <self_collide>false</self_collide>
     </model>
@@ -673,7 +671,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera>
+          <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -730,7 +728,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>9.9843 -7.4687 3.4983 -0 0.4408 2.6014</pose>
+      <pose>9.9843 -7.4687 3.4983 0 0.4408 2.6014</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>
@@ -757,7 +755,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera>
+          <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -836,7 +834,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera>
+          <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -915,7 +913,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera>
+          <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -994,7 +992,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera>
+          <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -1073,7 +1071,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera>
+          <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -1152,7 +1150,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera>
+          <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -1209,7 +1207,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>3.8126 2.3696 2.5835 0 0.3787 -0.3407</pose>
+      <pose>3.8126 2.3696 2.5835 0 0.3787 0</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>
@@ -1231,7 +1229,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera>
+          <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -1310,7 +1308,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera>
+          <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -1367,7 +1365,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>0 -7.4687 3.4983 0 0.4408 1.57</pose>
+      <pose>0 0 3.6544 -0 0.377 3.14</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>
@@ -1389,7 +1387,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera>
+          <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -1446,7 +1444,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>0 7.4687 3.4983 0 0.4408 -1.57</pose>
+      <pose>0 0 3.6544 0 0.377 0</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>

@@ -28,10 +28,10 @@ class Triangulation(Node):
         self.camera6_rot = np.array([0.031908520799500469, 0.18549615261691255, -0.16649729576294525])
         self.camera7_pos = np.array([3.8126, -2.3696])
         self.camera7_rot = np.array([-0.031908520799500469, 0.18549615261691255, 0.16649729576294525])
-        self.camera8_pos = np.array([0, -7.4687])
-        self.camera8_rot = np.array([-0.15452609606586357, 0.15464919835800375, 0.689727136104762])
-        self.camera9_pos = np.array([0, 7.4687])
-        self.camera9_rot = np.array([0.15452609606586357, 0.15464919835800375, -0.689727136104762])
+        self.camera8_pos = np.array([0, 0])
+        self.camera8_rot = np.array([-0.18738561729595227, 0.000149220219572989, 0.982286107147192])
+        self.camera9_pos = np.array([0, 0])
+        self.camera9_rot = np.array([0.982286107147192, 0.000149220219572989, -0.18738561729595227])
         self.hfov = 1.0469999999999999
         self.camera_position_vec = 2
         self.image_position_vec = 30        
