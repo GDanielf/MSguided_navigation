@@ -32,7 +32,7 @@ class ComparePosition(Node):
 
     def husky_callback(self, msg):
         self.husky_odom_position = msg.pose.pose.position
-        self.compare_positions()
+        #self.compare_positions()
 
     def triangulation_callback(self, msg):
         self.triangulation_position[0] = msg.x
