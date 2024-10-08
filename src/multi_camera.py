@@ -95,12 +95,8 @@ class MultiCamera(Node):
 
     def angulo_centro(self,x,y):
         angle = 0
-        tang = (x - 959)/y
+        tang = (x - 959)/(1080 - y)
         angle = math.atan(tang)
-
-        # Converter o ângulo para graus
-        #angle_degrees = math.degrees(angle)
-
         return angle
 
     def camera0_callback(self, msg):

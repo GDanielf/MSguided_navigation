@@ -14,13 +14,13 @@ class Triangulation(Node):
 
         #Posicoes e rotacoes das cameras no mundo
         self.camera0_pos = np.array([9.9843, -7.4687])
-        self.camera0_rot = np.array([-0.21069394117383711, 0.058333112987096356, 0.94043227869107393])
+        self.camera0_rot = np.array([-0.20651563011976296, 0.0693197799957628, 0.92525149065264534])
         self.camera1_pos = np.array([-9.9843, -7.4687])
-        self.camera1_rot = np.array([-0.060449057900463357, 0.19489749588336233, 0.29000353427422959])
+        self.camera1_rot = np.array([-0.068773030063436352, 0.20669834957811681, 0.30812364442338763])
         self.camera2_pos = np.array([9.9843, 7.4687])
-        self.camera2_rot = np.array([0.21069394117383711, 0.058333112987096356, -0.94043227869107393])
+        self.camera2_rot = np.array([0.20659175692043724, 0.069092570909980416, -0.925592561378196])
         self.camera3_pos = np.array([-9.9843, 7.4687])
-        self.camera3_rot = np.array([0.060449057900463357, 0.19489749588336233, -0.29000353427422959])
+        self.camera3_rot = np.array([0.069434111535624884, 0.20647721796285928, -0.3110854861843747])
         self.camera4_pos = np.array([-3.8126, -2.3696])
         self.camera4_rot = np.array([-0.18549626982220258, 0.031907839433870766, 0.96791159620266265])
         self.camera5_pos = np.array([-3.8126, 2.3696])
