@@ -101,6 +101,14 @@ def generate_launch_description():
         ),
 
         Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='husky_odometry_bridge',
+            arguments=['/model/marble_husky_sensor_config_5/odometry@nav_msgs/msg/Odometry@ignition.msgs.Odometry'],
+            output='screen' 
+        ),
+
+        Node(
             package='guided_navigation',
             executable='multi_camera.py',
             name='MultiCamera',

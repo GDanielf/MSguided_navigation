@@ -2,6 +2,7 @@
 import rclpy
 from rclpy.node import Node
 from guided_navigation.msg import ImagesAngles
+from guided_navigation.msg import PoseEstimate
 import numpy as np
 import matplotlib.pyplot as plt
 import math
@@ -37,6 +38,7 @@ class Triangulation(Node):
         self.image_position_vec = 30        
         self.xlimit = [-25, 25]
         self.ylimit = [-15, 15]
+
         self.subscription = self.create_subscription(
             ImagesAngles,
             '/image_angles',
@@ -46,6 +48,20 @@ class Triangulation(Node):
 
         # Desativar mensagens de retorno de chamada não utilizadas
         self.subscription
+
+        #publisher para enviar os valores dos angulos timer_publition publica msg a cada 1 seg
+        self.publisher = self.create_publisher(PoseEstimate, 'pose_estimate', 10)
+        timer_period = 1
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+
+        self.pose_x = 0
+        self.pose_y = 0
+
+    def timer_callback(self):
+        msg = PoseEstimate()
+        msg.x = float(self.pose_x)
+        msg.y = float(self.pose_y)
+        self.publisher.publish(msg)
 
     def yaw_rotation(self,x,y,z):
         w = np.sqrt(1 - x**2 - y**2 - z**2)
@@ -137,7 +153,7 @@ class Triangulation(Node):
 
         
         #print('Angle image 0: ', msg.angle_image_0, 'Angle image 1: ', msg.angle_image_1, 'Angle image 2: ', msg.angle_image_2, 'Angle image 3: ', msg.angle_image_3)
-        labels = ['Cam 0', 'Cam 1', 'Cam 2', 'Cam 3', 'Cam 4', 'Cam 5', 'Cam 6', 'Cam 7', 'Cam 8', 'Cam 9']
+        labels = ['Cam 0', 'Cam 1', 'Cam 2', 'Cam 3', 'Cam 4', 'Cam 5', 'Cam 6', 'Cam 7']
         tex_pos_01 = 2
         tex_pos_23 = 1
         tex_pos_45 = 0
@@ -282,6 +298,8 @@ class Triangulation(Node):
         #plotando
         
         bar_x, bar_y = self.baricentro(pontos_interseccao)
+        self.pose_x = float(bar_x)
+        self.pose_y = float(bar_y)
         #print('pontos de intersec: ', pontos_interseccao)
         #print('baricentro: ', [bar_x, bar_y])
         ax.scatter(float(bar_x), float(bar_y), color='c')

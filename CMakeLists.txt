@@ -19,6 +19,7 @@ install(
     src/multi_camera.py
     src/triangulation.py
     src/stereo_camera.py
+    src/compare_position.py
     src/mapa.py
   DESTINATION lib/${PROJECT_NAME}  
 )
@@ -29,6 +30,7 @@ install(DIRECTORY launch/
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ImagesAngles.msg"
+  "msg/PoseEstimate.msg"
   DEPENDENCIES sensor_msgs # Add packages that above messages depend on, in this case geometry_msgs for Sphere.msg
 )
 

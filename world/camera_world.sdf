@@ -596,7 +596,7 @@
         </axis>
         <pose>0 0 0 0 0 -0</pose>
       </joint>
-      <pose>5.91873 -2.05212 0.13228 0 0 -1.60335</pose>
+      <pose>0 0 0.1323 0 -0 0</pose>
       <static>false</static>
       <self_collide>false</self_collide>
     </model>
@@ -1207,7 +1207,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>3.8126 2.3696 2.5835 0 0.3787 0</pose>
+      <pose>3.8126 2.3696 2.907 0 0.3787 -0.3407</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>

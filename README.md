@@ -41,3 +41,4 @@ ros2 run camera_calibration cameracalibrator --size 8x6 --square 0.024 --approxi
 
 ##ajuda na simulacao
 
+ign topic -e -t /world/empty/pose/info | grep -A 10 'name: "rgbd_camera"'
