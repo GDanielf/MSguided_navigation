@@ -19,6 +19,7 @@ install(
     src/multi_camera.py
     src/triangulation.py
     src/stereo_camera.py
+    src/filtro_particulas.py
     src/compare_position.py
     src/mapa.py
   DESTINATION lib/${PROJECT_NAME}  

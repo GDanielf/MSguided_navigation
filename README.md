@@ -31,6 +31,12 @@ source install/local_setup.bash
 
 ros2 run guided_navigation triangulation.py
 
+## Rodar Filtro de particulas
+source install/local_setup.bash
+
+ros2 run guided_navigation filtro_particulas.py
+
+
 ## camera stereo
 sudo apt-get install ros-humble-camera-calibration
 
@@ -42,3 +48,4 @@ ros2 run camera_calibration cameracalibrator --size 8x6 --square 0.024 --approxi
 ##ajuda na simulacao
 
 ign topic -e -t /world/empty/pose/info | grep -A 10 'name: "rgbd_camera"'
+
