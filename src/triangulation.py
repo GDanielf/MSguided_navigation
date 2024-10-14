@@ -45,7 +45,6 @@ class Triangulation(Node):
         # Desativar mensagens de retorno de chamada não utilizadas
         self.subscription
 
-        #publisher para enviar os valores dos angulos timer_publition publica msg a cada 1 seg
         self.publisher = self.create_publisher(PoseEstimate, 'pose_estimate', 10)
         timer_period = 1
         self.timer = self.create_timer(timer_period, self.timer_callback)
@@ -94,7 +93,7 @@ class Triangulation(Node):
             # Verificar se as retas são paralelas
             det = np.linalg.det(A)
             if det == 0:
-                print("As retas são paralelas ou coincidentes. Não há interseção única.")
+                #print("As retas são paralelas ou coincidentes. Não há interseção única.")
                 return None
 
             # Resolver a equação para encontrar a interseção
@@ -105,7 +104,7 @@ class Triangulation(Node):
             else:
                 return None
         except np.linalg.LinAlgError:
-            print("Erro: Matriz singular. Não é possível calcular a interseção.")
+            #print("Erro: Matriz singular. Não é possível calcular a interseção.")
             return None
 
     def verificar_direcao(self, ponto, origem, direcao):
@@ -272,7 +271,7 @@ class Triangulation(Node):
                 A2, B2, C2 = retas[j]
                 ponto = self.intersecao_retas(A1, B1, C1, A2, B2, C2, camera_position, i, j)
                 
-                print('combinacao i j: ', i, j, 'ponto: ', ponto)
+                #print('combinacao i j: ', i, j, 'ponto: ', ponto)
                 if(ponto is not None and mapa.verifica_ponto_dentro(ponto)):
                     pontos_interseccao.append(ponto)
 

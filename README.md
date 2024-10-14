@@ -36,6 +36,9 @@ source install/local_setup.bash
 
 ros2 run guided_navigation filtro_particulas.py
 
+## RViz 
+rviz2 -d ros2_ws/src/guided_navigation/rviz/filtro.rviz
+
 
 ## camera stereo
 sudo apt-get install ros-humble-camera-calibration
