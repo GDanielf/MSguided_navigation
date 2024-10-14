@@ -45,13 +45,14 @@ class FiltroParticulas(Node):
         marker.pose.position.y = self.point.y
         marker.pose.position.z = self.point.z
         # Definindo a cor e tamanho
-        marker.scale.x = 0.1  # Tamanho do ponto
-        marker.scale.y = 0.1
-        marker.color.a = 1.0  # Opacidade
-        marker.color.r = 1.0  # Cor (vermelho)
+        marker.scale.x = 0.2  # Tamanho do ponto
+        marker.scale.y = 0.2
+        marker.scale.z = 0.2
+        marker.color.a = 1.0  # Opacidade total
+        marker.color.r = 1.0  # Cor vermelha
         marker.color.g = 0.0
         marker.color.b = 0.0
-        
+            
         self.publisher_.publish(marker)
         # Apagar o ponto antigo se necessário
         delete_marker = Marker()
