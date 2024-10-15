@@ -12,33 +12,39 @@ class FiltroParticulas(Node):
     def __init__(self):
         super().__init__('filtro_particulas')
 
-        # Subscriber para o tópico /data_topic
-        self.subscription = self.create_subscription(
+        # Subscriber para o tópico /pose_estimate
+        self.subscription_pose = self.create_subscription(
             PoseEstimate,
             '/pose_estimate',
-            self.filtro_callback,
+            self.pose_callback,
             10
-        )        
+        )  
+        self.subscription_pose        
+        
+
         #inicializacao filtro de particulas
+        self.validar_primeira_msg = True
+        mapa = Mapa()        
         self.particle_number = 5
-        mapa = Mapa()
         self.points_array = mapa.gerar_pontos_aleatorios_dentro(self.particle_number)
-        self.publisher_filtro = self.create_publisher(Marker, 'topico_filtro', 10)   
+        self.publisher_filtro = self.create_publisher(Marker, 'visualization_marker', 10)   
         # Definindo o ponto estimado
-        self.publisher_ponto_est = self.create_publisher(Marker, 'visualization_marker', 10)
-        timer_period = 0.5  # 500 ms
-        self.timer = self.create_timer(timer_period, self.publish_ponto_pose_estimada)
+        self.publisher_ponto_est = self.create_publisher(Marker, 'topic_pose_est', 10)
+        #timer_period = 0.5  # 500 ms
+        #self.timer = self.create_timer(timer_period, self.publish_ponto_pose_estimada)
         self.point_id = 0       
         self.point = Point()
         self.point.x = 0.0  
         self.point.y = 0.0  
         self.point.z = 0.0
 
-    def filtro_callback(self, msg):
+    def pose_callback(self, msg):        
         self.point.x = msg.x
         self.point.y = msg.y      
         self.point.z = 0.0  
-
+        self.publish_ponto_pose_estimada()
+    
+    #publica o ponto da pose estimada no rviz
     def publish_ponto_pose_estimada(self):
         marker = Marker()
         marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
@@ -50,7 +56,6 @@ class FiltroParticulas(Node):
         marker.pose.position.x = self.point.x
         marker.pose.position.y = self.point.y
         marker.pose.position.z = self.point.z
-        self.publish_points_array()
         # Definindo a cor e tamanho
         marker.scale.x = 0.2  # Tamanho do ponto
         marker.scale.y = 0.2

@@ -20,7 +20,24 @@ def generate_launch_description():
         ),
 
         # Set the Roboflow API key environment variable
-        export_roboflow_key,        
+        export_roboflow_key,      
+
+        #bridges for robot /cmd_vel   
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='cmd_vel_bridge',
+            arguments=['/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist'],
+            output='screen'
+        ),
+        
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='imu_bridge',
+            arguments=['/imu@sensor_msgs/msg/Imu@gz.msgs.IMU'],
+            output='screen'
+        ),
 
         # Bridges for each camera
         Node(
@@ -82,7 +99,7 @@ def generate_launch_description():
             name='camera_8_bridge',
             arguments=['/world/empty/model/rgbd_camera_7/link/link_7/sensor/camera_sensor_7/image@sensor_msgs/msg/Image@gz.msgs.Image'],
             output='screen'
-        ),
+        ),     
 
         Node(
             package='ros_gz_bridge',
