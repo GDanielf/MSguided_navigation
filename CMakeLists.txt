@@ -21,6 +21,8 @@ install(
     src/stereo_camera.py
     src/filtro_particulas.py
     src/compare_position.py
+    src/navigation.py
+    src/planner.py
     src/mapa.py
   DESTINATION lib/${PROJECT_NAME}  
 )

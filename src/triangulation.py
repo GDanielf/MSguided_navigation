@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
+from std_msgs.msg import Bool
 from guided_navigation.msg import ImagesAngles
 from guided_navigation.msg import PoseEstimate
 import numpy as np
@@ -35,7 +36,15 @@ class Triangulation(Node):
         self.xlimit = [-25, 25]
         self.ylimit = [-15, 15]
 
-        self.subscription = self.create_subscription(
+        #subscribeer do robot status
+        self.robot_status_subscription = self.create_subscription(
+            Bool,
+            '/robot_status',
+            self.robot_status_callback,
+            10
+        )
+        #subscriber dos angulos das cameras
+        self.image_angle_subscription = self.create_subscription(
             ImagesAngles,
             '/image_angles',
             self.triangulation_callback,
@@ -43,20 +52,24 @@ class Triangulation(Node):
         )
 
         # Desativar mensagens de retorno de chamada não utilizadas
-        self.subscription
+        self.image_angle_subscription
+        self.robot_status_subscription
 
         self.publisher = self.create_publisher(PoseEstimate, 'pose_estimate', 10)
-        timer_period = 1
-        self.timer = self.create_timer(timer_period, self.timer_callback)
-
         self.pose_x = 0
         self.pose_y = 0
 
-    def timer_callback(self):
+    def publish_pose_estimate(self):
+        # Cria a mensagem de pose estimada e publica
         msg = PoseEstimate()
-        msg.x = float(self.pose_x)
-        msg.y = float(self.pose_y)
+        msg.x = float(self.pose_x)  # Aqui você insere o valor de x
+        msg.y = float(self.pose_y)  # Aqui você insere o valor de y
         self.publisher.publish(msg)
+
+    def robot_status_callback(self, msg):
+        # Verifica se o robô está parado
+        if not msg.data:  # msg.data == False indica que o robô parou
+            self.publish_pose_estimate()
 
     def yaw_rotation(self,x,y,z):
         w = np.sqrt(1 - x**2 - y**2 - z**2)
