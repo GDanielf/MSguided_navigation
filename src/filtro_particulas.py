@@ -36,8 +36,6 @@ class FiltroParticulas(Node):
             self.pose_callback,
             10
         )  
-        self.subscription_pose_atual      
-
         self.publisher_final_pose= self.create_publisher(Point, '/filter_final_pose', 10)  
 
         #inicializacao filtro de particulas
@@ -70,8 +68,10 @@ class FiltroParticulas(Node):
         self.ponto_atual[0] = msg.x
         self.ponto_atual[1] = msg.y 
         self.publish_ponto_pose_estimada()
-        self.publish_points_array()
-        self.update_points_array()
+        self.make_particles()
+        self.predict_particles()
+        self.update_particles()
+        self.resampling_particles()
 
     #publica o ponto da pose estimada no rviz
     def publish_ponto_pose_estimada(self):
@@ -99,7 +99,7 @@ class FiltroParticulas(Node):
         delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
         self.publisher_ponto_est.publish(delete_marker)        
 
-    def publish_points_array(self):
+    def make_particles(self):
         if(self.validar_primeira_msg):
             marker = Marker()
             marker.header.frame_id = "map"
@@ -129,25 +129,23 @@ class FiltroParticulas(Node):
             self.publisher_filtro.publish(delete_marker)
             self.validar_primeira_msg = False
 
-    def predict_points(self):
+    def predict_particles(self):
         #recebe a velocidade 
         #modelo do carrinho da udacity
-        pass
+        if not self.validar_primeira_msg and self.robot_status:
+            pass
 
-    def update_points_array(self):
+    def update_particles(self):
         # Se for o primeiro ponto ou se o ponto atual for diferente do anterior
         if not self.validar_primeira_msg and not self.robot_status:
-            self.get_logger().info('O ponto MUDOU!')
             # Atualizar as posições
             for point in self.points_array:
                 point.x = random.uniform(-10.0, 10.0)  # Novas posições aleatórias
                 point.y = random.uniform(-10.0, 10.0)
         else:
-            self.get_logger().info('O ponto não mudou, está parado.')
+            self.get_logger().info('O ponto não mudou, está parado.')        
 
-        self.publish_point(self.points_array)
-
-    def resampling(self, points_array):
+    def resampling_particles(self, points_array):
         self.publish_point(points_array)
 
     def publish_point(self, points_array):
