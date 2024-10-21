@@ -24,6 +24,7 @@ install(
     src/navigation.py
     src/planner.py
     src/mapa.py
+    src/particle.py
   DESTINATION lib/${PROJECT_NAME}  
 )
 install(DIRECTORY launch/
