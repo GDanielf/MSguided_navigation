@@ -4,11 +4,14 @@ from rclpy.node import Node
 from visualization_msgs.msg import Marker
 from std_msgs.msg import Header
 from guided_navigation.msg import PoseEstimate
-from geometry_msgs.msg import Twist, Point
+from geometry_msgs.msg import Twist, Pose
 from std_msgs.msg import Bool
 import random
 import math
 from mapa import Mapa
+from particle import Particle
+from math import *
+
 
 class FiltroParticulas(Node):
     def __init__(self):
@@ -36,42 +39,76 @@ class FiltroParticulas(Node):
             self.pose_callback,
             10
         )  
-        self.publisher_final_pose= self.create_publisher(Point, '/filter_final_pose', 10)  
+        self.publisher_final_pose= self.create_publisher(Pose, '/filter_final_pose', 10)  
 
         #inicializacao filtro de particulas
         self.validar_primeira_msg = True
         mapa = Mapa()        
-        self.particle_number = 5
-        self.points_array = mapa.gerar_pontos_aleatorios_dentro(self.particle_number)
-        self.publisher_filtro = self.create_publisher(Marker, 'visualization_marker', 10)   
+        self.particle_number = 500
+        self.publisher_filtro = self.create_publisher(Marker, 'visualization_marker', 10)
+        #fazendo as particulas
+        bearing_noise  = 0.05 # initialize bearing noise to zero
+        steering_noise = 0.1 # initialize steering noise to zero
+        distance_noise = 1.0 
+        self.p = []
+        for i in range(self.particle_number):
+            r = Particle()
+            r.set_noise(bearing_noise, steering_noise, distance_noise)
+            self.p.append(r)   
         # Definindo o ponto estimado
         self.publisher_ponto_est = self.create_publisher(Marker, 'topic_pose_est', 10)
         #timer_period = 0.5  # 500 ms
         #self.timer = self.create_timer(timer_period, self.publish_ponto_pose_estimada)
         self.ponto_atual = [0.0, 0.0]
-        velocidade_linear = 0.0
-        velocidade_angular = 0.0
+        self.velocidade_linear = 0.0
+        self.velocidade_angular = 0.0
         self.robot_status = None
-    
+
+    def particle_filter(self, particle_number):        
+        if(not self.robot_status and self.validar_primeira_msg):
+            self.publish_ponto_pose_estimada()
+            self.publish_particles(self.p)
+            self.validar_primeira_msg = False
+        elif(not self.robot_status and not self.validar_primeira_msg):
+            # motion update (prediction)
+            p2 = []
+            for i in range(particle_number):
+                p2.append(self.p[i].move(self.velocidade_linear, self.angular_velocity, tal = 5))
+            self.p = p2
+            # measurement update
+            w = []
+            for i in range(particle_number):
+                w.append(self.p[i].measurement_prob(self.ponto_atual))
+            # resampling
+            p3 = []
+            index = int(random.random() * particle_number)
+            beta = 0.0
+            mw = max(w)
+            for i in range(particle_number):
+                beta += random.random() * 2.0 * mw
+                while beta > w[index]:
+                    beta -= w[index]
+                    index = (index + 1) % particle_number
+                p3.append(self.p[index])
+            self.p = p3
+            self.publish_ponto_pose_estimada()
+            self.publish_particles(self.p)
+            self.publish_final_point(self.p)
+
     #acho q isso aqui vai ser uma mensagem recebida pela navegacao para atualizar/prever a posicao
     def robot_status_callback(self, msg):
         self.robot_status = msg.data
 
     def navigation_callback(self, msg):
         # Obtendo a velocidade linear e angular do robô
-        velocidade_linear = msg.linear.x
-        velocidade_angular = msg.angular.z
-
+        self.velocidade_linear = msg.linear.x
+        self.velocidade_angular = msg.angular.z
 
     def pose_callback(self, msg): 
         #A mensagem eh recebida quando o robo estiver parado     
         self.ponto_atual[0] = msg.x
         self.ponto_atual[1] = msg.y 
-        self.publish_ponto_pose_estimada()
-        self.make_particles()
-        self.predict_particles()
-        self.update_particles()
-        self.resampling_particles()
+        self.particle_filter(self.particle_number)
 
     #publica o ponto da pose estimada no rviz
     def publish_ponto_pose_estimada(self):
@@ -99,68 +136,73 @@ class FiltroParticulas(Node):
         delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
         self.publisher_ponto_est.publish(delete_marker)        
 
-    def make_particles(self):
-        if(self.validar_primeira_msg):
-            marker = Marker()
-            marker.header.frame_id = "map"
-            marker.header.stamp = self.get_clock().now().to_msg()
+    def publish_particles(self, points_array):    
+        marker = Marker()
+        marker.header.frame_id = "map"
+        marker.header.stamp = self.get_clock().now().to_msg()
 
-            marker.ns = "filtro_points"
-            marker.id = 1  # ID diferente do ponto único
-            marker.type = Marker.POINTS
-            marker.action = Marker.ADD
+        marker.ns = "filtro_points"
+        marker.id = 1  # ID diferente do ponto único
+        marker.type = Marker.ARROW
+        marker.action = Marker.ADD
 
-            # Definir o array de pontos
-            marker.points = self.points_array  # Usar os 500 pontos
-            marker.scale.x = 0.1
-            marker.scale.y = 0.1
-            marker.scale.z = 0.1
-            marker.color.a = 1.0
-            marker.color.r = 1.0
-            marker.color.g = 0.0
-            marker.color.b = 1.0
+        # Definir o array de pontos
+        marker.points = points_array  # Usar os 500 pontos
+        marker.scale.x = 0.1
+        marker.scale.y = 0.1
+        marker.scale.z = 0.1
+        marker.color.a = 1.0
+        marker.color.r = 1.0
+        marker.color.g = 0.0
+        marker.color.b = 1.0
 
-            # Publicar o array de pontos
-            self.publisher_filtro.publish(marker)
+        for point in enumerate(points_array):
+            x, y, theta = point[0], point[1], point[2]
+            # Definir a posição
+            marker.pose.position.x = x
+            marker.pose.position.y = y
+            # Converter o ângulo theta para um quaternion (rotação em torno do eixo Z)
+            marker.pose.orientation.x = 0.0
+            marker.pose.orientation.y = 0.0
+            marker.pose.orientation.z = math.sin(theta / 2.0)  # Parte Z do quaternion
+            marker.pose.orientation.w = math.cos(theta / 2.0)  # Parte W do quaternion
 
-            # Limpar os pontos antigos, caso necessário
-            delete_marker = Marker()
-            delete_marker.action = Marker.DELETEALL  # Remove os pontos antigos
-            self.publisher_filtro.publish(delete_marker)
-            self.validar_primeira_msg = False
+            # Publicar o marcador
+            self.marker_pub.publish(marker)
+            marker.id += 1  # Incrementar o ID para cada marcador
 
-    def predict_particles(self):
-        #recebe a velocidade 
-        #modelo do carrinho da udacity
-        if not self.validar_primeira_msg and self.robot_status:
-            pass
+        self.get_logger().info(f'Publicando {len(points_array)} partículas')
 
-    def update_particles(self):
-        # Se for o primeiro ponto ou se o ponto atual for diferente do anterior
-        if not self.validar_primeira_msg and not self.robot_status:
-            # Atualizar as posições
-            for point in self.points_array:
-                point.x = random.uniform(-10.0, 10.0)  # Novas posições aleatórias
-                point.y = random.uniform(-10.0, 10.0)
-        else:
-            self.get_logger().info('O ponto não mudou, está parado.')        
+        # Publicar o array de pontos
+        self.publisher_filtro.publish(marker)
 
-    def resampling_particles(self, points_array):
-        self.publish_point(points_array)
+        # Limpar os pontos antigos, caso necessário
+        delete_marker = Marker()
+        delete_marker.action = Marker.DELETEALL  # Remove os pontos antigos
+        self.publisher_filtro.publish(delete_marker)        
+     
 
-    def publish_point(self, points_array):
+    def publish_final_point(self, points_array):
         # Criando a mensagem Point
-        point_final = Point()
+        point_final = Pose()
         x = 0
         y = 0
-        for point in points_array:
-            x = x + point.x
-            y = y + point.y
-        point_final.x = x/(len(points_array))
-        point_final.y = y/(len(points_array))
+        orientation = 0.0
+        for i in range(len(points_array)):
+            x = x + points_array[i][0]
+            y = y + points_array[i][1]
+            orientation += (((points_array[i][2] - points_array[0][2] + pi) % (2.0 * pi)) 
+                        + points_array[0][2] - pi)
+            
+        point_final.position.x = x/(len(points_array))
+        point_final.position.y = y/(len(points_array))
+        point_final.orientation.x = 0.0
+        point_final.orientation.y = 0.0
+        point_final.orientation.z = math.sin(orientation / 2.0)
+        point_final.orientation.w = math.cos(orientation / 2.0)
         # Publicando o ponto no tópico
-        self.publisher_.publish(point_final)
-        self.get_logger().info(f'Ponto enviado: ({point_final.x}, {point_final.y})')
+        self.publisher_final_pose.publish(point_final)
+        self.get_logger().info(f'Ponto enviado: ({point_final.position.x}, {point_final.position.y}, {orientation})')
     
 def main(args=None):
     rclpy.init(args=args)
