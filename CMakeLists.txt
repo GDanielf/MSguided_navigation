@@ -25,6 +25,7 @@ install(
     src/planner.py
     src/mapa.py
     src/particle.py
+    src/simulation_monitor.py
   DESTINATION lib/${PROJECT_NAME}  
 )
 install(DIRECTORY launch/

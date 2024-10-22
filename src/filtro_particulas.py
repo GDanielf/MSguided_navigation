@@ -63,6 +63,8 @@ class FiltroParticulas(Node):
         self.velocidade_linear = 0.0
         self.velocidade_angular = 0.0
         self.robot_status = None
+        self.get_logger().info('Filtro de particulas inicializado.')        
+
 
     def particle_filter(self, particle_number):        
         if(not self.robot_status and self.validar_primeira_msg):

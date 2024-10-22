@@ -13,12 +13,6 @@ def generate_launch_description():
     export_roboflow_key = SetEnvironmentVariable('ROBOFLOW_API_KEY', 'aFkoLbgUAThELZEBkgQ5')
 
     return LaunchDescription([
-        # Start the Ignition Gazebo simulation
-        ExecuteProcess(
-            cmd=['ign', 'gazebo', world_file],
-            output='screen'
-        ),
-
         # Set the Roboflow API key environment variable
         export_roboflow_key,      
 
@@ -30,15 +24,13 @@ def generate_launch_description():
             arguments=['/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist'],
             output='screen'
         ),
-        
         Node(
             package='ros_gz_bridge',
             executable='parameter_bridge',
-            name='imu_bridge',
-            arguments=['/imu@sensor_msgs/msg/Imu@gz.msgs.IMU'],
+            name='clock_simulation_bridge',
+            arguments=['/clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock'],
             output='screen'
         ),
-
         # Bridges for each camera
         Node(
             package='ros_gz_bridge',

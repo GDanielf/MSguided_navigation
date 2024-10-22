@@ -13,6 +13,7 @@ class Navigation(Node):
         self.status_publisher = self.create_publisher(Bool, '/robot_status', 10)
         self.command_subscriber = self.create_subscription(Int32, '/nav_command', self.command_callback, 10)
         self.tal = 5.0
+        self.get_logger().info('Navigation inicializado. Enviando comandos de velocidade...')        
 
         self.moving = False
         
@@ -21,11 +22,14 @@ class Navigation(Node):
         # Recebe um comando do Planner e executa a ação correspondente
         command = msg.data
         self.get_logger().info(f'Comando recebido: {command}')
-        
-        if command == 1:
+        if command == 0:
+            self.stop_robot()
+        elif command == 1:
             self.move_forward()
         elif command == 2:
-            self.rotate()
+            self.rotate(1)
+        elif command == 3:
+            self.rotate(-1)
         else:
             self.get_logger().info('Comando desconhecido.')
 
@@ -41,17 +45,17 @@ class Navigation(Node):
         
         self.create_timer(self.tal, self.stop_robot)  # Para após 3 segundos, simulação
 
-    def rotate(self):
+    def rotate(self, direcao):
         cmd = Twist()
         cmd.linear.x = 0.0
-        cmd.angular.z = 0.5  # Rotacionar com velocidade angular
+        cmd.angular.z = 0.5 * direcao  # Rotacionar com velocidade angular
         self.cmd_vel_publisher.publish(cmd)
 
         self.moving = True
         self.publish_status()
         self.get_logger().info('Rotacionando...')
         
-        self.create_timer(self.tal, self.stop_robot)  # Para após 3 segundos, simulação
+        self.create_timer(self.tal, self.move_forward)  # Para após 3 segundos, simulação
 
     def stop_robot(self):
         cmd = Twist()
