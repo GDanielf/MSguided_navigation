@@ -23,6 +23,8 @@ colcon build --packages-select guided_navigation
 
 source install/local_setup.bash
 
+ign gazebo ros2_ws/src/guided_navigation/world/camera_world.sdf
+
 ros2 launch guided_navigation guided_simulation.launch.py
 
 ## Rodar triangulacao:
