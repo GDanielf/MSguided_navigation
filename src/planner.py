@@ -4,7 +4,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int32
 from std_msgs.msg import Bool
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, Twist
 from mapa import Mapa
 import math
 
@@ -12,38 +12,84 @@ import math
 class Planner(Node):
     def __init__(self):
         super().__init__('planner')
-        self.status_subscriber = self.create_subscription(Bool, '/robot_status', self.status_callback, 10)
         self.particle_filter_subscriber = self.create_subscription(Pose, '/filter_final_pose', self.filter_callback, 10)
         self.simulation_subscriber = self.create_subscription(Bool, '/simulation_status', self.simulation_callback, 10)
-        self.command_publisher = self.create_publisher(Int32, '/nav_command', 10)
-        self.robot_status = None
-
+        self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.stop_duration = 2.0 
+        self.tal = 5.0 
+        self.current_timer = None
         #retorno do filtro de particulas
-        self.point_final = [0.0, 0.0, 0.0]        
-
+        self.point_final = [0.0, 0.0, 0.0]     
+        self.robot_status = False  
         self.get_logger().info('Planner inicializado. Enviando comandos para o Navigation...')        
         self.mapa = Mapa()
 
-    def send_command(self, command):
-        command_msg = Int32()
-        command_msg.data = command
-        self.command_publisher.publish(command_msg)
-        self.get_logger().info(f'Comando enviado: {command}')
+    def velocity_sender(self, linear, angular):
+        cmd = Twist()
+        cmd.linear.x = linear  # Mover para frente com velocidade linear
+        cmd.angular.z = angular
+        self.cmd_vel_publisher.publish(cmd)        
+        if linear == 1.0:
+            self.get_logger().info('Movendo para frente...')  
+
+    def stop(self):
+        self.get_logger().info(f'Robo parado')
+        self.velocity_sender(0.0, 0.0)
+        # Cancela o timer atual para evitar múltiplas execuções
+        if self.current_timer:
+            self.current_timer.cancel()
+
+        # Cria um novo timer para retomar o movimento após o tempo de parada
+        self.current_timer = self.create_timer(self.tal, self.move_forward)
+
+
+    def move_forward(self):
+        self.get_logger().info(f'Movendo o robo para frente')
+        self.velocity_sender(1.0, 0.0)
+
+        # Cancela o timer atual para evitar múltiplas execuções
+        if self.current_timer:
+            self.current_timer.cancel()
+
+        # Cria um novo timer para parar o movimento após o tempo de movimento
+        self.current_timer = self.create_timer(self.stop_duration, self.stop)
+
+
+    def move_backward(self):
+        self.velocity_sender(-1.0, 0.0)
+        # Cancela o timer atual para evitar múltiplas execuções
+        if self.current_timer:
+            self.current_timer.cancel()
+
+        # Cria um novo timer para parar o movimento após o tempo de movimento
+        self.current_timer = self.create_timer(self.stop_duration, self.stop)
+
+    def rotate_clockwise(self):
+        self.velocity_sender(0.0, 0.5)
+
+    def rotate_counter_clockwise(self):
+        self.velocity_sender(0.0, -0.5)
+
+    def start_movement_sequence(self):
+        # Começa o movimento parando primeiro (pode ajustar conforme necessário)
+        self.stop()
+        # Inicia o primeiro timer de movimento após o tempo de parada
+        self.current_timer = self.create_timer(self.stop_duration, self.move_forward)
 
     def simulation_callback(self, msg):
-        if(msg.data):
-            self.send_command(1)
-            self.get_logger().info(f'Simulacao em Play')
-        else:
-            self.send_command(0)
+        if(msg.data):            
+            if not self.robot_status:
+                #acabei de dar play
+                #fica parado por um tempo e depois comeca a andar
+                self.robot_status = True
+                self.start_movement_sequence()                           
+        elif(not msg.data and self.robot_status):
+            self.create_timer(self.stop_duration, self.stop)
             self.get_logger().info(f'Simulacao em Pause')
-
-    def status_callback(self, msg):
-        self.robot_status = msg.data
-        if msg.data:
-            self.get_logger().info('Robô está se movendo.')
-        else:
-            self.get_logger().info('Robô parou.')
+        elif(msg.data and not self.robot_status):
+            self.stop()
+            self.get_logger().info(f'Simulacao em Play, pare o robo') 
+    
 
     def filter_callback(self, msg):
         theta = 2 * math.acos(msg.orientation.z)
