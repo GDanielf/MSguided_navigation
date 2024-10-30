@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from visualization_msgs.msg import Marker
+from visualization_msgs.msg import Marker, MarkerArray
 from std_msgs.msg import Header
 from guided_navigation.msg import PoseEstimate
-from geometry_msgs.msg import Twist, Pose
+from geometry_msgs.msg import Twist, Pose, Point, Quaternion
 from std_msgs.msg import Bool
 import random
 import math
@@ -25,13 +25,6 @@ class FiltroParticulas(Node):
         )
         self.subscription_navigation  # Impede que o garbage collector elimine a subscrição
 
-        self.robot_status_subscription = self.create_subscription(
-            Bool,
-            '/robot_status',
-            self.robot_status_callback,
-            10
-        )
-
         # Subscriber para o tópico /pose_estimate_1 recebe msg a cada 10 seg
         self.subscription_pose_atual = self.create_subscription(
             PoseEstimate,
@@ -41,11 +34,21 @@ class FiltroParticulas(Node):
         )  
         self.publisher_final_pose= self.create_publisher(Pose, '/filter_final_pose', 10)  
 
+        #subscribeer do robot status
+        self.robot_status_subscription = self.create_subscription(
+            Bool,
+            '/robot_movement_status',
+            self.robot_movement_status_callback,
+            10
+        )
+        
+        self.movement_status = None
+
         #inicializacao filtro de particulas
-        self.validar_primeira_msg = True
+        self.validar_primeira_msg = False
         mapa = Mapa()        
         self.particle_number = 500
-        self.publisher_filtro = self.create_publisher(Marker, 'visualization_marker', 10)
+        self.publisher_filtro = self.create_publisher(MarkerArray, 'visualization_marker', 10)
         #fazendo as particulas
         bearing_noise  = 0.05 # initialize bearing noise to zero
         steering_noise = 0.1 # initialize steering noise to zero
@@ -62,20 +65,43 @@ class FiltroParticulas(Node):
         self.ponto_atual = [0.0, 0.0]
         self.velocidade_linear = 0.0
         self.velocidade_angular = 0.0
-        self.robot_status = None
-        self.get_logger().info('Filtro de particulas inicializado.')        
+        self.pose_status = None
+        self.get_logger().info('Filtro de particulas inicializado.') 
+        self.get_logger().info(f'particulas inicializadas: {self.p[0].orientation}')
 
+    def euler_to_quaternion(self, roll, pitch, yaw):
+        """
+        Converte ângulos de Euler para quaternion.
+        O roll e o pitch são definidos como 0 pois estamos no plano XY.
+        """
+        qx = math.sin(roll/2) * math.cos(pitch/2) * math.cos(yaw/2) - math.cos(roll/2) * math.sin(pitch/2) * math.sin(yaw/2)
+        qy = math.cos(roll/2) * math.sin(pitch/2) * math.cos(yaw/2) + math.sin(roll/2) * math.cos(pitch/2) * math.sin(yaw/2)
+        qz = math.cos(roll/2) * math.cos(pitch/2) * math.sin(yaw/2) - math.sin(roll/2) * math.sin(pitch/2) * math.cos(yaw/2)
+        qw = math.cos(roll/2) * math.cos(pitch/2) * math.cos(yaw/2) + math.sin(roll/2) * math.sin(pitch/2) * math.sin(yaw/2)
+        return Quaternion(x=qx, y=qy, z=qz, w=qw)
 
-    def particle_filter(self, particle_number):        
-        if(not self.robot_status and self.validar_primeira_msg):
+    def robot_movement_status_callback(self, msg):
+        self.movement_status  = msg.data   
+        self.get_logger().info(f'movement_status: {self.movement_status}') 
+             
+
+    def navigation_callback(self, msg):
+        # Obtendo a velocidade linear e angular do robô
+        self.velocidade_linear = msg.linear.x
+        self.velocidade_angular = msg.angular.z
+
+    def particle_filter(self, particle_number): 
+        if(not self.validar_primeira_msg):     
             self.publish_ponto_pose_estimada()
             self.publish_particles(self.p)
-            self.validar_primeira_msg = False
-        elif(not self.robot_status and not self.validar_primeira_msg):
+            self.get_logger().info('If 1.') 
+            self.validar_primeira_msg = True
+        elif(self.movement_status and self.validar_primeira_msg):
             # motion update (prediction)
+            self.get_logger().info('If 2.') 
             p2 = []
             for i in range(particle_number):
-                p2.append(self.p[i].move(self.velocidade_linear, self.angular_velocity, tal = 5))
+                p2.append(self.p[i].move(self.velocidade_linear, self.velocidade_angular, tal = 5))
             self.p = p2
             # measurement update
             w = []
@@ -95,16 +121,12 @@ class FiltroParticulas(Node):
             self.p = p3
             self.publish_ponto_pose_estimada()
             self.publish_particles(self.p)
-            self.publish_final_point(self.p)
-
-    #acho q isso aqui vai ser uma mensagem recebida pela navegacao para atualizar/prever a posicao
-    def robot_status_callback(self, msg):
-        self.robot_status = msg.data
-
-    def navigation_callback(self, msg):
-        # Obtendo a velocidade linear e angular do robô
-        self.velocidade_linear = msg.linear.x
-        self.velocidade_angular = msg.angular.z
+            self.publish_final_point(self.p)    
+        elif(not self.movement_status and self.validar_primeira_msg):
+            self.p = self.p
+            self.publish_ponto_pose_estimada()
+            self.publish_particles(self.p)
+            self.publish_final_point(self.p) 
 
     def pose_callback(self, msg): 
         #A mensagem eh recebida quando o robo estiver parado     
@@ -138,50 +160,40 @@ class FiltroParticulas(Node):
         delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
         self.publisher_ponto_est.publish(delete_marker)        
 
-    def publish_particles(self, points_array):    
-        marker = Marker()
-        marker.header.frame_id = "map"
-        marker.header.stamp = self.get_clock().now().to_msg()
+    def publish_particles(self, points_array):             
+        
+        marker_array = MarkerArray()  
+        i = 1
+        for point in (points_array):
+            marker = Marker()
+            marker.header.frame_id = "map"
+            marker.header.stamp = self.get_clock().now().to_msg()      
+            marker.ns = "filtro_points"
+            marker.id = i  # ID diferente do ponto único
+            marker.type = Marker.ARROW
+            marker.action = Marker.ADD
+            marker.pose.position.x = point.x
+            marker.pose.position.y = point.y
+            marker.pose.position.z = 0.0  # Mantém-se no plano XY
+            marker.pose.orientation = self.euler_to_quaternion(0, 0, point.orientation)
+            # Definir o array de pontos
+            marker.scale.x = 1.0
+            marker.scale.y = 0.05
+            marker.scale.z = 0.05
+            marker.color.a = 1.0
+            marker.color.r = 0.0
+            marker.color.g = 1.0
+            marker.color.b = 1.0
+            i +=1
 
-        marker.ns = "filtro_points"
-        marker.id = 1  # ID diferente do ponto único
-        marker.type = Marker.ARROW
-        marker.action = Marker.ADD
-
-        # Definir o array de pontos
-        marker.points = points_array  # Usar os 500 pontos
-        marker.scale.x = 0.1
-        marker.scale.y = 0.1
-        marker.scale.z = 0.1
-        marker.color.a = 1.0
-        marker.color.r = 1.0
-        marker.color.g = 0.0
-        marker.color.b = 1.0
-
-        for point in enumerate(points_array):
-            x, y, theta = point[0], point[1], point[2]
-            # Definir a posição
-            marker.pose.position.x = x
-            marker.pose.position.y = y
-            # Converter o ângulo theta para um quaternion (rotação em torno do eixo Z)
-            marker.pose.orientation.x = 0.0
-            marker.pose.orientation.y = 0.0
-            marker.pose.orientation.z = math.sin(theta / 2.0)  # Parte Z do quaternion
-            marker.pose.orientation.w = math.cos(theta / 2.0)  # Parte W do quaternion
-
-            # Publicar o marcador
-            self.marker_pub.publish(marker)
-            marker.id += 1  # Incrementar o ID para cada marcador
-
-        self.get_logger().info(f'Publicando {len(points_array)} partículas')
-
-        # Publicar o array de pontos
-        self.publisher_filtro.publish(marker)
+            marker_array.markers.append(marker)
+        
+        self.publisher_filtro.publish(marker_array)
 
         # Limpar os pontos antigos, caso necessário
-        delete_marker = Marker()
-        delete_marker.action = Marker.DELETEALL  # Remove os pontos antigos
-        self.publisher_filtro.publish(delete_marker)        
+        #delete_marker = MarkerArray()
+        #delete_marker.action = MarkerArray.DELETEALL  # Remove os pontos antigos
+        #self.publisher_filtro.publish(delete_marker)        
      
 
     def publish_final_point(self, points_array):
@@ -191,10 +203,10 @@ class FiltroParticulas(Node):
         y = 0
         orientation = 0.0
         for i in range(len(points_array)):
-            x = x + points_array[i][0]
-            y = y + points_array[i][1]
-            orientation += (((points_array[i][2] - points_array[0][2] + pi) % (2.0 * pi)) 
-                        + points_array[0][2] - pi)
+            x = x + points_array[i].x
+            y = y + points_array[i].y
+            orientation += (((points_array[i].orientation - points_array[0].orientation  + pi) % (2.0 * pi)) 
+                        + points_array[0].orientation  - pi)
             
         point_final.position.x = x/(len(points_array))
         point_final.position.y = y/(len(points_array))

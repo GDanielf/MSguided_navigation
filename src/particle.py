@@ -10,7 +10,7 @@ class Particle:
 
     def __init__(self, world_size = 30.0):
         self.x = random.uniform(-world_size, world_size) # initial x position
-        self.y = random.uniform(-world_size, world_size) * world_size # initial y position
+        self.y = random.uniform(-world_size, world_size) # initial y position
         self.orientation = random.random() * 2.0 * pi # initial orientation
         self.bearing_noise  = 0.05 # initialize bearing noise to zero
         self.steering_noise = 0.1 # initialize steering noise to zero

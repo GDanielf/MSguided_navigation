@@ -34,15 +34,8 @@ class Triangulation(Node):
         self.camera_position_vec = 2
         self.image_position_vec = 30        
         self.xlimit = [-25, 25]
-        self.ylimit = [-15, 15]
+        self.ylimit = [-15, 15]        
 
-        #subscribeer do robot status
-        self.robot_status_subscription = self.create_subscription(
-            Bool,
-            '/robot_status',
-            self.robot_status_callback,
-            10
-        )
         #subscriber dos angulos das cameras
         self.image_angle_subscription = self.create_subscription(
             ImagesAngles,
@@ -53,7 +46,6 @@ class Triangulation(Node):
 
         # Desativar mensagens de retorno de chamada não utilizadas
         self.image_angle_subscription
-        self.robot_status_subscription
 
         self.publisher = self.create_publisher(PoseEstimate, 'pose_estimate', 10)
         self.pose_x = 0
@@ -66,10 +58,7 @@ class Triangulation(Node):
         msg.y = float(self.pose_y)  # Aqui você insere o valor de y
         self.publisher.publish(msg)
 
-    def robot_status_callback(self, msg):
-        # Verifica se o robô está parado
-        if not msg.data:  # msg.data == False indica que o robô parou
-            self.publish_pose_estimate()
+    
 
     def yaw_rotation(self,x,y,z):
         w = np.sqrt(1 - x**2 - y**2 - z**2)
@@ -304,6 +293,7 @@ class Triangulation(Node):
         bar_x, bar_y = self.baricentro(pontos_interseccao)
         self.pose_x = float(bar_x)
         self.pose_y = float(bar_y)
+        self.publish_pose_estimate()
         #self.plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, bar_x, bar_y)
         #print('pontos de intersec: ', pontos_interseccao)
         #print('baricentro: ', [bar_x, bar_y])
