@@ -15,7 +15,8 @@ class Planner(Node):
         self.simulation_subscriber = self.create_subscription(Bool, '/simulation_status', self.simulation_callback, 10)
         self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
         self.robot_movement_status_publisher = self.create_publisher(Bool, '/robot_movement_status', 10)
-        self.stop_duration = 2.0 
+        self.stop_duration = 2.0
+        self.rotate_duration = 18.75
         self.tal = 5.0 
         self.current_timer = None
         #retorno do filtro de particulas
@@ -47,7 +48,7 @@ class Planner(Node):
             self.current_timer.cancel()
 
         # Cria um novo timer para retomar o movimento após o tempo de parada
-        self.current_timer = self.create_timer(self.tal, self.move_forward)
+        #self.current_timer = self.create_timer(self.tal, self.move_forward)
 
 
     def move_forward(self):
@@ -73,17 +74,34 @@ class Planner(Node):
         # Cria um novo timer para parar o movimento após o tempo de movimento
         self.current_timer = self.create_timer(self.stop_duration, self.stop)
 
-    def rotate_clockwise(self):
-        self.velocity_sender(0.0, 0.5)
-
     def rotate_counter_clockwise(self):
+        self.get_logger().info(f'Rotacionando no sentido anti-horario')
+        self.velocity_sender(0.0, 0.5)
+        # Cancela o timer atual para evitar múltiplas execuções
+        if self.current_timer:
+            self.current_timer.cancel()
+        
+        # Cria um novo timer para parar o movimento após o tempo de movimento
+        self.current_timer = self.create_timer(self.rotate_duration, self.stop)
+
+    def rotate_clockwise(self):
+        self.get_logger().info(f'Rotacionando no sentido horario')
         self.velocity_sender(0.0, -0.5)
+        # Cancela o timer atual para evitar múltiplas execuções
+        if self.current_timer:
+            self.current_timer.cancel()
+
+        # Cria um novo timer para parar o movimento após o tempo de movimento
+        self.current_timer = self.create_timer(self.rotate_duration, self.stop)
 
     def start_movement_sequence(self):
         # Começa o movimento parando primeiro (pode ajustar conforme necessário)
         self.stop()
         # Inicia o primeiro timer de movimento após o tempo de parada
-        self.current_timer = self.create_timer(self.stop_duration, self.move_forward)
+        # self.current_timer = self.create_timer(self.stop_duration, self.move_forward)
+        # self.current_timer = self.create_timer(self.stop_duration, self.rotate_counter_clockwise)
+        self.rotate_clockwise()
+        
 
     def simulation_callback(self, msg):
         if(msg.data):            
