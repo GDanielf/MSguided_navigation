@@ -70,29 +70,22 @@ class Particle:
     #           self.steering_noise
     #           self.distance_noise
     
-    def move(self, linear_velocity, angular_velocity, tal = 5):
-        # Adicionando ruído à velocidade linear e angular
-        linear_velocity = random.gauss(linear_velocity, self.distance_noise)
-        angular_velocity = random.gauss(angular_velocity, self.steering_noise)
-
+    def move(self, linear_velocity, angular_velocity, tal = 5, sigma_rot = 0.087):
+        # Adicionando ruído à velocidade linear e angular   
         # Se a velocidade angular for muito pequena, podemos tratar como movimento em linha reta
         if abs(angular_velocity) < 1e-6:
+            linear_velocity = random.gauss(linear_velocity, self.distance_noise)
             # Movimento em linha reta
             new_x = self.x + linear_velocity * cos(self.orientation) * tal
             new_y = self.y + linear_velocity * sin(self.orientation) * tal
             new_orientation = self.orientation
-        else:
-            # Movimento em curva
-            radius = linear_velocity / angular_velocity
-            new_orientation = (self.orientation + angular_velocity * tal) % (2.0 * pi)
-            new_x = self.x + radius * (sin(new_orientation) - sin(self.orientation))
-            new_y = self.y - radius * (cos(new_orientation) - cos(self.orientation))
+        elif angular_velocity > 0:
+            self.orientation = self.orientation + pi/2 + sigma_rot
+        elif angular_velocity < 0:
+            self.orientation = self.orientation - pi/2 + sigma_rot    
 
         # Criando um novo resultado como uma nova partícula
         result = Particle()
         result.set(new_x, new_y, new_orientation)
         
         return result
-
-    
-    ############## ONLY ADD/MODIFY CODE ABOVE HERE ####################

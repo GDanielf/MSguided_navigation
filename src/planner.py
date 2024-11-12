@@ -19,9 +19,11 @@ class Planner(Node):
         self.rotate_duration = 18.75
         self.tal = 5.0 
         self.current_timer = None
+        self.action_queue = []  # Fila de ações a serem executadas
         #retorno do filtro de particulas
         self.point_final = [0.0, 0.0, 0.0]     
-        self.robot_status = False  
+        self.robot_status = False
+        self.movement_in_progress = False
         self.get_logger().info('Planner inicializado. Enviando comandos para o Navigation...')        
         self.mapa = Mapa()
 
@@ -39,69 +41,68 @@ class Planner(Node):
         if linear == 1.0:
             self.get_logger().info('Movendo para frente...')  
 
-    def stop(self):
+    def schedule_action(self, action, duration):
+        """Agenda a execução de uma ação com um timer."""
+        if self.current_timer:
+            self.current_timer.cancel()  # Cancela o timer atual, se houver
+        
+        # Cria um timer para a ação atual
+        self.current_timer = self.create_timer(duration, action)
+        
+
+    def add_action_to_queue(self, action):
+        """Adiciona uma ação à fila de ações."""
+        self.action_queue.append(action)
+        self.process_next_action()
+
+    def process_next_action(self):
+        """Processa a próxima ação na fila, se houver uma e não houver outra em andamento."""
+        if not self.movement_in_progress and self.action_queue:
+            next_action = self.action_queue.pop(0)
+            next_action()  # Executa a próxima ação       
+
+    def stop(self):         
+        self.movement_in_progress = False  
+        self.is_robot_moving(False)  
         self.get_logger().info(f'Robo parado')
         self.velocity_sender(0.0, 0.0)
-        self.is_robot_moving(False)
-        # Cancela o timer atual para evitar múltiplas execuções
-        if self.current_timer:
-            self.current_timer.cancel()
-
-        # Cria um novo timer para retomar o movimento após o tempo de parada
-        #self.current_timer = self.create_timer(self.tal, self.move_forward)
+        self.process_next_action()
 
 
-    def move_forward(self):
+    def move_forward(self):         
+        self.movement_in_progress = True  
+        self.is_robot_moving(True)  
         self.get_logger().info(f'Movendo o robo para frente')
-        self.velocity_sender(1.0, 0.0)
-        self.is_robot_moving(True)
-        # Cancela o timer atual para evitar múltiplas execuções
-        if self.current_timer:
-            self.current_timer.cancel()
-
-        # Cria um novo timer para parar o movimento após o tempo de movimento
-        self.current_timer = self.create_timer(self.stop_duration, self.stop)
+        self.velocity_sender(1.0, 0.0)        
+        self.schedule_action(self.stop, self.tal)
 
 
     def move_backward(self):
+        self.movement_in_progress = True
+        self.is_robot_moving(True)
         self.get_logger().info(f'Movendo o robo para tras')
         self.velocity_sender(-1.0, 0.0)
-        self.is_robot_moving(True)
-        # Cancela o timer atual para evitar múltiplas execuções
-        if self.current_timer:
-            self.current_timer.cancel()
-
-        # Cria um novo timer para parar o movimento após o tempo de movimento
-        self.current_timer = self.create_timer(self.stop_duration, self.stop)
+        self.schedule_action(self.stop, self.tal)
 
     def rotate_counter_clockwise(self):
+        self.movement_in_progress = True
+        self.is_robot_moving(True)
         self.get_logger().info(f'Rotacionando no sentido anti-horario')
         self.velocity_sender(0.0, 0.5)
-        # Cancela o timer atual para evitar múltiplas execuções
-        if self.current_timer:
-            self.current_timer.cancel()
-        
-        # Cria um novo timer para parar o movimento após o tempo de movimento
-        self.current_timer = self.create_timer(self.rotate_duration, self.stop)
+        self.schedule_action(self.stop, self.rotate_duration)
 
     def rotate_clockwise(self):
+        self.movement_in_progress = True
+        self.is_robot_moving(True)
         self.get_logger().info(f'Rotacionando no sentido horario')
         self.velocity_sender(0.0, -0.5)
-        # Cancela o timer atual para evitar múltiplas execuções
-        if self.current_timer:
-            self.current_timer.cancel()
-
-        # Cria um novo timer para parar o movimento após o tempo de movimento
-        self.current_timer = self.create_timer(self.rotate_duration, self.stop)
+        self.schedule_action(self.stop, self.rotate_duration)
 
     def start_movement_sequence(self):
-        # Começa o movimento parando primeiro (pode ajustar conforme necessário)
-        self.stop()
-        # Inicia o primeiro timer de movimento após o tempo de parada
-        # self.current_timer = self.create_timer(self.stop_duration, self.move_forward)
-        # self.current_timer = self.create_timer(self.stop_duration, self.rotate_counter_clockwise)
-        self.rotate_clockwise()
-        
+        self.add_action_to_queue(self.stop)        
+        self.add_action_to_queue(self.move_forward)
+        self.add_action_to_queue(self.rotate_clockwise)
+
 
     def simulation_callback(self, msg):
         if(msg.data):            
@@ -115,7 +116,7 @@ class Planner(Node):
             self.get_logger().info(f'Simulacao em Pause')
         elif(msg.data and self.robot_status):
             self.start_movement_sequence() 
-            self.get_logger().info(f'Simulacao em Play, pare o robo') 
+            self.get_logger().info(f'Simulacao em Play') 
     
     #obtem o ponto final para determinar onde o robo deve ir
     def filter_callback(self, msg):

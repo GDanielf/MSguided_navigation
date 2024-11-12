@@ -27,6 +27,15 @@ ign gazebo ros2_ws/src/guided_navigation/world/camera_world.sdf
 
 ros2 launch guided_navigation guided_simulation.launch.py
 
+## Status da simulacao:
+
+ros2 run guided_navigation simulation_monitor.py
+
+## Planner:
+
+ros2 run guided_navigation planner.py
+
+
 ## Rodar triangulacao:
 
 source install/local_setup.bash
