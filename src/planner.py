@@ -26,6 +26,25 @@ class Planner(Node):
         self.movement_in_progress = False
         self.get_logger().info('Planner inicializado. Enviando comandos para o Navigation...')        
         self.mapa = Mapa()
+        
+    def simulation_callback(self, msg):
+        if(msg.data):            
+            if not self.robot_status:
+                #acabei de dar play
+                #fica parado por um tempo e depois comeca a andar
+                self.robot_status = True
+                self.start_movement_sequence()                           
+        elif(not msg.data and self.robot_status):
+            self.create_timer(self.stop_duration, self.stop)
+            self.get_logger().info(f'Simulacao em Pause')
+        elif(msg.data and self.robot_status):
+            self.start_movement_sequence() 
+            self.get_logger().info(f'Simulacao em Play')  
+
+    #obtem o ponto final para determinar onde o robo deve ir
+    def filter_callback(self, msg):
+        theta = 2 * math.acos(msg.orientation.z)
+        self.point_final = [msg.position.x, msg.position.y, theta]   
 
     def is_robot_moving(self, value):
         status_msg = Bool()
@@ -35,20 +54,15 @@ class Planner(Node):
 
     def velocity_sender(self, linear, angular):
         cmd = Twist()
-        cmd.linear.x = linear  # Mover para frente com velocidade linear
+        cmd.linear.x = linear  
         cmd.angular.z = angular
         self.cmd_vel_publisher.publish(cmd)        
-        if linear == 1.0:
-            self.get_logger().info('Movendo para frente...')  
 
     def schedule_action(self, action, duration):
         """Agenda a execução de uma ação com um timer."""
         if self.current_timer:
-            self.current_timer.cancel()  # Cancela o timer atual, se houver
-        
-        # Cria um timer para a ação atual
-        self.current_timer = self.create_timer(duration, action)
-        
+            self.current_timer.cancel()
+        self.current_timer = self.create_timer(duration, action)        
 
     def add_action_to_queue(self, action):
         """Adiciona uma ação à fila de ações."""
@@ -59,7 +73,7 @@ class Planner(Node):
         """Processa a próxima ação na fila, se houver uma e não houver outra em andamento."""
         if not self.movement_in_progress and self.action_queue:
             next_action = self.action_queue.pop(0)
-            next_action()  # Executa a próxima ação       
+            next_action()         
 
     def stop(self):         
         self.movement_in_progress = False  
@@ -68,14 +82,12 @@ class Planner(Node):
         self.velocity_sender(0.0, 0.0)
         self.process_next_action()
 
-
     def move_forward(self):         
         self.movement_in_progress = True  
         self.is_robot_moving(True)  
         self.get_logger().info(f'Movendo o robo para frente')
         self.velocity_sender(1.0, 0.0)        
         self.schedule_action(self.stop, self.tal)
-
 
     def move_backward(self):
         self.movement_in_progress = True
@@ -101,27 +113,8 @@ class Planner(Node):
     def start_movement_sequence(self):
         self.add_action_to_queue(self.stop)        
         self.add_action_to_queue(self.move_forward)
-        self.add_action_to_queue(self.rotate_clockwise)
-
-
-    def simulation_callback(self, msg):
-        if(msg.data):            
-            if not self.robot_status:
-                #acabei de dar play
-                #fica parado por um tempo e depois comeca a andar
-                self.robot_status = True
-                self.start_movement_sequence()                           
-        elif(not msg.data and self.robot_status):
-            self.create_timer(self.stop_duration, self.stop)
-            self.get_logger().info(f'Simulacao em Pause')
-        elif(msg.data and self.robot_status):
-            self.start_movement_sequence() 
-            self.get_logger().info(f'Simulacao em Play') 
-    
-    #obtem o ponto final para determinar onde o robo deve ir
-    def filter_callback(self, msg):
-        theta = 2 * math.acos(msg.orientation.z)
-        self.point_final = [msg.position.x, msg.position.y, theta]         
+        self.add_action_to_queue(self.rotate_clockwise)   
+      
 
 def main(args=None):
     rclpy.init(args=args)

@@ -1,3 +1,5 @@
+<?xml version="1.0"?>
+
 <sdf version='1.9'>
   <world name='empty'>
     <physics name='1ms' type='ignored'>
@@ -369,7 +371,7 @@
             <friction>0</friction>
           </dynamics>
         </axis>
-        <pose>-0 0 -0 0 0 -0</pose>
+        <pose>-0 0 -0 0 -0 0</pose>
       </joint>
       <link name='front_right_wheel_link'>
         <pose>0.256 -0.2854 0.03282 -0.000231 1.55973 -0.000229</pose>
@@ -444,7 +446,7 @@
             <friction>0</friction>
           </dynamics>
         </axis>
-        <pose>-0 0 -0 0 0 0</pose>
+        <pose>-0 0 -0 0 -0 0</pose>
       </joint>
       <link name='rear_left_wheel_link'>
         <pose>-0.256 0.2854 0.03282 -1.4e-05 1.39499 -1.7e-05</pose>
@@ -519,7 +521,7 @@
             <friction>0</friction>
           </dynamics>
         </axis>
-        <pose>-0 0 0 0 0 0</pose>
+        <pose>-0 0 0 0 -0 0</pose>
       </joint>
       <link name='rear_right_wheel_link'>
         <pose>-0.256 -0.2854 0.03282 3.14158 1.33542 3.14158</pose>
@@ -594,9 +596,9 @@
             <friction>0</friction>
           </dynamics>
         </axis>
-        <pose>0 0 0 0 0 -0</pose>
+        <pose>0 0 0 0 -0 0</pose>
       </joint>
-      <pose>0 0 0.13228 0 -0 0</pose>
+      <pose>0 -0 0.13228 -0 0 0</pose>
       <static>false</static>
       <self_collide>false</self_collide>
     </model>
@@ -671,7 +673,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera name='__default__'>
+          <camera>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -728,7 +730,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>9.9843 -7.4687 3.4983 0 0.4392 2.4939</pose>
+      <pose>9.9843 -7.4687 3.4983 -0 0.4392 2.4939</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>
@@ -755,7 +757,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera name='__default__'>
+          <camera>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -834,7 +836,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera name='__default__'>
+          <camera>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -891,7 +893,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>9.9843 7.4687 3.4983 0 0.4392 -2.4961</pose>
+      <pose>9.9843 7.4687 3.4983 -0 0.4392 -2.4961</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>
@@ -913,7 +915,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera name='__default__'>
+          <camera>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -970,7 +972,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>-9.9843 7.4687 3.4983 0 0.4392 -0.6488</pose>
+      <pose>-9.9843 7.4687 3.4983 -0 0.4392 -0.6488</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>
@@ -992,7 +994,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera name='__default__'>
+          <camera>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -1071,7 +1073,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera name='__default__'>
+          <camera>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -1150,7 +1152,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera name='__default__'>
+          <camera>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -1229,7 +1231,7 @@
           <topic>__default__</topic>
           <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera name='__default__'>
+          <camera>
             <pose>0 0 0 0 -0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
@@ -1287,6 +1289,164 @@
         <enable_wind>false</enable_wind>
       </link>
       <pose>3.8126 -2.3696 2.907 -0 0.3787 0.3407</pose>
+      <static>true</static>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='rgbd_camera_8'>
+      <link name='link_8'>
+        <visual name='camera_visual_8'>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.5 0.5 0.5 1</diffuse>
+          </material>
+        </visual>
+        <sensor name='camera_sensor_8' type='camera'>
+          <pose>0 0 0 0 -0 0</pose>
+          <topic>__default__</topic>
+          <update_rate>30</update_rate>
+          <enable_metrics>false</enable_metrics>
+          <camera name='__default__'>
+            <pose>0 0 0 0 -0 0</pose>
+            <horizontal_fov>1.0469999999999999</horizontal_fov>
+            <image>
+              <width>1920</width>
+              <height>1080</height>
+              <format>RGB_INT8</format>
+              <anti_aliasing>4</anti_aliasing>
+            </image>
+            <camera_info_topic>__default__</camera_info_topic>
+            <trigger_topic></trigger_topic>
+            <triggered>false</triggered>
+            <clip>
+              <near>0.10000000000000001</near>
+              <far>100</far>
+            </clip>
+            <save enabled='false'>
+              <path>__default__</path>
+            </save>
+            <visibility_mask>4294967295</visibility_mask>
+            <noise>
+              <type>none</type>
+              <mean>0</mean>
+              <stddev>0</stddev>
+            </noise>
+            <distortion>
+              <k1>0</k1>
+              <k2>0</k2>
+              <k3>0</k3>
+              <p1>0</p1>
+              <p2>0</p2>
+              <center>0.5 0.5</center>
+            </distortion>
+            <lens>
+              <type>stereographic</type>
+              <scale_to_hfov>true</scale_to_hfov>
+              <cutoff_angle>1.5708</cutoff_angle>
+              <env_texture_size>256</env_texture_size>
+            </lens>
+            <optical_frame_id></optical_frame_id>
+          </camera>
+        </sensor>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>4 -7.4687 3.4983 0 0.4392 1.57</pose>
+      <static>true</static>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='rgbd_camera_9'>
+      <link name='link_9'>
+        <visual name='camera_visual_9'>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.5 0.5 0.5 1</diffuse>
+          </material>
+        </visual>
+        <sensor name='camera_sensor_9' type='camera'>
+          <pose>0 0 0 0 -0 0</pose>
+          <topic>__default__</topic>
+          <update_rate>30</update_rate>
+          <enable_metrics>false</enable_metrics>
+          <camera name='__default__'>
+            <pose>0 0 0 0 -0 0</pose>
+            <horizontal_fov>1.0469999999999999</horizontal_fov>
+            <image>
+              <width>1920</width>
+              <height>1080</height>
+              <format>RGB_INT8</format>
+              <anti_aliasing>4</anti_aliasing>
+            </image>
+            <camera_info_topic>__default__</camera_info_topic>
+            <trigger_topic></trigger_topic>
+            <triggered>false</triggered>
+            <clip>
+              <near>0.10000000000000001</near>
+              <far>100</far>
+            </clip>
+            <save enabled='false'>
+              <path>__default__</path>
+            </save>
+            <visibility_mask>4294967295</visibility_mask>
+            <noise>
+              <type>none</type>
+              <mean>0</mean>
+              <stddev>0</stddev>
+            </noise>
+            <distortion>
+              <k1>0</k1>
+              <k2>0</k2>
+              <k3>0</k3>
+              <p1>0</p1>
+              <p2>0</p2>
+              <center>0.5 0.5</center>
+            </distortion>
+            <lens>
+              <type>stereographic</type>
+              <scale_to_hfov>true</scale_to_hfov>
+              <cutoff_angle>1.5708</cutoff_angle>
+              <env_texture_size>256</env_texture_size>
+            </lens>
+            <optical_frame_id></optical_frame_id>
+          </camera>
+        </sensor>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>4 7.4687 3.4983 -0 0.4392 -1.57</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>
