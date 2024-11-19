@@ -112,6 +112,22 @@ def generate_launch_description():
         Node(
             package='ros_gz_bridge',
             executable='parameter_bridge',
+            name='camera_11_bridge',
+            arguments=['/world/empty/model/rgbd_camera_10/link/link_10/sensor/camera_sensor_10/image@sensor_msgs/msg/Image@gz.msgs.Image'],
+            output='screen'
+        ),
+
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='camera_12_bridge',
+            arguments=['/world/empty/model/rgbd_camera_11/link/link_11/sensor/camera_sensor_11/image@sensor_msgs/msg/Image@gz.msgs.Image'],
+            output='screen'
+        ),
+
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
             name='husky_odometry_bridge',
             arguments=['/model/marble_husky_sensor_config_5/odometry@nav_msgs/msg/Odometry@ignition.msgs.Odometry'],
             output='screen' 

@@ -34,6 +34,10 @@ class Triangulation(Node):
         self.camera8_rot = np.array([-0.15397426496748834, 0.15409692764667762, 0.68985053625575676])
         self.camera9_pos = np.array([4.0, 7.4687])
         self.camera9_rot = np.array([0.15397426496748834, 0.15409692764667762, -0.68985053625575676])
+        self.camera10_pos = np.array([-4.0, -7.4687])
+        self.camera10_rot = np.array([-0.15397426496748834, 0.15409692764667762, 0.68985053625575676])
+        self.camera11_pos = np.array([-4.0, 7.4687])
+        self.camera11_rot = np.array([0.15397426496748834, 0.15409692764667762, -0.68985053625575676])
         self.hfov = 1.0469999999999999
         self.camera_position_vec = 2
         self.image_position_vec = 30        
@@ -58,11 +62,9 @@ class Triangulation(Node):
     def publish_pose_estimate(self):
         # Cria a mensagem de pose estimada e publica
         msg = PoseEstimate()
-        msg.x = float(self.pose_x)  # Aqui você insere o valor de x
-        msg.y = float(self.pose_y)  # Aqui você insere o valor de y
-        self.publisher.publish(msg)
-
-    
+        msg.x = float(self.pose_x)  
+        msg.y = float(self.pose_y) 
+        self.publisher.publish(msg)    
 
     def yaw_rotation(self,x,y,z):
         w = np.sqrt(1 - x**2 - y**2 - z**2)
@@ -91,7 +93,10 @@ class Triangulation(Node):
             return (b >= round(camera_list[8][1],2))
         elif camera_desejada == 9:
             return (b <= round(camera_list[9][1],2))
-    
+        elif camera_desejada == 10:
+            return (b >= round(camera_list[8][1],2))
+        elif camera_desejada == 11:
+            return (b <= round(camera_list[9][1],2))    
     
     def intersecao_retas(self, A1, B1, C1, A2, B2, C2, camera_list, camera1, camera2):
         try:
@@ -168,21 +173,27 @@ class Triangulation(Node):
 
         #plotando os limites de hfov
         for pos, angle in zip(camera_position, hfov_limit):
-            # Calcular o vetor unitário
-            unit_vector = np.array([self.camera_position_vec*np.cos(angle[0]), self.camera_position_vec*np.sin(angle[0])])
-            unit_vector_1 = np.array([self.camera_position_vec*np.cos(angle[1]), self.camera_position_vec*np.sin(angle[1])])
-            
-            # Adicionar o vetor unitário à posição
-            end_pos = pos + unit_vector
+            vector_length = 20 
+            # Calcular os vetores de direção (usando o ângulo e a posição da câmera)
+            vector_0 = np.array([np.cos(angle[0]), np.sin(angle[0])])  # Vetor limite inferior
+            vector_1 = np.array([np.cos(angle[1]), np.sin(angle[1])])  # Vetor limite superior
 
-            # Plotar a linha do vetor unitário
-            ax.quiver(pos[0], pos[1], unit_vector[0], unit_vector[1], angles='xy', scale_units='xy', scale=1, color= 'k')
-            ax.quiver(pos[0], pos[1], unit_vector_1[0], unit_vector_1[1], angles='xy', scale_units='xy', scale=1, color= 'k')
+            # Determinar os pontos finais dos vetores
+            end_pos_0 = pos + self.camera_position_vec * vector_0
+            end_pos_1 = pos + self.camera_position_vec * vector_1
 
-            # Plotar a posição
-            ax.scatter(pos[0], pos[1], color='b') 
+            end_pos_area_0 = pos + vector_length * vector_0
+            end_pos_area_1 = pos + vector_length * vector_1
 
-            # Plotar cada ponto e vetor das imagens
+            # Plotar os vetores
+            ax.quiver(pos[0], pos[1], end_pos_0[0] - pos[0], end_pos_0[1] - pos[1], angles='xy', scale_units='xy', scale=1, color='k')
+            ax.quiver(pos[0], pos[1], end_pos_1[0] - pos[0], end_pos_1[1] - pos[1], angles='xy', scale_units='xy', scale=1, color='k')
+
+            # Calcular os vértices da área coberta e preenchê-la
+            x_area = [pos[0], end_pos_area_0[0], end_pos_area_1[0]]
+            y_area = [pos[1], end_pos_area_0[1], end_pos_area_1[1]]
+            plt.fill(x_area, y_area, color='lightgray', alpha=0.5)
+
         for pos, angle in zip(camera_position, image_angles_res):
             if not math.isnan(angle):
                 # Calcular o vetor unitário
@@ -219,7 +230,7 @@ class Triangulation(Node):
     def triangulation_callback(self, msg):        
         camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos,
                            self.camera4_pos, self.camera5_pos, self.camera6_pos, self.camera7_pos,
-                           self.camera8_pos, self.camera9_pos]
+                           self.camera8_pos, self.camera9_pos, self.camera10_pos, self.camera11_pos]
         camera_rotations = [self.yaw_rotation(self.camera0_rot[0], self.camera0_rot[1], self.camera0_rot[2]), 
                      self.yaw_rotation(self.camera1_rot[0], self.camera1_rot[1], self.camera1_rot[2]),
                      self.yaw_rotation(self.camera2_rot[0], self.camera2_rot[1], self.camera2_rot[2]),
@@ -229,7 +240,9 @@ class Triangulation(Node):
                      self.yaw_rotation(self.camera6_rot[0], self.camera6_rot[1], self.camera6_rot[2]),
                      self.yaw_rotation(self.camera7_rot[0], self.camera7_rot[1], self.camera7_rot[2]),
                      self.yaw_rotation(self.camera8_rot[0], self.camera8_rot[1], self.camera8_rot[2]),                
-                     self.yaw_rotation(self.camera9_rot[0], self.camera9_rot[1], self.camera9_rot[2])
+                     self.yaw_rotation(self.camera9_rot[0], self.camera9_rot[1], self.camera9_rot[2]),
+                     self.yaw_rotation(self.camera10_rot[0], self.camera10_rot[1], self.camera10_rot[2]),
+                     self.yaw_rotation(self.camera11_rot[0], self.camera11_rot[1], self.camera11_rot[2])
                      ]                
         #print('Angle image 0: ', msg.angle_image_0, 'Angle image 1: ', msg.angle_image_1, 'Angle image 2: ', msg.angle_image_2, 'Angle image 3: ', msg.angle_image_3)     
            
@@ -237,30 +250,25 @@ class Triangulation(Node):
         down_hfov = 0
         hfov_limit = []
         for i in range(len(camera_rotations)):
-            up_hfov = camera_rotations[i] + self.hfov
-            down_hfov = camera_rotations[i] - self.hfov
+            up_hfov = camera_rotations[i] + 0.2618
+            down_hfov = camera_rotations[i] - 0.2618
             hfov_limit.append([up_hfov, down_hfov])
-        #print('hfov limite: ', hfov_limit)
-        hfov_limit[0] = [3.1416, 1.57]
-        hfov_limit[1] = [1.57, 0]
-        hfov_limit[2] = [-1.57, -3.1416]
-        hfov_limit[3] = [0, -1.57]
-        hfov_limit[4] = [3.1416, 1.57]
-        hfov_limit[5] = [-1.57, -3.1416]
-        hfov_limit[6] = [0, -1.57]
-        hfov_limit[7] = [1.57, 0]        
+        print('hfov limite: ', hfov_limit)      
+        print('rot: ', camera_rotations)
         
         image_angles = [msg.angle_image_0, msg.angle_image_1, msg.angle_image_2, msg.angle_image_3,
                          msg.angle_image_4, msg.angle_image_5, msg.angle_image_6, msg.angle_image_7,
-                         msg.angle_image_8, msg.angle_image_9]
+                         msg.angle_image_8, msg.angle_image_9, msg.angle_image_10, msg.angle_image_11]
 
         image_angles_res = []
 
         for i in range(len(image_angles)):
             if math.isnan(image_angles[i]):
                 image_angles_res.append(float('nan'))
+            elif (camera_rotations[i] + image_angles[i] > hfov_limit[i][0]) or (camera_rotations[i] + image_angles[i] < hfov_limit[i][1]):
+                image_angles_res.append(float('nan'))
             else:
-                image_angles_res.append(np.clip(camera_rotations[i] - image_angles[i], hfov_limit[i][1], hfov_limit[i][0]))
+                image_angles_res.append(camera_rotations[i] - image_angles[i])
 
         # Cada reta pode ser representada pela equação da forma geral: Ax+By+C=0
         # A equação da reta em termos de um ponto (x0,y0)(x0​,y0​) e o ângulo θθ seria: y−y0=tan⁡(θ)(x−x0)

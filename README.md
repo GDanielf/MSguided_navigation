@@ -47,6 +47,11 @@ source install/local_setup.bash
 
 ros2 run guided_navigation filtro_particulas.py
 
+## Comparar posicao estimada com odometria (iniciar o robo em 0 0 0 0 0 0)
+source install/local_setup.bash
+
+ros2 run guided_navigation compare_position.py
+
 ## RViz 
 rviz2 -d ros2_ws/src/guided_navigation/rviz/filtro.rviz
 
