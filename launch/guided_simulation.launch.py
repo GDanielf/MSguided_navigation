@@ -128,6 +128,38 @@ def generate_launch_description():
         Node(
             package='ros_gz_bridge',
             executable='parameter_bridge',
+            name='camera_13_bridge',
+            arguments=['/world/empty/model/rgbd_camera_12/link/link_12/sensor/camera_sensor_12/image@sensor_msgs/msg/Image@gz.msgs.Image'],
+            output='screen'
+        ),
+
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='camera_14_bridge',
+            arguments=['/world/empty/model/rgbd_camera_13/link/link_13/sensor/camera_sensor_13/image@sensor_msgs/msg/Image@gz.msgs.Image'],
+            output='screen'
+        ),
+
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='camera_15_bridge',
+            arguments=['/world/empty/model/rgbd_camera_14/link/link_14/sensor/camera_sensor_14/image@sensor_msgs/msg/Image@gz.msgs.Image'],
+            output='screen'
+        ),
+
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='camera_16_bridge',
+            arguments=['/world/empty/model/rgbd_camera_15/link/link_15/sensor/camera_sensor_15/image@sensor_msgs/msg/Image@gz.msgs.Image'],
+            output='screen'
+        ),
+
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
             name='husky_odometry_bridge',
             arguments=['/model/marble_husky_sensor_config_5/odometry@nav_msgs/msg/Odometry@ignition.msgs.Odometry'],
             output='screen' 

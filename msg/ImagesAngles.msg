@@ -10,3 +10,7 @@ float64 angle_image_8
 float64 angle_image_9
 float64 angle_image_10
 float64 angle_image_11
+float64 angle_image_12
+float64 angle_image_13
+float64 angle_image_14
+float64 angle_image_15
