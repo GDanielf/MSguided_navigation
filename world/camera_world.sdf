@@ -27,7 +27,7 @@
         <right_joint>rear_right_wheel_joint</right_joint>
         <wheel_separation>0.535</wheel_separation>
         <wheel_radius>0.165</wheel_radius>
-        <odom_publish_frequency>1</odom_publish_frequency>
+        <odom_publish_frequency>5</odom_publish_frequency>
         <topic>cmd_vel</topic>
       </plugin>
       <link name='base_link'>
@@ -669,7 +669,7 @@
         <sensor name='camera_sensor' type='camera'>
           <pose>0 0 0 0 -0 0</pose>
           <topic>__default__</topic>
-          <update_rate>30</update_rate>
+          <update_rate>5</update_rate>
           <enable_metrics>false</enable_metrics>
           <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
@@ -753,7 +753,7 @@
         <sensor name='camera_sensor_1' type='camera'>
           <pose>0 0 0 0 -0 0</pose>
           <topic>__default__</topic>
-          <update_rate>30</update_rate>
+          <update_rate>5</update_rate>
           <enable_metrics>false</enable_metrics>
           <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
@@ -832,7 +832,7 @@
         <sensor name='camera_sensor_2' type='camera'>
           <pose>0 0 0 0 -0 0</pose>
           <topic>__default__</topic>
-          <update_rate>30</update_rate>
+          <update_rate>5</update_rate>
           <enable_metrics>false</enable_metrics>
           <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
@@ -911,7 +911,7 @@
         <sensor name='camera_sensor_3' type='camera'>
           <pose>0 0 0 0 -0 0</pose>
           <topic>__default__</topic>
-          <update_rate>30</update_rate>
+          <update_rate>5</update_rate>
           <enable_metrics>false</enable_metrics>
           <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
@@ -990,7 +990,7 @@
         <sensor name='camera_sensor_4' type='camera'>
           <pose>0 0 0 0 -0 0</pose>
           <topic>__default__</topic>
-          <update_rate>30</update_rate>
+          <update_rate>5</update_rate>
           <enable_metrics>false</enable_metrics>
           <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
@@ -1069,7 +1069,7 @@
         <sensor name='camera_sensor_5' type='camera'>
           <pose>0 0 0 0 -0 0</pose>
           <topic>__default__</topic>
-          <update_rate>30</update_rate>
+          <update_rate>5</update_rate>
           <enable_metrics>false</enable_metrics>
           <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
@@ -1148,7 +1148,7 @@
         <sensor name='camera_sensor_6' type='camera'>
           <pose>0 0 0 0 -0 0</pose>
           <topic>__default__</topic>
-          <update_rate>30</update_rate>
+          <update_rate>5</update_rate>
           <enable_metrics>false</enable_metrics>
           <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
@@ -1227,7 +1227,7 @@
         <sensor name='camera_sensor_7' type='camera'>
           <pose>0 0 0 0 -0 0</pose>
           <topic>__default__</topic>
-          <update_rate>30</update_rate>
+          <update_rate>5</update_rate>
           <enable_metrics>false</enable_metrics>
           <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
@@ -1306,7 +1306,7 @@
         <sensor name='camera_sensor_8' type='camera'>
           <pose>0 0 0 0 -0 0</pose>
           <topic>__default__</topic>
-          <update_rate>30</update_rate>
+          <update_rate>5</update_rate>
           <enable_metrics>false</enable_metrics>
           <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
@@ -1365,7 +1365,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>4 -7.4687 3.4983 0 0.4392 1.57</pose>
+      <pose>6 -7.4687 3.4983 0 0.4392 1.57</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>
@@ -1385,7 +1385,7 @@
         <sensor name='camera_sensor_9' type='camera'>
           <pose>0 0 0 0 -0 0</pose>
           <topic>__default__</topic>
-          <update_rate>30</update_rate>
+          <update_rate>5</update_rate>
           <enable_metrics>false</enable_metrics>
           <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
@@ -1444,7 +1444,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>4 7.4687 3.4983 -0 0.4392 -1.57</pose>
+      <pose>6 7.4687 3.4983 -0 0.4392 -1.57</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>
@@ -1464,7 +1464,7 @@
         <sensor name='camera_sensor_10' type='camera'>
           <pose>0 0 0 0 -0 0</pose>
           <topic>__default__</topic>
-          <update_rate>30</update_rate>
+          <update_rate>5</update_rate>
           <enable_metrics>false</enable_metrics>
           <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
@@ -1523,7 +1523,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>-4 -7.4687 3.4983 0 0.4392 1.57</pose>
+      <pose>-6 -7.4687 3.4983 0 0.4392 1.57</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>
@@ -1543,7 +1543,7 @@
         <sensor name='camera_sensor_11' type='camera'>
           <pose>0 0 0 0 -0 0</pose>
           <topic>__default__</topic>
-          <update_rate>30</update_rate>
+          <update_rate>5</update_rate>
           <enable_metrics>false</enable_metrics>
           <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
@@ -1602,7 +1602,7 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>-4 7.4687 3.4983 -0 0.4392 -1.57</pose>
+      <pose>-6 7.4687 3.4983 -0 0.4392 -1.57</pose>
       <static>true</static>
       <self_collide>false</self_collide>
     </model>
@@ -1622,7 +1622,7 @@
         <sensor name='camera_sensor_12' type='camera'>
           <pose>0 0 0 0 -0 0</pose>
           <topic>__default__</topic>
-          <update_rate>30</update_rate>
+          <update_rate>5</update_rate>
           <enable_metrics>false</enable_metrics>
           <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
@@ -1701,7 +1701,7 @@
         <sensor name='camera_sensor_13' type='camera'>
           <pose>0 0 0 0 -0 0</pose>
           <topic>__default__</topic>
-          <update_rate>30</update_rate>
+          <update_rate>5</update_rate>
           <enable_metrics>false</enable_metrics>
           <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
@@ -1780,7 +1780,7 @@
         <sensor name='camera_sensor_14' type='camera'>
           <pose>0 0 0 0 -0 0</pose>
           <topic>__default__</topic>
-          <update_rate>30</update_rate>
+          <update_rate>5</update_rate>
           <enable_metrics>false</enable_metrics>
           <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>
@@ -1859,7 +1859,7 @@
         <sensor name='camera_sensor_15' type='camera'>
           <pose>0 0 0 0 -0 0</pose>
           <topic>__default__</topic>
-          <update_rate>30</update_rate>
+          <update_rate>5</update_rate>
           <enable_metrics>false</enable_metrics>
           <camera name='__default__'>
             <pose>0 0 0 0 -0 0</pose>

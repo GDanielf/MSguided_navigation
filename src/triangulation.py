@@ -31,13 +31,13 @@ class Triangulation(Node):
         self.camera6_rot = np.array([0.031908520799500469, 0.18549615261691255, -0.16649729576294525])
         self.camera7_pos = np.array([3.8126, -2.3696])
         self.camera7_rot = np.array([-0.031908520799500469, 0.18549615261691255, 0.16649729576294525])        
-        self.camera8_pos = np.array([4.0, -7.4687]) 
+        self.camera8_pos = np.array([6.0, -7.4687]) 
         self.camera8_rot = np.array([-0.15397426496748834, 0.15409692764667762, 0.68985053625575676])
-        self.camera9_pos = np.array([4.0, 7.4687])
+        self.camera9_pos = np.array([6.0, 7.4687])
         self.camera9_rot = np.array([0.15397426496748834, 0.15409692764667762, -0.68985053625575676])
-        self.camera10_pos = np.array([-4.0, -7.4687])
+        self.camera10_pos = np.array([-6.0, -7.4687])
         self.camera10_rot = np.array([-0.15397426496748834, 0.15409692764667762, 0.68985053625575676])
-        self.camera11_pos = np.array([-4.0, 7.4687])
+        self.camera11_pos = np.array([-6.0, 7.4687])
         self.camera11_rot = np.array([0.15397426496748834, 0.15409692764667762, -0.68985053625575676])
         self.camera12_pos = np.array([9.983, -5])
         self.camera12_rot = np.array([-0.21783917758328675, 0.00017347121075593651, 0.97598435365204861])
@@ -47,11 +47,11 @@ class Triangulation(Node):
         self.camera14_rot = np.array([0.0, 0.21783924665317703, 0.0])
         self.camera15_pos = np.array([-9.983, 5])
         self.camera15_rot = np.array([0.0, 0.21783924665317703, 0.0])
-        self.hfov = 1.0469999999999999
         self.camera_position_vec = 2
         self.image_position_vec = 30        
         self.xlimit = [-25, 25]
-        self.ylimit = [-15, 15]        
+        self.ylimit = [-15, 15]       
+        self.hfov_limit = 0.1745 
 
         #subscriber dos angulos das cameras
         self.image_angle_subscription = self.create_subscription(
@@ -274,8 +274,8 @@ class Triangulation(Node):
         down_hfov = 0
         hfov_limit = []
         for i in range(len(camera_rotations)):
-            up_hfov = camera_rotations[i] + 0.2618
-            down_hfov = camera_rotations[i] - 0.2618
+            up_hfov = camera_rotations[i] + self.hfov_limit
+            down_hfov = camera_rotations[i] - self.hfov_limit
             hfov_limit.append([up_hfov, down_hfov])
         #print('hfov limite: ', hfov_limit)      
         #print('rot: ', camera_rotations)
