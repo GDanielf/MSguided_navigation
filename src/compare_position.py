@@ -11,6 +11,10 @@ class ComparePosition(Node):
     def __init__(self):
         super().__init__('compare_position')
 
+        # Variáveis para armazenar posições
+        self.husky_odom_position = None
+        self.triangulation_position = [0,0]
+
         # Subscribers para os dois tópicos de odometria
         self.subscriber_husky = self.create_subscription(
             Odometry,
@@ -26,9 +30,8 @@ class ComparePosition(Node):
             10
         )
 
-        # Variáveis para armazenar as posições
-        self.husky_odom_position = None
-        self.triangulation_position = [0, 0]
+        self.timer = self.create_timer(0.1, self.compare_positions)  # A cada 0.1s (10 Hz)
+        
 
     def husky_callback(self, msg):
         self.husky_odom_position = msg.pose.pose.position

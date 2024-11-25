@@ -4,7 +4,8 @@ from rclpy.node import Node
 from std_msgs.msg import Bool
 from guided_navigation.msg import ImagesAngles
 from guided_navigation.msg import PoseEstimate
-from visualization_msgs.msg import Marker
+from visualization_msgs.msg import Marker, MarkerArray
+from geometry_msgs.msg import Point
 import numpy as np
 import matplotlib.pyplot as plt
 import math
@@ -65,7 +66,7 @@ class Triangulation(Node):
         self.image_angle_subscription
 
         self.publisher = self.create_publisher(PoseEstimate, 'pose_estimate', 10)
-        self.publisher_ponto_est = self.create_publisher(Marker, 'triang_est', 10)
+        self.rviz_publisher = self.create_publisher(MarkerArray, 'visualization_marker_array', 10)
         self.pose_x = 0
         self.pose_y = 0
 
@@ -96,9 +97,9 @@ class Triangulation(Node):
         elif camera_desejada == 5:
             return (a <= round(camera_list[5][0],2) and b <= round(camera_list[5][1],2))
         elif camera_desejada == 6:
-            return (a >= round(camera_list[6][0],2) and b <= round(camera_list[6][1],2))
+            return (a >= round(camera_list[6][0],2))
         elif camera_desejada == 7:
-            return (a >= round(camera_list[7][0],2) and b >= round(camera_list[7][1],2))
+            return (a >= round(camera_list[7][0],2))
         elif camera_desejada == 8:
             return (b >= round(camera_list[8][1],2))
         elif camera_desejada == 9:
@@ -160,90 +161,119 @@ class Triangulation(Node):
         return x,y  
     
     def plotting_all(self, camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, bar_x, bar_y):
-        fig, ax = plt.subplots()
-        # Plotar cada ponto e vetor da camera        
+        marker_array = MarkerArray()
+        marker_id = 0
+        # Plotar os vetores e posições das câmeras
         for pos, angle in zip(camera_position, camera_rotations):
-            # Calcular o vetor unitário
-            unit_vector = np.array([self.camera_position_vec*np.cos(angle), self.camera_position_vec*np.sin(angle)])
-            
-            # Adicionar o vetor unitário à posição
-            end_pos = pos + unit_vector
+            # Vetor da câmera
+            vector_end = pos + np.array([self.camera_position_vec * np.cos(angle), self.camera_position_vec * np.sin(angle)])
 
-            # Plotar a linha do vetor unitário
-            ax.quiver(pos[0], pos[1], unit_vector[0], unit_vector[1], angles='xy', scale_units='xy', scale=1, color= 'r')
+            # Adicionar linha (vetor)
+            line_marker = self.create_line_marker(marker_id, pos, vector_end, color=(1.0, 0.0, 0.0, 1.0))  # Vermelho
+            marker_array.markers.append(line_marker)
+            marker_id += 1
 
-            # Plotar a posição
-            ax.scatter(pos[0], pos[1], color='b')
+            # Adicionar posição (ponto)
+            point_marker = self.create_point_marker(marker_id, pos, color=(0.0, 0.0, 1.0, 1.0))  # Azul
+            marker_array.markers.append(point_marker)
+            marker_id += 1       
         
-        labels = ['Cam 0', 'Cam 1', 'Cam 2', 'Cam 3', 'Cam 4', 'Cam 5', 'Cam 6', 'Cam 7']
-        tex_pos_01 = 2
-        tex_pos_23 = 1
-        tex_pos_45 = 0      
 
-        plt.text(camera_position[0][0] - tex_pos_01, camera_position[0][1] - tex_pos_01, labels[0], fontsize=12)
-        plt.text(camera_position[1][0] - tex_pos_01, camera_position[1][1] - tex_pos_01, labels[1], fontsize=12)
-        plt.text(camera_position[2][0] - tex_pos_23, camera_position[2][1] + tex_pos_23, labels[2], fontsize=12)
-        plt.text(camera_position[3][0] - tex_pos_23, camera_position[3][1] + tex_pos_23, labels[3], fontsize=12)
-        plt.text(camera_position[4][0] - tex_pos_45, camera_position[4][1] + tex_pos_45, labels[4], fontsize=12)
-        plt.text(camera_position[5][0] - tex_pos_45, camera_position[5][1] + tex_pos_45, labels[5], fontsize=12)
-        plt.text(camera_position[6][0] - tex_pos_45, camera_position[6][1] + tex_pos_45, labels[6], fontsize=12)
-        plt.text(camera_position[7][0] - tex_pos_45, camera_position[7][1] + tex_pos_45, labels[7], fontsize=12)
+        # Plotar os limites do HFOV
+        for pos, angles in zip(camera_position, hfov_limit):
+            for angle in angles:
+                vector_end = pos + np.array([20 * np.cos(angle), 20 * np.sin(angle)])  # Vetores de limite
 
-        #plotando os limites de hfov
-        for pos, angle in zip(camera_position, hfov_limit):
-            vector_length = 20 
-            # Calcular os vetores de direção (usando o ângulo e a posição da câmera)
-            vector_0 = np.array([np.cos(angle[0]), np.sin(angle[0])])  # Vetor limite inferior
-            vector_1 = np.array([np.cos(angle[1]), np.sin(angle[1])])  # Vetor limite superior
+                line_marker = self.create_line_marker(marker_id, pos, vector_end, color=(0.0, 0.0, 0.0, 1.0))  # Preto
+                marker_array.markers.append(line_marker)
+                marker_id += 1
 
-            # Determinar os pontos finais dos vetores
-            end_pos_0 = pos + self.camera_position_vec * vector_0
-            end_pos_1 = pos + self.camera_position_vec * vector_1
+        # Área coberta pelo HFOV
+        for pos, (angle_0, angle_1) in zip(camera_position, hfov_limit):
+            point_0 = pos + np.array([20 * np.cos(angle_0), 20 * np.sin(angle_0)])
+            point_1 = pos + np.array([20 * np.cos(angle_1), 20 * np.sin(angle_1)])
 
-            end_pos_area_0 = pos + vector_length * vector_0
-            end_pos_area_1 = pos + vector_length * vector_1
+            area_marker = self.create_triangle_marker(marker_id, pos, point_0, point_1, color=(0.7, 0.7, 0.7, 0.15))  # Cinza claro
+            marker_array.markers.append(area_marker)
+            marker_id += 1
 
-            # Plotar os vetores
-            ax.quiver(pos[0], pos[1], end_pos_0[0] - pos[0], end_pos_0[1] - pos[1], angles='xy', scale_units='xy', scale=1, color='k')
-            ax.quiver(pos[0], pos[1], end_pos_1[0] - pos[0], end_pos_1[1] - pos[1], angles='xy', scale_units='xy', scale=1, color='k')
+        # Plotar os pontos de interseção
+        for point in pontos_interseccao:
+            point_marker = self.create_point_marker(marker_id, point, color=(1.0, 1.0, 0.0, 1.0))  # Amarelo
+            marker_array.markers.append(point_marker)
+            marker_id += 1
+  
+        # Plotar o ponto baricentro
+        bar_marker = self.create_point_marker(marker_id, [bar_x, bar_y], color=(0.0, 1.0, 1.0, 1.0))  # Ciano
+        marker_array.markers.append(bar_marker)
+        marker_id += 1
 
-            # Calcular os vértices da área coberta e preenchê-la
-            x_area = [pos[0], end_pos_area_0[0], end_pos_area_1[0]]
-            y_area = [pos[1], end_pos_area_0[1], end_pos_area_1[1]]
-            plt.fill(x_area, y_area, color='lightgray', alpha=0.5)
+        # Publicar os markers no tópico
+        self.rviz_publisher.publish(marker_array)
 
-        for pos, angle in zip(camera_position, image_angles_res):
-            if not math.isnan(angle):
-                # Calcular o vetor unitário
-                unit_vector = np.array([np.cos(angle), np.sin(angle)])
-                final_vector = np.array([self.image_position_vec*np.cos(angle), self.image_position_vec*np.sin(angle)])
+    def create_line_marker(self, marker_id, start, end, color):
+        marker = Marker()
+        marker.header.frame_id = "map"
+        marker.ns = "lines"
+        marker.id = marker_id
+        marker.type = Marker.LINE_STRIP
+        marker.action = Marker.ADD
+        marker.scale.x = 0.05  # Espessura da linha
 
-                # Plotar a linha do vetor unitário
-                ax.quiver(pos[0], pos[1], final_vector[0], final_vector[1], angles='xy', scale_units='xy', scale=1, color= 'g')
+        # Cor
+        marker.color.r, marker.color.g, marker.color.b, marker.color.a = color
 
-                # Plotar a posição
-                ax.scatter(pos[0], pos[1], color='b')   
+        # Pontos da linha
+        start_point = Point(x=start[0], y=start[1], z=0.0)
+        end_point = Point(x=end[0], y=end[1], z=0.0)
+        marker.points = [start_point, end_point]
 
+        return marker
+    
+    def create_point_marker(self, marker_id, position, color):
+        marker = Marker()
+        marker.header.frame_id = "map"
+        marker.ns = "points"
+        marker.id = marker_id
+        marker.type = Marker.SPHERE
+        marker.action = Marker.ADD
+        marker.scale.x = 0.2
+        marker.scale.y = 0.2
+        marker.scale.z = 0.2
 
-        # Plotar os pontos de interseccao
-        for j in pontos_interseccao:       
-            # Plotar a posição
-            ax.scatter(j[0], j[1], color='y')  
+        # Cor
+        marker.color.r, marker.color.g, marker.color.b, marker.color.a = color
 
+        # Posição
+        marker.pose.position.x = position[0]
+        marker.pose.position.y = position[1]
+        marker.pose.position.z = 0.0
 
-        ax.scatter(float(bar_x), float(bar_y), color='c')        
-        self.mapa.desenhar_mapa(ax)
-        # centro
-        ax.scatter(0, 0, color='black')          
-        # Configurar o gráfico
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_xlim(self.xlimit)
-        ax.set_ylim(self.ylimit)
-        ax.legend()
-        ax.grid(True)
-        plt.title('Posições e Vetores')
-        plt.show()  
+        return marker
+    
+    def create_triangle_marker(self, marker_id, point_0, point_1, point_2, color):
+        marker = Marker()
+        marker.header.frame_id = "map"
+        marker.ns = "hfov_areas"
+        marker.id = marker_id
+        marker.type = Marker.TRIANGLE_LIST
+        marker.action = Marker.ADD
+
+        # Escala
+        marker.scale.x = 1.0
+        marker.scale.y = 1.0
+        marker.scale.z = 1.0
+
+        # Cor
+        marker.color.r, marker.color.g, marker.color.b, marker.color.a = color
+
+        # Vértices do triângulo
+        p0 = Point(x=point_0[0], y=point_0[1], z=0.0)
+        p1 = Point(x=point_1[0], y=point_1[1], z=0.0)
+        p2 = Point(x=point_2[0], y=point_2[1], z=0.0)
+        marker.points = [p0, p1, p2]
+
+        return marker
         
     def triangulation_callback(self, msg):        
         camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos,
@@ -277,7 +307,7 @@ class Triangulation(Node):
             up_hfov = camera_rotations[i] + self.hfov_limit
             down_hfov = camera_rotations[i] - self.hfov_limit
             hfov_limit.append([up_hfov, down_hfov])
-        #print('hfov limite: ', hfov_limit)      
+        print('hfov limite 9: ', hfov_limit[9])      
         #print('rot: ', camera_rotations)
         
         image_angles = [msg.angle_image_0, msg.angle_image_1, msg.angle_image_2, msg.angle_image_3,
@@ -341,7 +371,7 @@ class Triangulation(Node):
         self.pose_x = float(bar_x)
         self.pose_y = float(bar_y)
         self.publish_pose_estimate()
-        self.plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, bar_x, bar_y)
+        self.plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)
         #print('pontos de intersec: ', pontos_interseccao)
         #print('baricentro: ', [bar_x, bar_y])
         #pontos_insterseccao = pos_list()
