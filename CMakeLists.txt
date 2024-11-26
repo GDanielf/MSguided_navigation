@@ -35,6 +35,7 @@ install(DIRECTORY launch/
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ImagesAngles.msg"
   "msg/PoseEstimate.msg"
+  "srv/SetCameraActive.srv"
   DEPENDENCIES sensor_msgs # Add packages that above messages depend on, in this case geometry_msgs for Sphere.msg
 )
 

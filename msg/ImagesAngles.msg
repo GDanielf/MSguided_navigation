@@ -1,16 +1,1 @@
-float64 angle_image_0
-float64 angle_image_1
-float64 angle_image_2
-float64 angle_image_3
-float64 angle_image_4
-float64 angle_image_5
-float64 angle_image_6
-float64 angle_image_7
-float64 angle_image_8
-float64 angle_image_9
-float64 angle_image_10
-float64 angle_image_11
-float64 angle_image_12
-float64 angle_image_13
-float64 angle_image_14
-float64 angle_image_15
+float64[] angles

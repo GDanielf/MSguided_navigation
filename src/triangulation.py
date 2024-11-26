@@ -310,11 +310,7 @@ class Triangulation(Node):
         print('hfov limite 9: ', hfov_limit[9])      
         #print('rot: ', camera_rotations)
         
-        image_angles = [msg.angle_image_0, msg.angle_image_1, msg.angle_image_2, msg.angle_image_3,
-                         msg.angle_image_4, msg.angle_image_5, msg.angle_image_6, msg.angle_image_7,
-                         msg.angle_image_8, msg.angle_image_9, msg.angle_image_10, msg.angle_image_11,
-                         msg.angle_image_12, msg.angle_image_13, msg.angle_image_14, msg.angle_image_15
-                        ]
+        image_angles = msg.angles 
 
         image_angles_res = []
 

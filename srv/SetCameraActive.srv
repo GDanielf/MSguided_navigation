@@ -1,0 +1,5 @@
+int32 camera_id
+bool activate
+---
+bool success
+string message
