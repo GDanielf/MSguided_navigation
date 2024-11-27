@@ -321,6 +321,14 @@ class MultiCamera(Node):
             for prediction in predict[0].predictions:
                 x, y = int(prediction.x), int(prediction.y)
                 self.angles[camera_id] = self.angulo_centro(x, y)
+                width, height = int(prediction.width), int(prediction.height)
+                top_left = (abs(int(width / 2) - x), abs(int(height / 2) - y))
+                bottom_right = (int(width / 2) + x, int(height / 2) + y)
+                cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)
+                label = f"{prediction.class_name}: {prediction.confidence:.5f}"
+                cv2.putText(cv_image, label, top_left, 
+                        cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
+    
         
         # Apenas exibir se a câmera for ativada
         if self.is_camera_active(camera_id):

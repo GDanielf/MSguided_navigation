@@ -27,6 +27,10 @@ ign gazebo ros2_ws/src/guided_navigation/world/camera_world.sdf
 
 ros2 launch guided_navigation guided_simulation.launch.py
 
+## Service para visualizar a simulacao
+
+ros2 service call /set_camera_active guided_navigation/srv/SetCameraActive "{camera_id: 7, activate: true}"
+
 ## Status da simulacao:
 
 ros2 run guided_navigation simulation_monitor.py
@@ -66,5 +70,7 @@ ros2 run camera_calibration cameracalibrator --size 8x6 --square 0.024 --approxi
 
 ##ajuda na simulacao
 
-ign topic -e -t /world/empty/pose/info | grep -A 10 'name: "rgbd_camera"'
+ign topic -e -t /world/empty/pose/info | grep -A 10 'name: "rgbd_camera_0"'
+
+
 

@@ -16,38 +16,76 @@ class Triangulation(Node):
         super().__init__('triangulation')
         self.mapa = Mapa()
         #Posicoes e rotacoes das cameras no mundo
-        self.camera0_pos = np.array([9.9843, -7.4687])
-        self.camera0_rot = np.array([-0.20651563011976296, 0.0693197799957628, 0.92525149065264534])
-        self.camera1_pos = np.array([-9.9843, -7.4687])
-        self.camera1_rot = np.array([-0.068773030063436352, 0.20669834957811681, 0.30812364442338763])
-        self.camera2_pos = np.array([9.9843, 7.4687])
-        self.camera2_rot = np.array([0.20659175692043724, 0.069092570909980416, -0.925592561378196])
-        self.camera3_pos = np.array([-9.9843, 7.4687])
-        self.camera3_rot = np.array([0.069434111535624884, 0.20647721796285928, -0.3110854861843747])
-        self.camera4_pos = np.array([-3.8126, -2.3696])
-        self.camera4_rot = np.array([-0.18549626982220258, 0.031907839433870766, 0.96791159620266265])
-        self.camera5_pos = np.array([-3.8126, 2.3696])
-        self.camera5_rot = np.array([0.18549626982220258, 0.031907839433870766, -0.96791159620266265])
-        self.camera6_pos = np.array([3.8126, 2.3696])
-        self.camera6_rot = np.array([0.031908520799500469, 0.18549615261691255, -0.16649729576294525])
-        self.camera7_pos = np.array([3.8126, -2.3696])
-        self.camera7_rot = np.array([-0.031908520799500469, 0.18549615261691255, 0.16649729576294525])        
-        self.camera8_pos = np.array([6.0, -7.4687]) 
+        self.camera0_pos = np.array([-9.0, -7.4687])
+        self.camera0_rot = np.array([-0.15397426496748834, 0.15409692764667762, 0.68985053625575676])
+        self.camera1_pos = np.array([-7.0, -7.4687])
+        self.camera1_rot = np.array([-0.15397426496748834, 0.15409692764667762, 0.68985053625575676])
+        self.camera2_pos = np.array([-5.0, -7.4687])
+        self.camera2_rot = np.array([-0.15397426496748834, 0.15409692764667762, 0.68985053625575676])
+        self.camera3_pos = np.array([-3.0, -7.4687])
+        self.camera3_rot = np.array([-0.15397426496748834, 0.15409692764667762, 0.68985053625575676])
+        self.camera4_pos = np.array([-1.0, -7.4687])
+        self.camera4_rot = np.array([-0.15397426496748834, 0.15409692764667762, 0.68985053625575676])
+        self.camera5_pos = np.array([1.0, -7.4687])
+        self.camera5_rot = np.array([-0.15397426496748834, 0.15409692764667762, 0.68985053625575676])
+        self.camera6_pos = np.array([3.0, -7.4687])
+        self.camera6_rot = np.array([-0.15397426496748834, 0.15409692764667762, 0.68985053625575676])
+        self.camera7_pos = np.array([5.0, -7.4687])
+        self.camera7_rot = np.array([-0.15397426496748834, 0.15409692764667762, 0.68985053625575676])
+        self.camera8_pos = np.array([7.0, -7.4687])
         self.camera8_rot = np.array([-0.15397426496748834, 0.15409692764667762, 0.68985053625575676])
-        self.camera9_pos = np.array([6.0, 7.4687])
-        self.camera9_rot = np.array([0.15397426496748834, 0.15409692764667762, -0.68985053625575676])
-        self.camera10_pos = np.array([-6.0, -7.4687])
-        self.camera10_rot = np.array([-0.15397426496748834, 0.15409692764667762, 0.68985053625575676])
+        self.camera9_pos = np.array([9.0, -7.4687])
+        self.camera9_rot = np.array([-0.15397426496748834, 0.15409692764667762, 0.68985053625575676])
+        self.camera10_pos = np.array([-8.0, 7.4687])
+        self.camera10_rot = np.array([0.15397426496748834, 0.15409692764667762, -0.68985053625575676])
         self.camera11_pos = np.array([-6.0, 7.4687])
         self.camera11_rot = np.array([0.15397426496748834, 0.15409692764667762, -0.68985053625575676])
-        self.camera12_pos = np.array([9.983, -5])
-        self.camera12_rot = np.array([-0.21783917758328675, 0.00017347121075593651, 0.97598435365204861])
-        self.camera13_pos = np.array([9.983, 5])
-        self.camera13_rot = np.array([-0.21783917758328675, 0.00017347121075593651, 0.97598435365204861])
-        self.camera14_pos = np.array([-9.983, -5])
-        self.camera14_rot = np.array([0.0, 0.21783924665317703, 0.0])
-        self.camera15_pos = np.array([-9.983, 5])
-        self.camera15_rot = np.array([0.0, 0.21783924665317703, 0.0])
+        self.camera12_pos = np.array([-4.0, 7.4687])
+        self.camera12_rot = np.array([0.15397426496748834, 0.15409692764667762, -0.68985053625575676])
+        self.camera13_pos = np.array([-2.0, 7.4687])
+        self.camera13_rot = np.array([0.15397426496748834, 0.15409692764667762, -0.68985053625575676])
+        self.camera14_pos = np.array([0.0, 7.4687])
+        self.camera14_rot = np.array([0.15397426496748834, 0.15409692764667762, -0.68985053625575676])
+        self.camera15_pos = np.array([2.0, 7.4687])
+        self.camera15_rot = np.array([0.15397426496748834, 0.15409692764667762, -0.68985053625575676])
+        self.camera16_pos = np.array([4.0, 7.4687])
+        self.camera16_rot = np.array([0.15397426496748834, 0.15409692764667762, -0.68985053625575676])
+        self.camera17_pos = np.array([6.0, 7.4687])
+        self.camera17_rot = np.array([0.15397426496748834, 0.15409692764667762, -0.68985053625575676])
+        self.camera18_pos = np.array([8.0, 7.4687])
+        self.camera18_rot = np.array([0.15397426496748834, 0.15409692764667762, -0.68985053625575676])
+        self.camera19_pos = np.array([9.983, -6.5])
+        self.camera19_rot = np.array([-0.21783917758328675, 0.00017347121075593651, 0.97598435365204861])
+        self.camera20_pos = np.array([9.983, -4.5])
+        self.camera20_rot = np.array([-0.21783917758328675, 0.00017347121075593651, 0.97598435365204861])
+        self.camera21_pos = np.array([9.983, -2.5])
+        self.camera21_rot = np.array([-0.21783917758328675, 0.00017347121075593651, 0.97598435365204861])
+        self.camera22_pos = np.array([9.983, -0.5])
+        self.camera22_rot = np.array([-0.21783917758328675, 0.00017347121075593651, 0.97598435365204861])
+        self.camera23_pos = np.array([9.983, 1.5])
+        self.camera23_rot = np.array([-0.21783917758328675, 0.00017347121075593651, 0.97598435365204861])
+        self.camera24_pos = np.array([9.983, 3.5])
+        self.camera24_rot = np.array([-0.21783917758328675, 0.00017347121075593651, 0.97598435365204861])
+        self.camera25_pos = np.array([9.983, 5.5])
+        self.camera25_rot = np.array([-0.21783917758328675, 0.00017347121075593651, 0.97598435365204861])
+        self.camera26_pos = np.array([-9.983, -5.75])
+        self.camera26_rot = np.array([0.0, 0.21783924665317703, 0.0])
+        self.camera27_pos = np.array([-9.983, -4.25])
+        self.camera27_rot = np.array([0.0, 0.21783924665317703, 0.0])
+        self.camera28_pos = np.array([-9.983, -2.75])
+        self.camera28_rot = np.array([0.0, 0.21783924665317703, 0.0])
+        self.camera29_pos = np.array([-9.983, -1.25])
+        self.camera29_rot = np.array([0.0, 0.21783924665317703, 0.0])
+        self.camera30_pos = np.array([-9.983, 0.25])
+        self.camera30_rot = np.array([0.0, 0.21783924665317703, 0.0])
+        self.camera31_pos = np.array([-9.983, 1.75])
+        self.camera31_rot = np.array([0.0, 0.21783924665317703, 0.0])
+        self.camera32_pos = np.array([-9.983, 3.25])
+        self.camera32_rot = np.array([0.0, 0.21783924665317703, 0.0])
+        self.camera33_pos = np.array([-9.983, 4.75])
+        self.camera33_rot = np.array([0.0, 0.21783924665317703, 0.0])
+        self.camera34_pos = np.array([-9.983, 6])
+        self.camera34_rot = np.array([0.0, 0.21783924665317703, 0.0])
         self.camera_position_vec = 2
         self.image_position_vec = 30        
         self.xlimit = [-25, 25]
@@ -84,38 +122,18 @@ class Triangulation(Node):
     def compara_ponto(self, camera_list, camera_desejada, ponto):
         a = round(ponto[0],2)
         b = round(ponto[1],2)
-        if camera_desejada == 0:
-            return (a <= round(camera_list[0][0],2) and b >= round(camera_list[0][1],2))
-        elif camera_desejada == 1:
-            return (a >= round(camera_list[1][0],2) and b >= round(camera_list[1][1],2))
-        elif camera_desejada == 2:
-            return (a <= round(camera_list[2][0],2) and b <= round(camera_list[2][1],2))
-        elif camera_desejada == 3:
-            return (a >= round(camera_list[3][0],2) and b <= round(camera_list[3][1],2))
-        elif camera_desejada == 4:
-            return (a <= round(camera_list[4][0],2) and b >= round(camera_list[4][1],2))
-        elif camera_desejada == 5:
-            return (a <= round(camera_list[5][0],2) and b <= round(camera_list[5][1],2))
-        elif camera_desejada == 6:
-            return (a >= round(camera_list[6][0],2))
-        elif camera_desejada == 7:
-            return (a >= round(camera_list[7][0],2))
-        elif camera_desejada == 8:
-            return (b >= round(camera_list[8][1],2))
-        elif camera_desejada == 9:
-            return (b <= round(camera_list[9][1],2))
-        elif camera_desejada == 10:
-            return (b >= round(camera_list[10][1],2))
-        elif camera_desejada == 11:
-            return (b <= round(camera_list[11][1],2))    
-        elif camera_desejada == 12:
-            return (a <= round(camera_list[12][0],2))    
-        elif camera_desejada == 13:
-            return (a <= round(camera_list[13][0],2)) 
-        elif camera_desejada == 14:
-            return (a >= round(camera_list[14][0],2))     
-        elif camera_desejada == 15:
-            return (a >= round(camera_list[15][0],2))   
+        if (camera_desejada == 0 or camera_desejada == 1 or camera_desejada == 2 or camera_desejada == 3 or camera_desejada == 4 or camera_desejada == 5
+            or camera_desejada == 6 or camera_desejada == 7 or camera_desejada == 8 or camera_desejada == 9):
+            return (b >= round(camera_list[0][1],2))
+        elif (camera_desejada == 10 or camera_desejada == 11 or camera_desejada == 12 or camera_desejada == 13 or camera_desejada == 14 or camera_desejada == 15 
+              or camera_desejada == 16 or camera_desejada == 17  or camera_desejada == 18):
+            return (b <= round(camera_list[10][1],2))
+        elif (camera_desejada == 19 or camera_desejada == 20 or camera_desejada == 21 or camera_desejada == 22 or camera_desejada == 23 or camera_desejada == 24 
+              or camera_desejada == 25):
+            return (a <= round(camera_list[19][0],2))
+        elif (camera_desejada == 26 or camera_desejada == 27 or camera_desejada == 28 or camera_desejada == 29 or camera_desejada == 30 or camera_desejada == 31 
+              or camera_desejada == 32 or camera_desejada == 33 or camera_desejada == 34):
+            return (a >= round(camera_list[26][0],2))
     
     def intersecao_retas(self, A1, B1, C1, A2, B2, C2, camera_list, camera1, camera2):
         try:
@@ -159,6 +177,92 @@ class Triangulation(Node):
             x = x/(len(lista_pontos_interseccao))
             y = y/(len(lista_pontos_interseccao))
         return x,y  
+    
+    def matplt_plotting_all(self, camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, bar_x, bar_y):
+        fig, ax = plt.subplots()
+        # Plotar cada ponto e vetor da camera        
+        for pos, angle in zip(camera_position, camera_rotations):
+            # Calcular o vetor unitário
+            unit_vector = np.array([self.camera_position_vec*np.cos(angle), self.camera_position_vec*np.sin(angle)])
+            
+            # Adicionar o vetor unitário à posição
+            end_pos = pos + unit_vector
+
+            # Plotar a linha do vetor unitário
+            ax.quiver(pos[0], pos[1], unit_vector[0], unit_vector[1], angles='xy', scale_units='xy', scale=1, color= 'r')
+
+            # Plotar a posição
+            ax.scatter(pos[0], pos[1], color='b')
+        
+        labels = ['Cam 0', 'Cam 1', 'Cam 2', 'Cam 3', 'Cam 4', 'Cam 5', 'Cam 6', 'Cam 7']
+        tex_pos_01 = 2
+        tex_pos_23 = 1
+        tex_pos_45 = 0      
+
+        plt.text(camera_position[0][0] - tex_pos_01, camera_position[0][1] - tex_pos_01, labels[0], fontsize=12)
+        plt.text(camera_position[1][0] - tex_pos_01, camera_position[1][1] - tex_pos_01, labels[1], fontsize=12)
+        plt.text(camera_position[2][0] - tex_pos_23, camera_position[2][1] + tex_pos_23, labels[2], fontsize=12)
+        plt.text(camera_position[3][0] - tex_pos_23, camera_position[3][1] + tex_pos_23, labels[3], fontsize=12)
+        plt.text(camera_position[4][0] - tex_pos_45, camera_position[4][1] + tex_pos_45, labels[4], fontsize=12)
+        plt.text(camera_position[5][0] - tex_pos_45, camera_position[5][1] + tex_pos_45, labels[5], fontsize=12)
+        plt.text(camera_position[6][0] - tex_pos_45, camera_position[6][1] + tex_pos_45, labels[6], fontsize=12)
+        plt.text(camera_position[7][0] - tex_pos_45, camera_position[7][1] + tex_pos_45, labels[7], fontsize=12)
+
+        #plotando os limites de hfov
+        for pos, angle in zip(camera_position, hfov_limit):
+            vector_length = 20 
+            # Calcular os vetores de direção (usando o ângulo e a posição da câmera)
+            vector_0 = np.array([np.cos(angle[0]), np.sin(angle[0])])  # Vetor limite inferior
+            vector_1 = np.array([np.cos(angle[1]), np.sin(angle[1])])  # Vetor limite superior
+
+            # Determinar os pontos finais dos vetores
+            end_pos_0 = pos + self.camera_position_vec * vector_0
+            end_pos_1 = pos + self.camera_position_vec * vector_1
+
+            end_pos_area_0 = pos + vector_length * vector_0
+            end_pos_area_1 = pos + vector_length * vector_1
+
+            # Plotar os vetores
+            ax.quiver(pos[0], pos[1], end_pos_0[0] - pos[0], end_pos_0[1] - pos[1], angles='xy', scale_units='xy', scale=1, color='k')
+            ax.quiver(pos[0], pos[1], end_pos_1[0] - pos[0], end_pos_1[1] - pos[1], angles='xy', scale_units='xy', scale=1, color='k')
+
+            # Calcular os vértices da área coberta e preenchê-la
+            x_area = [pos[0], end_pos_area_0[0], end_pos_area_1[0]]
+            y_area = [pos[1], end_pos_area_0[1], end_pos_area_1[1]]
+            plt.fill(x_area, y_area, color='lightgray', alpha=0.5)
+
+        for pos, angle in zip(camera_position, image_angles_res):
+            if not math.isnan(angle):
+                # Calcular o vetor unitário
+                unit_vector = np.array([np.cos(angle), np.sin(angle)])
+                final_vector = np.array([self.image_position_vec*np.cos(angle), self.image_position_vec*np.sin(angle)])
+
+                # Plotar a linha do vetor unitário
+                ax.quiver(pos[0], pos[1], final_vector[0], final_vector[1], angles='xy', scale_units='xy', scale=1, color= 'g')
+
+                # Plotar a posição
+                ax.scatter(pos[0], pos[1], color='b')   
+
+
+        # Plotar os pontos de interseccao
+        for j in pontos_interseccao:       
+            # Plotar a posição
+            ax.scatter(j[0], j[1], color='y')  
+
+
+        ax.scatter(float(bar_x), float(bar_y), color='c')        
+        self.mapa.desenhar_mapa(ax)
+        # centro
+        ax.scatter(0, 0, color='black')          
+        # Configurar o gráfico
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_xlim(self.xlimit)
+        ax.set_ylim(self.ylimit)
+        ax.legend()
+        ax.grid(True)
+        plt.title('Posições e Vetores')
+        plt.show()  
     
     def plotting_all(self, camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, bar_x, bar_y):
         marker_array = MarkerArray()
@@ -279,7 +383,12 @@ class Triangulation(Node):
         camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos,
                            self.camera4_pos, self.camera5_pos, self.camera6_pos, self.camera7_pos,
                            self.camera8_pos, self.camera9_pos, self.camera10_pos, self.camera11_pos,
-                           self.camera12_pos, self.camera13_pos, self.camera14_pos, self.camera15_pos]
+                           self.camera12_pos, self.camera13_pos, self.camera14_pos, self.camera15_pos,
+                           self.camera16_pos, self.camera17_pos, self.camera18_pos, self.camera19_pos,
+                           self.camera20_pos, self.camera21_pos, self.camera22_pos, self.camera23_pos, 
+                           self.camera24_pos, self.camera25_pos, self.camera26_pos, self.camera27_pos, 
+                           self.camera28_pos, self.camera29_pos, self.camera30_pos, self.camera31_pos, 
+                           self.camera32_pos, self.camera33_pos, self.camera34_pos]
                            
         camera_rotations = [self.yaw_rotation(self.camera0_rot[0], self.camera0_rot[1], self.camera0_rot[2]), 
                      self.yaw_rotation(self.camera1_rot[0], self.camera1_rot[1], self.camera1_rot[2]),
@@ -296,7 +405,26 @@ class Triangulation(Node):
                      self.yaw_rotation(self.camera12_rot[0], self.camera12_rot[1], self.camera12_rot[2]),
                      self.yaw_rotation(self.camera13_rot[0], self.camera13_rot[1], self.camera13_rot[2]),
                      self.yaw_rotation(self.camera14_rot[0], self.camera14_rot[1], self.camera14_rot[2]),
-                     self.yaw_rotation(self.camera15_rot[0], self.camera15_rot[1], self.camera15_rot[2])
+                     self.yaw_rotation(self.camera15_rot[0], self.camera15_rot[1], self.camera15_rot[2]),
+                     self.yaw_rotation(self.camera16_rot[0], self.camera16_rot[1], self.camera16_rot[2]),
+                     self.yaw_rotation(self.camera17_rot[0], self.camera17_rot[1], self.camera17_rot[2]),
+                     self.yaw_rotation(self.camera18_rot[0], self.camera18_rot[1], self.camera18_rot[2]),
+                     self.yaw_rotation(self.camera19_rot[0], self.camera19_rot[1], self.camera19_rot[2]),
+                     self.yaw_rotation(self.camera20_rot[0], self.camera20_rot[1], self.camera20_rot[2]),
+                     self.yaw_rotation(self.camera21_rot[0], self.camera21_rot[1], self.camera21_rot[2]),
+                     self.yaw_rotation(self.camera22_rot[0], self.camera22_rot[1], self.camera22_rot[2]),
+                     self.yaw_rotation(self.camera23_rot[0], self.camera23_rot[1], self.camera23_rot[2]),
+                     self.yaw_rotation(self.camera24_rot[0], self.camera24_rot[1], self.camera24_rot[2]),
+                     self.yaw_rotation(self.camera25_rot[0], self.camera25_rot[1], self.camera25_rot[2]),
+                     self.yaw_rotation(self.camera26_rot[0], self.camera26_rot[1], self.camera26_rot[2]),
+                     self.yaw_rotation(self.camera27_rot[0], self.camera27_rot[1], self.camera27_rot[2]),
+                     self.yaw_rotation(self.camera28_rot[0], self.camera28_rot[1], self.camera28_rot[2]),
+                     self.yaw_rotation(self.camera29_rot[0], self.camera29_rot[1], self.camera29_rot[2]),
+                     self.yaw_rotation(self.camera30_rot[0], self.camera30_rot[1], self.camera30_rot[2]),
+                     self.yaw_rotation(self.camera31_rot[0], self.camera31_rot[1], self.camera31_rot[2]),
+                     self.yaw_rotation(self.camera32_rot[0], self.camera32_rot[1], self.camera32_rot[2]),
+                     self.yaw_rotation(self.camera33_rot[0], self.camera33_rot[1], self.camera33_rot[2]),
+                     self.yaw_rotation(self.camera34_rot[0], self.camera34_rot[1], self.camera34_rot[2])
                      ]                
         #print('Angle image 0: ', msg.angle_image_0, 'Angle image 1: ', msg.angle_image_1, 'Angle image 2: ', msg.angle_image_2, 'Angle image 3: ', msg.angle_image_3)     
            
@@ -307,7 +435,7 @@ class Triangulation(Node):
             up_hfov = camera_rotations[i] + self.hfov_limit
             down_hfov = camera_rotations[i] - self.hfov_limit
             hfov_limit.append([up_hfov, down_hfov])
-        print('hfov limite 9: ', hfov_limit[9])      
+        #print('hfov limite 9: ', hfov_limit[9])      
         #print('rot: ', camera_rotations)
         
         image_angles = msg.angles 
@@ -368,6 +496,7 @@ class Triangulation(Node):
         self.pose_y = float(bar_y)
         self.publish_pose_estimate()
         self.plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)
+        self.matplt_plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)
         #print('pontos de intersec: ', pontos_interseccao)
         #print('baricentro: ', [bar_x, bar_y])
         #pontos_insterseccao = pos_list()
