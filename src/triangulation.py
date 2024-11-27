@@ -192,21 +192,7 @@ class Triangulation(Node):
             ax.quiver(pos[0], pos[1], unit_vector[0], unit_vector[1], angles='xy', scale_units='xy', scale=1, color= 'r')
 
             # Plotar a posição
-            ax.scatter(pos[0], pos[1], color='b')
-        
-        labels = ['Cam 0', 'Cam 1', 'Cam 2', 'Cam 3', 'Cam 4', 'Cam 5', 'Cam 6', 'Cam 7']
-        tex_pos_01 = 2
-        tex_pos_23 = 1
-        tex_pos_45 = 0      
-
-        plt.text(camera_position[0][0] - tex_pos_01, camera_position[0][1] - tex_pos_01, labels[0], fontsize=12)
-        plt.text(camera_position[1][0] - tex_pos_01, camera_position[1][1] - tex_pos_01, labels[1], fontsize=12)
-        plt.text(camera_position[2][0] - tex_pos_23, camera_position[2][1] + tex_pos_23, labels[2], fontsize=12)
-        plt.text(camera_position[3][0] - tex_pos_23, camera_position[3][1] + tex_pos_23, labels[3], fontsize=12)
-        plt.text(camera_position[4][0] - tex_pos_45, camera_position[4][1] + tex_pos_45, labels[4], fontsize=12)
-        plt.text(camera_position[5][0] - tex_pos_45, camera_position[5][1] + tex_pos_45, labels[5], fontsize=12)
-        plt.text(camera_position[6][0] - tex_pos_45, camera_position[6][1] + tex_pos_45, labels[6], fontsize=12)
-        plt.text(camera_position[7][0] - tex_pos_45, camera_position[7][1] + tex_pos_45, labels[7], fontsize=12)
+            ax.scatter(pos[0], pos[1], color='b')        
 
         #plotando os limites de hfov
         for pos, angle in zip(camera_position, hfov_limit):
@@ -378,6 +364,20 @@ class Triangulation(Node):
         marker.points = [p0, p1, p2]
 
         return marker
+    
+    def identificar_fileira(self, indice):
+        """Identifica de qual fileira o índice pertence."""
+        fileiras = {
+            0: range(0, 10),      
+            1: range(10, 19),     
+            2: range(19, 26),     
+            3: range(26, 35)      
+        }     
+
+        for fileira, indices in fileiras.items():
+            if indice in indices:
+                return fileira
+        return None
         
     def triangulation_callback(self, msg):        
         camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos,
@@ -475,19 +475,28 @@ class Triangulation(Node):
         #print('ang: ', image_angles)
         #print('ang tratado: ', image_angles_res)
         #print('pos tratado: ', camera_rotations)       
+              
         
         pontos_interseccao = []
         ponto = []
+        pares_ortogonais = {(0, 3), (3, 0), (1, 3), (3, 1), (1, 2), (2, 1), (0, 2), (2, 0)}
         #print(len(retas))
         for i in range(len(retas)):
-            for j in range(i + 1, len(retas)):                
-                A1, B1, C1 = retas[i]
-                A2, B2, C2 = retas[j]
-                ponto = self.intersecao_retas(A1, B1, C1, A2, B2, C2, camera_position, i, j)
-                
-                #print('combinacao i j: ', i, j, 'ponto: ', ponto)
-                if(ponto is not None and self.mapa.verifica_ponto_dentro(ponto)):
-                    pontos_interseccao.append(ponto)
+            for j in range(i + 1, len(retas)):
+                fileira_i = self.identificar_fileira(i)
+                fileira_j = self.identificar_fileira(j)
+
+                # Verificar se a combinação de fileiras é permitida
+                if (fileira_i, fileira_j) in pares_ortogonais:
+                    A1, B1, C1 = retas[i]
+                    A2, B2, C2 = retas[j]
+
+                    # Calcular o ponto de interseção
+                    ponto = self.intersecao_retas(A1, B1, C1, A2, B2, C2, camera_position, i, j)
+
+                    # Adicionar apenas pontos válidos dentro do mapa
+                    if ponto is not None and self.mapa.verifica_ponto_dentro(ponto):
+                        pontos_interseccao.append(ponto)
 
         #plotando
         
