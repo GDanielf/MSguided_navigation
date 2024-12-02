@@ -379,6 +379,34 @@ class Triangulation(Node):
                 return fileira
         return None
         
+    def estimate_pose(self, camera1_pos, camera2_pos, angle1, angle2):
+        distance_vector = camera2_pos - camera1_pos
+        d12 = np.linalg.norm(distance_vector)
+        detection_vector1 = np.array([np.cos(angle1), np.sin(angle1)])
+        detection_vector2 = np.array([np.cos(angle2), np.sin(angle2)])
+        # Ângulo entre o vetor de detecção da câmera e o vetor distância
+        angle_internal1 = np.arccos(
+        np.dot(detection_vector1, distance_vector) / (np.linalg.norm(detection_vector1) * d12)
+    )
+        angle_internal2 = np.arccos(
+        np.dot(detection_vector2, -distance_vector) / (np.linalg.norm(detection_vector2) * d12)
+    )
+        angle3 = np.pi - angle_internal1 - angle_internal2
+
+        sin_angle1 = np.sin(angle_internal1)
+        sin_angle2 = np.sin(angle_internal2)
+        sin_angle3 = np.sin(angle3)
+
+        A = (d12 * sin_angle2)/(sin_angle3)
+        B = (d12 * sin_angle1)/(sin_angle3)
+
+        est_1 = camera1_pos + A * detection_vector1
+        est_2 = camera2_pos + B * detection_vector2
+
+        result = (est_1 + est_2)/2
+
+        return result
+
     def triangulation_callback(self, msg):        
         camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos,
                            self.camera4_pos, self.camera5_pos, self.camera6_pos, self.camera7_pos,
@@ -481,18 +509,20 @@ class Triangulation(Node):
         ponto = []
         pares_ortogonais = {(0, 3), (3, 0), (1, 3), (3, 1), (1, 2), (2, 1), (0, 2), (2, 0)}
         #print(len(retas))
-        for i in range(len(retas)):
-            for j in range(i + 1, len(retas)):
+        for i in range(len(image_angles_res)):
+            for j in range(i + 1, len(image_angles_res)):
                 fileira_i = self.identificar_fileira(i)
                 fileira_j = self.identificar_fileira(j)
 
                 # Verificar se a combinação de fileiras é permitida
                 if (fileira_i, fileira_j) in pares_ortogonais:
-                    A1, B1, C1 = retas[i]
-                    A2, B2, C2 = retas[j]
+                    #A1, B1, C1 = retas[i]
+                    #A2, B2, C2 = retas[j]
 
                     # Calcular o ponto de interseção
-                    ponto = self.intersecao_retas(A1, B1, C1, A2, B2, C2, camera_position, i, j)
+                    #ponto = self.intersecao_retas(A1, B1, C1, A2, B2, C2, camera_position, i, j)
+                    ponto = self.estimate_pose(camera_position[i], camera_position[j], image_angles_res[i], image_angles_res[j])
+
 
                     # Adicionar apenas pontos válidos dentro do mapa
                     if ponto is not None and self.mapa.verifica_ponto_dentro(ponto):
@@ -505,7 +535,7 @@ class Triangulation(Node):
         self.pose_y = float(bar_y)
         self.publish_pose_estimate()
         self.plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)
-        self.matplt_plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)
+        #self.matplt_plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)
         #print('pontos de intersec: ', pontos_interseccao)
         #print('baricentro: ', [bar_x, bar_y])
         #pontos_insterseccao = pos_list()
