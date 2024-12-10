@@ -22,6 +22,12 @@ def generate_launch_description():
             arguments=['/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist'],
             output='screen'
         ),
+        Node(package='ros_gz_bridge',
+             executable='parameter_bridge',
+             name='robot_real_pose',
+             arguments=['/model/marble_husky_sensor_config_5/pose@geometry_msgs/msg/PoseArray[gz.msgs.Pose_V'],
+             output='screen'
+        ),
         Node(
             package='ros_gz_bridge',
             executable='parameter_bridge',

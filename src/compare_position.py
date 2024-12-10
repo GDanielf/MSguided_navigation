@@ -4,6 +4,7 @@ import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from guided_navigation.msg import PoseEstimate
+from geometry_msgs.msg import PoseArray
 import math
 
 
@@ -12,14 +13,14 @@ class ComparePosition(Node):
         super().__init__('compare_position')
 
         # Variáveis para armazenar posições
-        self.husky_odom_position = None
+        self.last_pose = None
         self.triangulation_position = [0,0]
 
-        # Subscribers para os dois tópicos de odometria
-        self.subscriber_husky = self.create_subscription(
-            Odometry,
-            '/model/marble_husky_sensor_config_5/odometry',
-            self.husky_callback,
+        # Subscribers para o topico de pose real
+        self.subscription = self.create_subscription(
+            PoseArray,
+            '/model/marble_husky_sensor_config_5/pose',
+            self.pose_callback,
             10
         )
 
@@ -33,9 +34,9 @@ class ComparePosition(Node):
         self.timer = self.create_timer(0.1, self.compare_positions)  # A cada 0.1s (10 Hz)
         
 
-    def husky_callback(self, msg):
-        self.husky_odom_position = msg.pose.pose.position
-        #self.compare_positions()
+    def pose_callback(self, msg):
+        if msg.poses:
+            self.last_pose = msg.poses[-1]
 
     def triangulation_callback(self, msg):
         self.triangulation_position[0] = msg.x
@@ -46,13 +47,13 @@ class ComparePosition(Node):
         return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
     def compare_positions(self):
-        if self.husky_odom_position is not None and self.triangulation_position is not None:
-            x_diff = self.husky_odom_position.x - self.triangulation_position[0]
-            y_diff = self.husky_odom_position.y - self.triangulation_position[1]
-            erro = self.distance(self.husky_odom_position.x, self.husky_odom_position.y, 
+        if self.last_pose is not None and self.triangulation_position is not None:
+            x_diff = self.last_pose.position.x - self.triangulation_position[0]
+            y_diff = self.last_pose.position.y - self.triangulation_position[1]
+            erro = self.distance(self.last_pose.position.x, self.last_pose.position.y, 
                                                            self.triangulation_position[0], self.triangulation_position[1])
             
-            self.get_logger().info(f'Posição da Odom: x={self.husky_odom_position.x}, y={self.husky_odom_position.y}')
+            self.get_logger().info(f'Posição Real: x={self.last_pose.position.x}, y={self.last_pose.position.y}')
             self.get_logger().info(f'Posição Estimada: x={self.triangulation_position[0]}, y={self.triangulation_position[1]}')
             self.get_logger().info(f'Diferenças: dx={x_diff}, dy={y_diff}')
             self.get_logger().info(f'ERRO = {erro}')

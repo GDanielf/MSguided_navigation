@@ -601,6 +601,12 @@
       <pose>0 0 0.13228 0 -0 0</pose>
       <static>false</static>
       <self_collide>false</self_collide>
+      <plugin
+        filename="gz-sim-pose-publisher-system"
+        name="gz::sim::systems::PosePublisher">
+        <use_pose_vector_msg>true</use_pose_vector_msg>
+        <publish_nested_model_pose>true</publish_nested_model_pose>
+      </plugin>
     </model>
     <model name='ground_plane'>
       <static>true</static>
