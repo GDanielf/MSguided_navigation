@@ -43,7 +43,7 @@ def generate_launch_description():
             output='screen'
         ),
 
-        # Node de navegação
+        # Node de tratamento das cameras
         Node(
             package='guided_navigation',
             executable='multi_camera.py',

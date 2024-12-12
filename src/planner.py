@@ -16,7 +16,7 @@ class Planner(Node):
         self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
         self.robot_movement_status_publisher = self.create_publisher(Bool, '/robot_movement_status', 10)
         self.stop_duration = 2.0
-        self.rotate_duration = 18.75
+        self.rotate_duration = 9
         self.tal = 5.0 
         self.current_timer = None
         self.action_queue = []  # Fila de ações a serem executadas
@@ -110,10 +110,11 @@ class Planner(Node):
         self.velocity_sender(0.0, -0.5)
         self.schedule_action(self.stop, self.rotate_duration)
 
-    def start_movement_sequence(self):
+    def start_movement_sequence(self):        
         self.add_action_to_queue(self.stop)        
         self.add_action_to_queue(self.move_forward)
-        self.add_action_to_queue(self.rotate_clockwise)   
+        
+        
       
 
 def main(args=None):

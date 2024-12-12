@@ -23,7 +23,7 @@ class FiltroParticulas(Node):
             self.navigation_callback,
             10
         )
-        self.subscription_navigation  # Impede que o garbage collector elimine a subscrição
+        self.subscription_navigation  
 
         # Subscriber para o tópico /pose_estimate_1 recebe msg a cada 10 seg
         self.subscription_pose_atual = self.create_subscription(
@@ -129,9 +129,11 @@ class FiltroParticulas(Node):
             self.publish_final_point(self.p) 
 
     def pose_callback(self, msg): 
-        #A mensagem eh recebida quando o robo estiver parado     
+        #A mensagem eh recebida quando o robo estiver parado  
+         
         self.ponto_atual[0] = msg.x
         self.ponto_atual[1] = msg.y 
+        self.get_logger().info(f'Ponto recebido: {self.ponto_atual}')  
         self.particle_filter(self.particle_number)
 
     #publica o ponto da pose estimada no rviz

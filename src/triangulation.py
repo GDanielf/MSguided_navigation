@@ -90,7 +90,7 @@ class Triangulation(Node):
         self.image_position_vec = 30        
         self.xlimit = [-25, 25]
         self.ylimit = [-15, 15]       
-        self.hfov_limit = 0.1745 
+        self.hfov_limit = 0.2182 
 
         #subscriber dos angulos das cameras
         self.image_angle_subscription = self.create_subscription(
@@ -534,7 +534,7 @@ class Triangulation(Node):
         self.pose_x = float(bar_x)
         self.pose_y = float(bar_y)
         self.publish_pose_estimate()
-        self.plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)
+        #self.plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)
         #self.matplt_plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)
         #print('pontos de intersec: ', pontos_interseccao)
         #print('baricentro: ', [bar_x, bar_y])
