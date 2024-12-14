@@ -5,6 +5,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 from std_msgs.msg import Header
 from guided_navigation.msg import PoseEstimate
 from geometry_msgs.msg import Twist, Pose, Point, Quaternion
+from std_msgs.msg import Int32
 from std_msgs.msg import Bool
 import random
 import math
@@ -16,32 +17,22 @@ from math import *
 class FiltroParticulas(Node):
     def __init__(self):
         super().__init__('filtro_particulas')
-        #subscriber da odom
-        self.subscription_navigation = self.create_subscription(
-            Twist,
-            '/cmd_vel',
-            self.navigation_callback,
-            10
-        )
-        self.subscription_navigation  
 
-        # Subscriber para o tópico /pose_estimate_1 recebe msg a cada 10 seg
         self.subscription_pose_atual = self.create_subscription(
             PoseEstimate,
             '/pose_estimate',
             self.pose_callback,
             10
         )  
+        self.subscription_nav_command = self.create_subscription(
+            Int32,
+            '/robot_commands',
+            self.command_callback,
+            10
+        ) 
+        self.comando_recebido = None
         self.publisher_final_pose= self.create_publisher(Pose, '/filter_final_pose', 10)  
 
-        #subscribeer do robot status
-        self.robot_status_subscription = self.create_subscription(
-            Bool,
-            '/robot_movement_status',
-            self.robot_movement_status_callback,
-            10
-        )
-        
         self.movement_status = None
 
         #inicializacao filtro de particulas
@@ -69,44 +60,51 @@ class FiltroParticulas(Node):
         self.get_logger().info('Filtro de particulas inicializado.') 
         self.get_logger().info(f'particulas inicializadas: {self.p[0].orientation}')
 
-    def euler_to_quaternion(self, roll, pitch, yaw):
-        """
-        Converte ângulos de Euler para quaternion.
-        O roll e o pitch são definidos como 0 pois estamos no plano XY.
-        """
-        qx = math.sin(roll/2) * math.cos(pitch/2) * math.cos(yaw/2) - math.cos(roll/2) * math.sin(pitch/2) * math.sin(yaw/2)
-        qy = math.cos(roll/2) * math.sin(pitch/2) * math.cos(yaw/2) + math.sin(roll/2) * math.cos(pitch/2) * math.sin(yaw/2)
-        qz = math.cos(roll/2) * math.cos(pitch/2) * math.sin(yaw/2) - math.sin(roll/2) * math.sin(pitch/2) * math.cos(yaw/2)
-        qw = math.cos(roll/2) * math.cos(pitch/2) * math.cos(yaw/2) + math.sin(roll/2) * math.sin(pitch/2) * math.sin(yaw/2)
-        return Quaternion(x=qx, y=qy, z=qz, w=qw)
+    def euler_to_quaternion(self, angulo):
+        qx = 0.0
+        qy = 0.0
+        qz = math.sin(angulo / 2.0)
+        qw = math.cos(angulo / 2.0)
+        return Quaternion(x=qx, y=qy, z=qz, w=qw)           
 
-    def robot_movement_status_callback(self, msg):
-        self.movement_status  = msg.data   
-        self.get_logger().info(f'movement_status: {self.movement_status}') 
-             
+    def command_callback(self, msg):
+        self.comando_recebido = msg.data
 
-    def navigation_callback(self, msg):
-        # Obtendo a velocidade linear e angular do robô
-        self.velocidade_linear = msg.linear.x
-        self.velocidade_angular = msg.angular.z
+    def pose_callback(self, msg): 
+        #A mensagem eh recebida quando o robo estiver parado  
+         
+        self.ponto_atual[0] = msg.x
+        self.ponto_atual[1] = msg.y 
+        self.get_logger().info(f'Ponto recebido: {self.ponto_atual}')  
+        self.particle_filter(self.particle_number, self.ponto_atual)
 
-    def particle_filter(self, particle_number): 
+    #{0: "parar_robo", 1: "andar_para_frente", 2: "andar_para_tras", 3: "rotacionar_clockwise", 4: "rotacionar_counter_clockwise"}
+    def particle_filter(self, particle_number, ponto_recebido): 
         if(not self.validar_primeira_msg):     
             self.publish_ponto_pose_estimada()
             self.publish_particles(self.p)
             self.get_logger().info('If 1.') 
             self.validar_primeira_msg = True
-        elif(self.movement_status and self.validar_primeira_msg):
+        elif(self.validar_primeira_msg):
             # motion update (prediction)
             self.get_logger().info('If 2.') 
             p2 = []
             for i in range(particle_number):
-                p2.append(self.p[i].move(self.velocidade_linear, self.velocidade_angular, tal = 5))
+                if(self.comando_recebido == 0):
+                    p2.append(self.p[i].move(0, 0, 2))
+                elif(self.comando_recebido == 1):
+                    p2.append(self.p[i].move(1.0, 0, 2))
+                elif(self.comando_recebido == 2):
+                    p2.append(self.p[i].move(-1.0, 0, 2))
+                elif(self.comando_recebido == 3):
+                    p2.append(self.p[i].move(0.0, -0.5, 2))
+                elif(self.comando_recebido == 4):
+                    p2.append(self.p[i].move(0.0, 0.5, 2))
             self.p = p2
             # measurement update
             w = []
             for i in range(particle_number):
-                w.append(self.p[i].measurement_prob(self.ponto_atual))
+                w.append(self.p[i].measurement_prob(ponto_recebido))
             # resampling
             p3 = []
             index = int(random.random() * particle_number)
@@ -126,15 +124,7 @@ class FiltroParticulas(Node):
             self.p = self.p
             self.publish_ponto_pose_estimada()
             self.publish_particles(self.p)
-            self.publish_final_point(self.p) 
-
-    def pose_callback(self, msg): 
-        #A mensagem eh recebida quando o robo estiver parado  
-         
-        self.ponto_atual[0] = msg.x
-        self.ponto_atual[1] = msg.y 
-        self.get_logger().info(f'Ponto recebido: {self.ponto_atual}')  
-        self.particle_filter(self.particle_number)
+            self.publish_final_point(self.p)     
 
     #publica o ponto da pose estimada no rviz
     def publish_ponto_pose_estimada(self):
@@ -177,7 +167,7 @@ class FiltroParticulas(Node):
             marker.pose.position.x = point.x
             marker.pose.position.y = point.y
             marker.pose.position.z = 0.0  # Mantém-se no plano XY
-            marker.pose.orientation = self.euler_to_quaternion(0, 0, point.orientation)
+            marker.pose.orientation = self.euler_to_quaternion(point.orientation)
             # Definir o array de pontos
             marker.scale.x = 1.0
             marker.scale.y = 0.05

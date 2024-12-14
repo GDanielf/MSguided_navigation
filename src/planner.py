@@ -5,6 +5,7 @@ from rclpy.node import Node
 from std_msgs.msg import Int32
 from std_msgs.msg import Bool
 from geometry_msgs.msg import Pose, Twist
+from std_msgs.msg import Int32
 from mapa import Mapa
 import math
 
@@ -14,43 +15,46 @@ class Planner(Node):
         self.particle_filter_subscriber = self.create_subscription(Pose, '/filter_final_pose', self.filter_callback, 10)
         self.simulation_subscriber = self.create_subscription(Bool, '/simulation_status', self.simulation_callback, 10)
         self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
-        self.robot_movement_status_publisher = self.create_publisher(Bool, '/robot_movement_status', 10)
+        self.command_publisher = self.create_publisher(Int32, 'robot_commands', 10)
+        self.commands = {
+            0: "parar_robo",
+            1: "andar_para_frente",
+            2: "andar_para_tras",
+            3: "rotacionar_clockwise",
+            4: "rotacionar_counter_clockwise",
+        }
         self.stop_duration = 2.0
         self.rotate_duration = 9
         self.tal = 5.0 
         self.current_timer = None
         self.action_queue = []  # Fila de ações a serem executadas
         #retorno do filtro de particulas
-        self.point_final = [0.0, 0.0, 0.0]     
-        self.robot_status = False
+        self.ponto_final = [0.0, 0.0, 0.0]   
+        self.grade = None  
+        self.simulation_status = False
         self.movement_in_progress = False
         self.get_logger().info('Planner inicializado. Enviando comandos para o Navigation...')        
         self.mapa = Mapa()
+
+    def publish_command(self, comando):
+        msg = Int32()
+        msg.data = comando
+        self.get_logger().info(f'Publishing command: {self.commands[msg.data]}')
+        self.command_publisher.publish(msg)
         
-    def simulation_callback(self, msg):
-        if(msg.data):            
-            if not self.robot_status:
-                #acabei de dar play
-                #fica parado por um tempo e depois comeca a andar
-                self.robot_status = True
-                self.start_movement_sequence()                           
-        elif(not msg.data and self.robot_status):
-            self.create_timer(self.stop_duration, self.stop)
-            self.get_logger().info(f'Simulacao em Pause')
-        elif(msg.data and self.robot_status):
-            self.start_movement_sequence() 
-            self.get_logger().info(f'Simulacao em Play')  
+    def simulation_callback(self, msg):        
+        self.simulation_status = msg.data     
+        self.stop()           
 
     #obtem o ponto final para determinar onde o robo deve ir
-    def filter_callback(self, msg):
+    def filter_callback(self, msg):        
         theta = 2 * math.acos(msg.orientation.z)
-        self.point_final = [msg.position.x, msg.position.y, theta]   
+        self.ponto_final = [msg.position.x, msg.position.y, theta]  
+        self.grade = self.mapa.obter_cor_regiao(self.ponto_final[0], self.ponto_final[1])
 
-    def is_robot_moving(self, value):
-        status_msg = Bool()
-        status_msg.data = value
-        self.robot_movement_status_publisher.publish(status_msg)  
-        self.get_logger().info(f'robot moving: {status_msg.data}') 
+        if(self.simulation_status):
+            
+            print(self.grade)
 
     def velocity_sender(self, linear, angular):
         cmd = Twist()
@@ -77,42 +81,43 @@ class Planner(Node):
 
     def stop(self):         
         self.movement_in_progress = False  
-        self.is_robot_moving(False)  
         self.get_logger().info(f'Robo parado')
         self.velocity_sender(0.0, 0.0)
         self.process_next_action()
+        self.publish_command(0)
 
     def move_forward(self):         
-        self.movement_in_progress = True  
-        self.is_robot_moving(True)  
+        self.movement_in_progress = True 
         self.get_logger().info(f'Movendo o robo para frente')
         self.velocity_sender(1.0, 0.0)        
         self.schedule_action(self.stop, self.tal)
+        self.publish_command(1)
 
     def move_backward(self):
         self.movement_in_progress = True
-        self.is_robot_moving(True)
         self.get_logger().info(f'Movendo o robo para tras')
         self.velocity_sender(-1.0, 0.0)
         self.schedule_action(self.stop, self.tal)
-
-    def rotate_counter_clockwise(self):
-        self.movement_in_progress = True
-        self.is_robot_moving(True)
-        self.get_logger().info(f'Rotacionando no sentido anti-horario')
-        self.velocity_sender(0.0, 0.5)
-        self.schedule_action(self.stop, self.rotate_duration)
+        self.publish_command(2)    
 
     def rotate_clockwise(self):
         self.movement_in_progress = True
-        self.is_robot_moving(True)
         self.get_logger().info(f'Rotacionando no sentido horario')
         self.velocity_sender(0.0, -0.5)
         self.schedule_action(self.stop, self.rotate_duration)
+        self.publish_command(3)
+
+    def rotate_counter_clockwise(self):
+        self.movement_in_progress = True
+        self.get_logger().info(f'Rotacionando no sentido anti-horario')
+        self.velocity_sender(0.0, 0.5)
+        self.schedule_action(self.stop, self.rotate_duration)
+        self.publish_command(4)
 
     def start_movement_sequence(self):        
-        self.add_action_to_queue(self.stop)        
-        self.add_action_to_queue(self.move_forward)
+        for i in range(5):
+            #self.add_action_to_queue(self.stop)        
+            self.add_action_to_queue(self.move_forward)
         
         
       

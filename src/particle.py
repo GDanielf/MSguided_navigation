@@ -70,7 +70,7 @@ class Particle:
     #           self.steering_noise
     #           self.distance_noise
     
-    def move(self, linear_velocity, angular_velocity, tal = 5, sigma_rot = 0.087):
+    def move(self, linear_velocity, angular_velocity, tal, sigma_rot = 0.087):
         # Adicionando ruído à velocidade linear e angular   
         # Se a velocidade angular for muito pequena, podemos tratar como movimento em linha reta
         if abs(angular_velocity) < 1e-6:

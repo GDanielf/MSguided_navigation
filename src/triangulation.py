@@ -92,6 +92,12 @@ class Triangulation(Node):
         self.ylimit = [-15, 15]       
         self.hfov_limit = 0.2182 
 
+        self.simulation_subscriber = self.create_subscription(
+            Bool,
+            '/simulation_status',
+            self.simulation_callback,
+            10
+        )
         #subscriber dos angulos das cameras
         self.image_angle_subscription = self.create_subscription(
             ImagesAngles,
@@ -103,7 +109,7 @@ class Triangulation(Node):
         # Desativar mensagens de retorno de chamada não utilizadas
         self.image_angle_subscription
 
-        self.publisher = self.create_publisher(PoseEstimate, 'pose_estimate', 10)
+        self.pose_publisher = self.create_publisher(PoseEstimate, 'pose_estimate', 10)
         self.rviz_publisher = self.create_publisher(MarkerArray, 'visualization_marker_array', 10)
         self.pose_x = 0
         self.pose_y = 0
@@ -113,7 +119,7 @@ class Triangulation(Node):
         msg = PoseEstimate()
         msg.x = float(self.pose_x)  
         msg.y = float(self.pose_y) 
-        self.publisher.publish(msg)    
+        self.pose_publisher.publish(msg)    
 
     def yaw_rotation(self,x,y,z):
         w = np.sqrt(1 - x**2 - y**2 - z**2)
@@ -406,6 +412,10 @@ class Triangulation(Node):
         result = (est_1 + est_2)/2
 
         return result
+    
+    def simulation_callback(self, msg):
+        if msg.data:
+            self.publish_pose_estimate()
 
     def triangulation_callback(self, msg):        
         camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos,
@@ -532,8 +542,7 @@ class Triangulation(Node):
         
         bar_x, bar_y = self.baricentro(pontos_interseccao)
         self.pose_x = float(bar_x)
-        self.pose_y = float(bar_y)
-        self.publish_pose_estimate()
+        self.pose_y = float(bar_y)        
         #self.plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)
         #self.matplt_plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)
         #print('pontos de intersec: ', pontos_interseccao)
@@ -542,6 +551,7 @@ class Triangulation(Node):
         #print(f"Ponto de interseção : {pontos_interseccao}")
         #for i in range(len(camera_rotations)):
             #print('Limites Camera ', i, hfov_limit[i][0], camera_rotations[i], hfov_limit[i][1])
+    
         
 def main(args=None):
     rclpy.init(args=args)
