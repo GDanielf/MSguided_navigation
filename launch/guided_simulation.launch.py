@@ -43,13 +43,6 @@ def generate_launch_description():
             output='screen'
         ),
 
-        # Node de tratamento das cameras
-        Node(
-            package='guided_navigation',
-            executable='multi_camera.py',
-            name='MultiCamera',
-            output='screen'
-        ),
     ]
 
     # Geração dinâmica dos nós de câmera

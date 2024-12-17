@@ -27,6 +27,11 @@ ign gazebo ros2_ws/src/guided_navigation/world/camera_world.sdf
 
 ros2 launch guided_navigation guided_simulation.launch.py
 
+## Configuracao para deteccao com o modelo de treinamento da yolo:
+
+export ROBOFLOW_API_KEY="aFkoLbgUAThELZEBkgQ5"
+
+
 ## Service para visualizar a simulacao
 
 ros2 service call /set_camera_active guided_navigation/srv/SetCameraActive "{camera_id: 7, activate: true}"
