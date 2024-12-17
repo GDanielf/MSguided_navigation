@@ -23,7 +23,7 @@ colcon build --packages-select guided_navigation
 
 source install/local_setup.bash
 
-ign gazebo ros2_ws/src/guided_navigation/world/camera_world.sdf
+ign gazebo ros_ws/src/src/guided_navigation/world/camera_world.sdf
 
 ros2 launch guided_navigation guided_simulation.launch.py
 
@@ -62,7 +62,7 @@ source install/local_setup.bash
 ros2 run guided_navigation compare_position.py
 
 ## RViz 
-rviz2 -d ros2_ws/src/guided_navigation/rviz/filtro.rviz
+rviz2 -d ros_ws/src/src/guided_navigation/rviz/filtro.rviz
 
 
 ## camera stereo

@@ -14,6 +14,77 @@ class Mapa:
             [21, -3], [21, 3], [11, 3], [11, 8], [-11, 8], [-11, 3]
         ]
 
+        self.regioes = {
+            # Vermelha (Baixo)
+            (-10, -8, -7.5, -5.5): "vermelha_baixo_0",
+            (-10, -8, -5.5, -3.5): "vermelha_baixo_1",
+            (-10, -8, -3.5, -1.5): "vermelha_baixo_2",
+            (-10, -8, -1.5, 0.5): "vermelha_baixo_3",
+            (-8, -6, -7.5, -5.5): "vermelha_baixo_4",
+            (-6, -4, -7.5, -5.5): "vermelha_baixo_5",
+            (-4, -2, -7.5, -5.5): "vermelha_baixo_6",
+            (-2, 0, -7.5, -5.5): "vermelha_baixo_7",
+            (0, 2, -7.5, -5.5): "vermelha_baixo_8",
+            (2, 4, -7.5, -5.5): "vermelha_baixo_9",
+            (4, 6, -7.5, -5.5): "vermelha_baixo_10",
+            (6, 8, -7.5, -5.5): "vermelha_baixo_11",
+            (8, 10, -7.5, -5.5): "vermelha_baixo_12",
+            (8, 10, -5.5, -3.5): "vermelha_baixo_13",
+            (8, 10, -3.5, -1.5): "vermelha_baixo_14",
+            (8, 10, -1.5, 0.5): "vermelha_baixo_15",
+
+            # Vermelha (Cima)
+            (-10, -8, 0.5, 2.5): "vermelha_cima_0",
+            (-10, -8, 2.5, 4.5): "vermelha_cima_1",
+            (-10, -8, 4.5, 6.5): "vermelha_cima_2",
+            (-8, -6, 4.5, 6.5): "vermelha_cima_4",
+            (-6, -4, 4.5, 6.5): "vermelha_cima_5",
+            (-4, -2, 4.5, 6.5): "vermelha_cima_6",
+            (-2, 0, 4.5, 6.5): "vermelha_cima_7",
+            (0, 2, 4.5, 6.5): "vermelha_cima_8",
+            (2, 4, 4.5, 6.5): "vermelha_cima_9",
+            (4, 6, 4.5, 6.5): "vermelha_cima_10",
+            (6, 8, 4.5, 6.5): "vermelha_cima_11",
+            (8, 10, 0.5, 2.5): "vermelha_cima_12",
+            (8, 10, 2.5, 4.5): "vermelha_cima_13",
+            (8, 10, 4.5, 6.5): "vermelha_cima_14",
+
+            # Amarelo
+            (-8, -6, -5.5, -3.5): "amarelo",
+            (-6, -4, -5.5, -3.5): "amarelo",
+            (-6, -4, 2.5, 4.5): "amarelo",
+            (-4, -2, -5.5, -3.5): "amarelo",
+            (-4, -2, 2.5, 4.5): "amarelo",
+            (-2, 0, -5.5, -3.5): "amarelo",
+            (-2, 0, 2.5, 4.5): "amarelo",
+            (0, 2, -5.5, -3.5): "amarelo",
+            (0, 2, 2.5, 4.5): "amarelo",
+            (2, 4, -5.5, -3.5): "amarelo",
+            (2, 4, 2.5, 4.5): "amarelo",
+            (4, 6, -5.5, -3.5): "amarelo",
+            (4, 6, 2.5, 4.5): "amarelo",
+            (6, 8, -5.5, -3.5): "amarelo",
+            (6, 8, -3.5, -1.5): "amarelo",
+            (6, 8, -1.5, 0.5): "amarelo",
+            (6, 8, 0.5, 2.5): "amarelo",
+            (6, 8, 2.5, 4.5): "amarelo",
+
+            # Verde
+            (-6, -4, -3.5, -1.5): "verde",
+            (-6, -4, -1.5, 0.5): "verde",
+            (-4, -2, -3.5, -1.5): "verde",
+            (-4, -2, -1.5, 0.5): "verde",
+            (-2, 0, -3.5, -1.5): "verde",
+            (-2, 0, -1.5, 0.5): "verde",
+            (0, 2, -3.5, -1.5): "verde",
+            (0, 2, -1.5, 0.5): "verde",
+            (2, 4, -3.5, -1.5): "verde",
+            (2, 4, -1.5, 0.5): "verde",
+            (4, 6, -3.5, -1.5): "verde",
+            (4, 6, -1.5, 0.5): "verde",
+        }
+
+
         # Configuração da grade
         self.tamanho_celula = 2  # Tamanho do quadrado em metros (2x2)
         self.x_min = -10
@@ -72,12 +143,19 @@ class Mapa:
 
     def obter_cor_regiao(self, x, y):
         """
-        Determina a cor da região do mapa onde o ponto (x, y) está localizado.
+        Retorna a cor da região onde o ponto (x, y) está localizado.
+
+        Parâmetros:
+            x (float): Coordenada X do ponto.
+            y (float): Coordenada Y do ponto.
+
+        Retorna:
+            str: Nome da região ou 'fora_do_mapa' se o ponto não pertence a nenhuma região.
         """
-        # Encontrar a célula correspondente ao ponto
-        x_celula = round(x // self.tamanho_celula * self.tamanho_celula, 2)
-        y_celula = round(y // self.tamanho_celula * self.tamanho_celula, 2)
-        return self.grade.get((x_celula, y_celula), 'fora_do_mapa')
+        for (x_min, x_max, y_min, y_max), regiao in self.regioes.items():
+            if x_min <= x <= x_max and y_min <= y <= y_max:
+                return regiao
+        return "fora_do_mapa"
 
     def desenhar_mapa(self, ax):
         """
