@@ -4,6 +4,7 @@ from rclpy.node import Node
 from std_msgs.msg import Bool
 from guided_navigation.msg import ImagesAngles
 from guided_navigation.msg import PoseEstimate
+from std_msgs.msg import Int32
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point
 import numpy as np
@@ -91,6 +92,7 @@ class Triangulation(Node):
         self.xlimit = [-25, 25]
         self.ylimit = [-15, 15]       
         self.hfov_limit = 0.2182 
+        self.comando_recebido = 10
 
         self.simulation_subscriber = self.create_subscription(
             Bool,
@@ -105,6 +107,13 @@ class Triangulation(Node):
             self.triangulation_callback,
             10
         )
+        #subscriber do planner
+        self.subscription_nav_command = self.create_subscription(
+            Int32,
+            '/robot_commands',
+            self.command_callback,
+            10
+        ) 
 
         # Desativar mensagens de retorno de chamada não utilizadas
         self.image_angle_subscription
@@ -119,6 +128,7 @@ class Triangulation(Node):
         msg = PoseEstimate()
         msg.x = float(self.pose_x)  
         msg.y = float(self.pose_y) 
+        msg.comando = self.comando_recebido
         self.pose_publisher.publish(msg)    
 
     def yaw_rotation(self,x,y,z):
@@ -416,6 +426,9 @@ class Triangulation(Node):
     def simulation_callback(self, msg):
         if msg.data:
             self.publish_pose_estimate()
+
+    def command_callback(self, msg):
+        self.comando_recebido = msg.data
 
     def triangulation_callback(self, msg):        
         camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos,

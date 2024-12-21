@@ -5,58 +5,60 @@ class Particle:
 
     # --------
     # init: 
-    #    creates robot and initializes location/orientation 
+    #    creates robot and initializes location/orientacao 
     #
 
     def __init__(self, world_size = 30.0):
         self.x = random.uniform(-world_size, world_size) # initial x position
         self.y = random.uniform(-world_size, world_size) # initial y position
-        self.orientation = random.random() * 2.0 * pi # initial orientation
-        self.bearing_noise  = 0.05 # initialize bearing noise to zero
-        self.steering_noise = 0.1 # initialize steering noise to zero
-        self.distance_noise = 1.0 # initialize distance noise to zero
+        self.orientacao = random.random() * 2.0 * pi # initial orientacao
+        self.ruido_frente  = 0.05 # initialize bearing noise to zero
+        self.ruido_virar = 0.087 # initialize steering noise to zero
+        self.erro_pose_est = 0.8 #posicao estimada do robo com valor aleatorio de 0.8m representando o erro da posicao real
+        self.sigma_atualizacao = 0.05
+        self.w = 0.0
 
     # --------
     # set: 
     #    sets a robot coordinate
     #
 
-    def set(self, new_x, new_y, new_orientation):
+    def set(self, new_x, new_y, new_orientacao):
 
-        if new_orientation < 0 or new_orientation >= 2 * pi:
-            raise ValueError('Orientation must be in [0..2pi]')
+        if new_orientacao < 0 or new_orientacao >= 2 * pi:
+            raise ValueError('orientacao must be in [0..2pi]')
         self.x = float(new_x)
         self.y = float(new_y)
-        self.orientation = float(new_orientation)
+        self.orientacao = float(new_orientacao)
 
     # --------
     # set_noise: 
     #    sets the noise parameters
     #
-    def set_noise(self, new_b_noise, new_s_noise, new_d_noise):
+    def set_noise(self, new_frente_noise, new_virar_noise):
         # makes it possible to change the noise parameters
         # this is often useful in particle filters
-        self.bearing_noise  = float(new_b_noise)
-        self.steering_noise = float(new_s_noise)
-        self.distance_noise = float(new_d_noise)
+        self.ruido_frente  = float(new_frente_noise)
+        self.ruido_virar = float(new_virar_noise)
 
     # --------
     # measurement_prob
     #    computes the probability of a measurement
     #  
-
+    def gaussian(self, mu, sigma, x):
+        return exp(-((mu-x)**2)/(sigma**2) / 2) / sqrt(2*pi*(sigma**2))
+        
     def measurement_prob(self, pose_est): 
-        error_bearing = sqrt((pose_est[0] - self.x) ** 2 + (pose_est[1] - self.y) ** 2)        
+        dist = sqrt((pose_est[0] - self.x) ** 2 + (pose_est[1] - self.y) ** 2)        
 
         # update Gaussian
-        error = (exp(- (error_bearing ** 2) / (self.bearing_noise ** 2) / 2.0) /  
-                    sqrt(2.0 * pi * (self.bearing_noise ** 2)))
+        prob = self.gaussian(dist, self.sigma_atualizacao, 0)
 
-        return error
+        self.w = prob
     
     def __repr__(self): #allows us to print particle attributes.
         return '[x=%.6s y=%.6s orient=%.6s]' % (str(self.x), str(self.y), 
-                                                str(self.orientation))
+                                                str(self.orientacao))
     
     ############# ONLY ADD/MODIFY CODE BELOW HERE ###################
        
@@ -67,25 +69,40 @@ class Particle:
     # copy your code from the previous exercise
     # and modify it so that it simulates motion noise
     # according to the noise parameters
-    #           self.steering_noise
-    #           self.distance_noise
+    #           self.ruido_virar
+    #           self.erro_pose_est
     
-    def move(self, linear_velocity, angular_velocity, tal, sigma_rot = 0.087):
+    def move(self, linear_velocity, angular_velocity, tal):
         # Adicionando ruído à velocidade linear e angular   
-        # Se a velocidade angular for muito pequena, podemos tratar como movimento em linha reta
-        if abs(angular_velocity) < 1e-6:
-            linear_velocity = random.gauss(linear_velocity, self.distance_noise)
-            # Movimento em linha reta
-            new_x = self.x + linear_velocity * cos(self.orientation) * tal
-            new_y = self.y + linear_velocity * sin(self.orientation) * tal
-            new_orientation = self.orientation
-        elif angular_velocity > 0:
-            self.orientation = self.orientation + pi/2 + sigma_rot
-        elif angular_velocity < 0:
-            self.orientation = self.orientation - pi/2 + sigma_rot    
+        # Robo indo para frente
+        linear_velocity = random.gauss(linear_velocity, self.ruido_frente)
+        angular_velocity = random.gauss(angular_velocity, self.ruido_virar)
+        
+        # Movimento retilíneo (inclui ré)
+        if angular_velocity == 0:
+            new_x = self.x + linear_velocity * tal * cos(self.orientacao)
+            new_y = self.y + linear_velocity * tal * sin(self.orientacao)
+            new_orientacao = self.orientacao
+        
+        # Movimento com rotação
+        else:
+            # Atualiza a orientação
+            new_orientacao = (self.orientacao + angular_velocity * tal) % (2 * pi)
+            
+            # Raio de curvatura
+            radius = linear_velocity / angular_velocity
+            
+            # Atualiza a posição (movimento circular)
+            new_x = self.x + radius * (sin(new_orientacao) - sin(self.orientacao))
+            new_y = self.y - radius * (cos(new_orientacao) - cos(self.orientacao))
+        
+        # Atualiza as propriedades da partícula
+        self.x = new_x
+        self.y = new_y
+        self.orientacao = new_orientacao
 
         # Criando um novo resultado como uma nova partícula
         result = Particle()
-        result.set(new_x, new_y, new_orientation)
+        result.set(new_x, new_y, new_orientacao)
         
         return result

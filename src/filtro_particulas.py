@@ -17,20 +17,8 @@ from math import *
 class FiltroParticulas(Node):
     def __init__(self):
         super().__init__('filtro_particulas')
-
-        self.subscription_pose_atual = self.create_subscription(
-            PoseEstimate,
-            '/pose_estimate',
-            self.pose_callback,
-            10
-        )  
-        self.subscription_nav_command = self.create_subscription(
-            Int32,
-            '/robot_commands',
-            self.command_callback,
-            10
-        ) 
-        self.comando_recebido = None
+        
+        self.comando_recebido = 10
         self.publisher_final_pose= self.create_publisher(Pose, '/filter_final_pose', 10)  
 
         self.movement_status = None
@@ -41,13 +29,13 @@ class FiltroParticulas(Node):
         self.particle_number = 500
         self.publisher_filtro = self.create_publisher(MarkerArray, 'visualization_marker', 10)
         #fazendo as particulas
-        bearing_noise  = 0.05 # initialize bearing noise to zero
-        steering_noise = 0.1 # initialize steering noise to zero
-        distance_noise = 1.0 
+        ruido_frente  = 0.05 # initialize bearing noise to zero
+        ruido_virar = 0.1 # initialize steering noise to zero
+        ruido_sensor = 1.0 
         self.p = []
         for i in range(self.particle_number):
             r = Particle()
-            r.set_noise(bearing_noise, steering_noise, distance_noise)
+            r.set_noise(ruido_frente, ruido_virar)
             self.p.append(r)   
         # Definindo o ponto estimado
         self.publisher_ponto_est = self.create_publisher(Marker, 'topic_pose_est', 10)
@@ -56,26 +44,23 @@ class FiltroParticulas(Node):
         self.ponto_atual = [0.0, 0.0]
         self.velocidade_linear = 0.0
         self.velocidade_angular = 0.0
-        self.pose_status = None
         self.get_logger().info('Filtro de particulas inicializado.') 
-        self.get_logger().info(f'particulas inicializadas: {self.p[0].orientation}')
+        self.get_logger().info(f'particulas inicializadas')
 
     def euler_to_quaternion(self, angulo):
         qx = 0.0
         qy = 0.0
         qz = math.sin(angulo / 2.0)
         qw = math.cos(angulo / 2.0)
-        return Quaternion(x=qx, y=qy, z=qz, w=qw)           
-
-    def command_callback(self, msg):
-        self.comando_recebido = msg.data
+        return Quaternion(x=qx, y=qy, z=qz, w=qw)  
 
     def pose_callback(self, msg): 
         #A mensagem eh recebida quando o robo estiver parado  
          
         self.ponto_atual[0] = msg.x
         self.ponto_atual[1] = msg.y 
-        self.get_logger().info(f'Ponto recebido: {self.ponto_atual}')  
+        self.comando_recebido = msg.comando
+        self.get_logger().info(f'Ponto recebido: {self.ponto_atual}, comando: {self.comando_recebido}')  
         self.particle_filter(self.particle_number, self.ponto_atual)
 
     #{0: "parar_robo", 1: "andar_para_frente", 2: "andar_para_tras", 3: "rotacionar_clockwise", 4: "rotacionar_counter_clockwise"}
@@ -83,23 +68,24 @@ class FiltroParticulas(Node):
         if(not self.validar_primeira_msg):     
             self.publish_ponto_pose_estimada()
             self.publish_particles(self.p)
-            self.get_logger().info('If 1.') 
+            #self.get_logger().info('If 1.') 
             self.validar_primeira_msg = True
         elif(self.validar_primeira_msg):
             # motion update (prediction)
-            self.get_logger().info('If 2.') 
-            p2 = []
-            for i in range(particle_number):
-                if(self.comando_recebido == 0):
-                    p2.append(self.p[i].move(0, 0, 2))
-                elif(self.comando_recebido == 1):
-                    p2.append(self.p[i].move(1.0, 0, 2))
-                elif(self.comando_recebido == 2):
-                    p2.append(self.p[i].move(-1.0, 0, 2))
-                elif(self.comando_recebido == 3):
-                    p2.append(self.p[i].move(0.0, -0.5, 2))
-                elif(self.comando_recebido == 4):
-                    p2.append(self.p[i].move(0.0, 0.5, 2))
+            #self.get_logger().info('If 2.') 
+            if(self.comando_recebido != 10):            
+                p2 = []
+                for i in range(particle_number):
+                    if(self.comando_recebido == 0):
+                        p2.append(self.p[i].move(0, 0, 2))
+                    elif(self.comando_recebido == 1):
+                        p2.append(self.p[i].move(1.0, 0, 2))
+                    elif(self.comando_recebido == 2):
+                        p2.append(self.p[i].move(-1.0, 0, 2))
+                    elif(self.comando_recebido == 3):
+                        p2.append(self.p[i].move(0.0, -0.5, 2))
+                    elif(self.comando_recebido == 4):
+                        p2.append(self.p[i].move(0.0, 0.5, 2))
             self.p = p2
             # measurement update
             w = []
