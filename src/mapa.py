@@ -155,7 +155,7 @@ class Mapa:
         for (x_min, x_max, y_min, y_max), regiao in self.regioes.items():
             if x_min <= x <= x_max and y_min <= y <= y_max:
                 return regiao
-        return "fora_do_mapa"
+        return 500
 
     def desenhar_mapa(self, ax):
         """

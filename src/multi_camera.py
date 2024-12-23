@@ -3,6 +3,7 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
+from std_msgs.msg import Bool
 from guided_navigation.msg import ImagesAngles
 from guided_navigation.srv import SetCameraActive
 from cv_bridge import CvBridge
@@ -35,13 +36,24 @@ class MultiCamera(Node):
         # Configuração do Modelo
         self.model = inference.get_model("husky_test/3")
 
-        #publisher para enviar os valores dos angulos timer_publition publica msg a cada 1 seg
-        self.publisher = self.create_publisher(ImagesAngles, 'image_angles', 10)
-        timer_period = 1
-        self.timer = self.create_timer(timer_period, self.timer_callback)
+        
+
+        def simulation_callback(self, msg):
+            if msg.data:
+                self.publish_pose_estimate()
+
+        #angle_publisher para enviar os valores dos angulos timer_publition publica msg a cada 1 seg
+        self.angle_publisher = self.create_publisher(ImagesAngles, 'image_angles', 10)
 
         self.angles = [float('nan')] * 35 
         self.active_cameras = {i: False for i in range(35)}
+
+        self.simulation_subscriber = self.create_subscription(
+            Bool,
+            '/simulation_status',
+            self.simulation_callback,
+            10
+        )
 
         # Subscrições para os tópicos de imagem
         
@@ -294,11 +306,14 @@ class MultiCamera(Node):
         # Criar o servidor de serviço para ativar/desativar câmeras
         self.srv = self.create_service(SetCameraActive, 'set_camera_active', self.set_camera_active)
         
+    def simulation_callback(self, msg):
+        if msg.data:
+            self.publish_camera_angles()
 
-    def timer_callback(self):
+    def publish_camera_angles(self):
         msg = ImagesAngles()
         msg.angles = self.angles
-        self.publisher.publish(msg)
+        self.angle_publisher.publish(msg)
     
     #funcao que recebe o ponto do centro do retangulo e retorna o angulo entre a reta que divide metade da imagem o ponto 
 

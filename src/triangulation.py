@@ -9,7 +9,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point
 import numpy as np
 import matplotlib.pyplot as plt
-import math
+from math import *
 from mapa import Mapa
 
 class Triangulation(Node):
@@ -92,28 +92,24 @@ class Triangulation(Node):
         self.xlimit = [-25, 25]
         self.ylimit = [-15, 15]       
         self.hfov_limit = 0.2182 
-        self.comando_recebido = 10
 
-        self.simulation_subscriber = self.create_subscription(
-            Bool,
-            '/simulation_status',
-            self.simulation_callback,
-            10
-        )
+        self.last_pose = [0.0, 0.0]
+        self.tolerance = 0.01
+        
         #subscriber dos angulos das cameras
         self.image_angle_subscription = self.create_subscription(
             ImagesAngles,
             '/image_angles',
             self.triangulation_callback,
             10
-        )
-        #subscriber do planner
-        self.subscription_nav_command = self.create_subscription(
-            Int32,
-            '/robot_commands',
-            self.command_callback,
+        )     
+        self.robot_moving = False
+        self.subscription_robo_movendo = self.create_subscription(
+            Bool,
+            '/robot_moving',
+            self.robot_moving_callback,
             10
-        ) 
+        )    
 
         # Desativar mensagens de retorno de chamada não utilizadas
         self.image_angle_subscription
@@ -123,12 +119,18 @@ class Triangulation(Node):
         self.pose_x = 0
         self.pose_y = 0
 
+    def is_pose_significant_change(self):
+        return (sqrt(((self.pose_x - self.last_pose[0])**2 + (self.pose_y - self.last_pose[1])**2))) >= self.tolerance
+
+    def robot_moving_callback(self, msg):
+        msg = Bool()
+        self.robot_moving = msg.data
+
     def publish_pose_estimate(self):
         # Cria a mensagem de pose estimada e publica
         msg = PoseEstimate()
         msg.x = float(self.pose_x)  
         msg.y = float(self.pose_y) 
-        msg.comando = self.comando_recebido
         self.pose_publisher.publish(msg)    
 
     def yaw_rotation(self,x,y,z):
@@ -177,7 +179,7 @@ class Triangulation(Node):
 
     def verificar_direcao(self, ponto, origem, direcao):
         produto_escalar = 0
-        if not math.isnan(direcao[0]):
+        if not isnan(direcao[0]):
             vetor_intersecao = ponto - origem
             produto_escalar = np.dot(vetor_intersecao, direcao)   
             #print(produto_escalar > 0)         
@@ -234,7 +236,7 @@ class Triangulation(Node):
             plt.fill(x_area, y_area, color='lightgray', alpha=0.5)
 
         for pos, angle in zip(camera_position, image_angles_res):
-            if not math.isnan(angle):
+            if not isnan(angle):
                 # Calcular o vetor unitário
                 unit_vector = np.array([np.cos(angle), np.sin(angle)])
                 final_vector = np.array([self.image_position_vec*np.cos(angle), self.image_position_vec*np.sin(angle)])
@@ -421,14 +423,9 @@ class Triangulation(Node):
 
         result = (est_1 + est_2)/2
 
-        return result
+        return result  
     
-    def simulation_callback(self, msg):
-        if msg.data:
-            self.publish_pose_estimate()
-
-    def command_callback(self, msg):
-        self.comando_recebido = msg.data
+            
 
     def triangulation_callback(self, msg):        
         camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos,
@@ -494,7 +491,7 @@ class Triangulation(Node):
         image_angles_res = []
 
         for i in range(len(image_angles)):
-            if math.isnan(image_angles[i]):
+            if isnan(image_angles[i]):
                 image_angles_res.append(float('nan'))
             elif (camera_rotations[i] + image_angles[i] > hfov_limit[i][0]) or (camera_rotations[i] + image_angles[i] < hfov_limit[i][1]):
                 image_angles_res.append(float('nan'))
@@ -514,7 +511,7 @@ class Triangulation(Node):
         #image_angles_res = np.array([1.0469999999999999, -1.0469999999999999, 1.0469999999999999, -1.0469999999999999])
 
         for i in range(len(image_angles_res)):
-            if not math.isnan(image_angles_res[i]):
+            if not isnan(image_angles_res[i]):
                 Ax.append(np.tan(image_angles_res[i]))
                 Cx.append(camera_position[i][1] - np.tan(image_angles_res[i])*camera_position[i][0])
             else:
@@ -555,7 +552,10 @@ class Triangulation(Node):
         
         bar_x, bar_y = self.baricentro(pontos_interseccao)
         self.pose_x = float(bar_x)
-        self.pose_y = float(bar_y)        
+        self.pose_y = float(bar_y)   
+        if((self.pose_x != 0.0 and self.pose_y != 0.0) and not self.robot_moving and self.is_pose_significant_change()):
+            self.publish_pose_estimate()
+            self.last_pose = [self.pose_x, self.pose_y]    
         #self.plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)
         #self.matplt_plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)
         #print('pontos de intersec: ', pontos_interseccao)

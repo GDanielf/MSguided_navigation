@@ -15,7 +15,7 @@ class Particle:
         self.ruido_frente  = 0.05 # initialize bearing noise to zero
         self.ruido_virar = 0.087 # initialize steering noise to zero
         self.erro_pose_est = 0.8 #posicao estimada do robo com valor aleatorio de 0.8m representando o erro da posicao real
-        self.sigma_atualizacao = 0.05
+        self.sigma_atualizacao = 2.5
         self.w = 0.0
 
     # --------
@@ -49,12 +49,13 @@ class Particle:
         return exp(-((mu-x)**2)/(sigma**2) / 2) / sqrt(2*pi*(sigma**2))
         
     def measurement_prob(self, pose_est): 
-        dist = sqrt((pose_est[0] - self.x) ** 2 + (pose_est[1] - self.y) ** 2)        
-
+        
+        dist = sqrt((pose_est[0] - self.x) ** 2 + (pose_est[1] - self.y) ** 2)     
+        
         # update Gaussian
         prob = self.gaussian(dist, self.sigma_atualizacao, 0)
-
-        self.w = prob
+        #print(prob)
+        return prob
     
     def __repr__(self): #allows us to print particle attributes.
         return '[x=%.6s y=%.6s orient=%.6s]' % (str(self.x), str(self.y), 
