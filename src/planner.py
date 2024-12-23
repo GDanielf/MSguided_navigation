@@ -7,6 +7,7 @@ from std_msgs.msg import Bool
 from geometry_msgs.msg import Pose, Twist, Quaternion
 from visualization_msgs.msg import Marker, MarkerArray
 from guided_navigation.msg import PoseEstimate
+
 from std_msgs.msg import Int32
 from particle import Particle
 import random
@@ -14,6 +15,7 @@ from mapa import Mapa
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import time
 
 class Planner(Node):
     def __init__(self):
@@ -24,8 +26,15 @@ class Planner(Node):
             self.pose_callback,
             10
         ) 
+        #self.cmd_vel_subscriber = self.create_subscription(
+        #    Twist,
+        #    '/cmd_vel',
+        #    self.velocity_callback,
+        #    10
+        #)
         self.robot_mover_publisher = self.create_publisher(Bool, '/robot_moving', 10)
         self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.robot_velocity = 0.0
         self.commands = {
             0: "parar_robo",
             1: "andar_para_frente",
@@ -50,84 +59,76 @@ class Planner(Node):
         self.ultimo_ponto_processado = None 
         self.new_pose_received = False
         self.get_logger().info('Planner inicializado. Enviando comandos para o Navigation...')  
-        self.publisher_ponto_est = self.create_publisher(Marker, 'topic_pose_est', 10)
         self.publisher_filtro = self.create_publisher(MarkerArray, 'visualization_marker', 10)
-        self.last_pose = None
-        self.new_pose_received = False
         #definicoes filtro de particula
         self.particle_number = 500
         self.p = []
         for i in range(self.particle_number):
             r = Particle()
             r.set_noise(0.05, 0.087)
-            self.p.append(r)     
+            self.p.append(r) 
+        self.publish_particles(self.p)   
+        self.publisher_ponto_est = self.create_publisher(Marker, 'topic_pose_est', 10)
+        self.ponto_antigo = None
+        self.new_pose_received = False
+        self.start_timer = None
+        self.finish_timer = None   
+        self.dist = 0      
 
     #obtem o ponto final para determinar onde o robo deve ir
     def pose_callback(self, msg):    
         self.ponto_atual = [msg.x, msg.y]
-        
+        self.dist = msg.dist
+        print('ponto recebido: ', self.ponto_atual)
+        if(self.start_planner):
+            self.start_planner = False
+            self.ponto_antigo = self.ponto_atual
+            self.publish_particles(self.p)
         self.publish_ponto_pose_estimada()
         #self.get_logger().info(f'Ponto recebido: {self.ponto_atual}')
         #self.particle_filter(self.particle_number, self.ponto_atual)
         #qual regiao esta o ponto?
         regiao_nova_robo = self.mapa.obter_cor_regiao(self.ponto_atual[0], self.ponto_atual[1])        
         #libera particulas
-        self.p = self.p
-        self.publish_particles(self.p) 
+        
         #enquanto o robo nao chegar na regiao objetivo, faca:
         #E a orientacao?
         if(regiao_nova_robo != self.regiao_objetivo):
-            #regioa verde e amarela  
-            if(self.start_planner):
-                self.start_planner = False
-                self.regiao_antiga = regiao_nova_robo 
-            if(self.regiao_antiga == regiao_nova_robo):
-                if(regiao_nova_robo >= 30 and regiao_nova_robo <= 59):
-                    print('if do move')                    
-                    self.move_forward()                    
-                    self.contador_de_comando += 1  
-                    self.filtro_particula(1)
-                    #self.plot_particles(self.p)
-                    self.publish_particles(self.p)
-                    #print(len(self.p))
-            else:
-                self.velocity_sender(0.0, 0.0) 
-                #self.plot_particles(self.p) 
-                self.publish_particles(self.p)
-                #obter direcao 
-                #rotacionar o robo 
-                self.filtro_particula(0)
-                self.contador_de_comando += 1 
-                self.regiao_antiga = regiao_nova_robo
-            
-                
+            #if(regiao_nova_robo >= 30 and regiao_nova_robo <= 59):
+            print('if do move') 
+            self.move_forward()             
+            if self.current_timer:
+                self.current_timer.cancel()
+            self.current_timer = self.create_timer(self.tal, self.stop)        
+            self.contador_de_comando += 1  
+            self.p = self.predicao(self.dist, 1)
+            self.p = self.reamostragem()
+            self.publish_particles(self.p)
+            #self.plot_particles(self.p)
+            #print(len(self.p))                    
+        else:
+            print('chegou')
+            self.stop()
+            #obter direcao 
+            #rotacionar o robo 
+            self.contador_de_comando += 1 
     
     #funcoes parciais do filtro de particulas
     #{0: "parar_robo", 1: "andar_para_frente", 2: "andar_para_tras", 3: "rotacionar_clockwise", 4: "rotacionar_counter_clockwise"}
-    def filtro_particula(self, acao):
+    def predicao(self, dist_ponto, acao):
         #predicao
-        p2 = []         
-        if(acao == 0):
-            p2 = self.p
-        elif(acao == 1):
-            for i in range(self.particle_number):
-                p2.append(self.p[i].move(1.0, 0, 2))
-        elif(acao == 2):
-            for i in range(self.particle_number):
-                p2.append(self.p[i].move(-1.0, 0, 2))
-        elif(acao == 3):
-            for i in range(self.particle_number):
-                p2.append(self.p[i].move(0.0, -0.5, 2))
-        elif(acao == 4):
-            for i in range(self.particle_number):
-                p2.append(self.p[i].move(0.0, 0.5, 2))  
-        self.p = p2
+        p2 = []       
+        for i in range(self.particle_number):
+            p2.append(self.p[i].move(dist_ponto, acao))
+        return p2
+    
+    def reamostragem(self):
         #print(self.ponto_atual)
         # measurement update
         w = []
         for i in range(self.particle_number):
             w.append(self.p[i].measurement_prob(self.ponto_atual))
-        # resampling
+        
         #print(w)
         p3 = []
         index = int(random.random() * self.particle_number)
@@ -140,13 +141,8 @@ class Planner(Node):
                 index = (index + 1) % self.particle_number
             p3.append(self.p[index])
 
-        self.p = p3
+        return p3
     
-
-    def start_movement_sequence(self): 
-        print('movement-seq')
-        self.add_action_to_queue(self.stop)        
-        self.add_action_to_queue(self.move_forward)
 
     #comandos para enviar para o robo
     def moving_status(self, status):
@@ -177,20 +173,18 @@ class Planner(Node):
             next_action = self.action_queue.pop(0)
             next_action()         
 
-    def stop(self):         
+    def stop(self):     
+        self.finish_timer = time.time()     
         self.get_logger().info(f'Robo parado')
         self.velocity_sender(0.0, 0.0)
-        self.process_next_action()
         self.movement_in_progress = False
         self.moving_status(self.movement_in_progress)
 
-    def move_forward(self):         
+    def move_forward(self):        
+        self.start_timer = time.time() 
         self.get_logger().info(f'Movendo o robo para frente')
         self.velocity_sender(1.0, 0.0)  
         self.movement_in_progress = True
-        self.moving_status(self.movement_in_progress)      
-        self.schedule_action(self.stop, self.tal)
-        self.movement_in_progress = False
         self.moving_status(self.movement_in_progress)
         
 

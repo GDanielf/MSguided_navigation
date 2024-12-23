@@ -92,6 +92,7 @@ class Triangulation(Node):
         self.xlimit = [-25, 25]
         self.ylimit = [-15, 15]       
         self.hfov_limit = 0.2182 
+        self.dist = 0
 
         self.last_pose = [0.0, 0.0]
         self.tolerance = 0.01
@@ -118,9 +119,8 @@ class Triangulation(Node):
         self.rviz_publisher = self.create_publisher(MarkerArray, 'visualization_marker_array', 10)
         self.pose_x = 0
         self.pose_y = 0
-
-    def is_pose_significant_change(self):
-        return (sqrt(((self.pose_x - self.last_pose[0])**2 + (self.pose_y - self.last_pose[1])**2))) >= self.tolerance
+        
+        
 
     def robot_moving_callback(self, msg):
         msg = Bool()
@@ -131,6 +131,7 @@ class Triangulation(Node):
         msg = PoseEstimate()
         msg.x = float(self.pose_x)  
         msg.y = float(self.pose_y) 
+        msg.dist = float(self.dist)
         self.pose_publisher.publish(msg)    
 
     def yaw_rotation(self,x,y,z):
@@ -552,8 +553,9 @@ class Triangulation(Node):
         
         bar_x, bar_y = self.baricentro(pontos_interseccao)
         self.pose_x = float(bar_x)
-        self.pose_y = float(bar_y)   
-        if((self.pose_x != 0.0 and self.pose_y != 0.0) and not self.robot_moving and self.is_pose_significant_change()):
+        self.pose_y = float(bar_y) 
+        self.dist = sqrt((((self.pose_x - self.last_pose[0])**2 + (self.pose_y - self.last_pose[1])**2)))  
+        if((self.pose_x != 0.0 and self.pose_y != 0.0) and not self.robot_moving and (self.dist >= self.tolerance)):
             self.publish_pose_estimate()
             self.last_pose = [self.pose_x, self.pose_y]    
         #self.plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)

@@ -186,7 +186,7 @@ if __name__ == "__main__":
     mapa = Mapa()
 
     # Teste para verificar a cor de uma posição
-    x, y = 1.3, -6.9
+    x, y = 1.7732411925348928, 0.6024850223445085
     cor = mapa.obter_cor_regiao(x, y)
     print(type(cor))
     print(f"A posição ({x}, {y}) está na região: {cor}")

@@ -15,7 +15,8 @@ class Particle:
         self.ruido_frente  = 0.05 # initialize bearing noise to zero
         self.ruido_virar = 0.087 # initialize steering noise to zero
         self.erro_pose_est = 0.8 #posicao estimada do robo com valor aleatorio de 0.8m representando o erro da posicao real
-        self.sigma_atualizacao = 2.5
+        self.sigma_atualizacao = 5.0
+        self.sigma_translacao = 0.2
         self.w = 0.0
 
     # --------
@@ -48,7 +49,7 @@ class Particle:
     def gaussian(self, mu, sigma, x):
         return exp(-((mu-x)**2)/(sigma**2) / 2) / sqrt(2*pi*(sigma**2))
         
-    def measurement_prob(self, pose_est): 
+    def measurement_prob(self, pose_est):         
         
         dist = sqrt((pose_est[0] - self.x) ** 2 + (pose_est[1] - self.y) ** 2)     
         
@@ -73,34 +74,25 @@ class Particle:
     #           self.ruido_virar
     #           self.erro_pose_est
     
-    def move(self, linear_velocity, angular_velocity, tal):
+    def move(self, dist, comando):
         # Adicionando ruído à velocidade linear e angular   
         # Robo indo para frente
-        linear_velocity = random.gauss(linear_velocity, self.ruido_frente)
-        angular_velocity = random.gauss(angular_velocity, self.ruido_virar)
-        
-        # Movimento retilíneo (inclui ré)
-        if angular_velocity == 0:
-            new_x = self.x + linear_velocity * tal * cos(self.orientacao)
-            new_y = self.y + linear_velocity * tal * sin(self.orientacao)
+        dist = random.gauss(dist, self.sigma_translacao) 
+
+        #andar para frente
+        if comando == 1:
             new_orientacao = self.orientacao
-        
-        # Movimento com rotação
-        else:
-            # Atualiza a orientação
-            new_orientacao = (self.orientacao + angular_velocity * tal) % (2 * pi)
-            
-            # Raio de curvatura
-            radius = linear_velocity / angular_velocity
-            
-            # Atualiza a posição (movimento circular)
-            new_x = self.x + radius * (sin(new_orientacao) - sin(self.orientacao))
-            new_y = self.y - radius * (cos(new_orientacao) - cos(self.orientacao))
-        
-        # Atualiza as propriedades da partícula
-        self.x = new_x
-        self.y = new_y
-        self.orientacao = new_orientacao
+        #se acao = virar para esquerda e se movimentar para frente
+        elif comando == 2:
+            new_orientacao = (self.orientacao + pi/2 + self.ruido_virar) % (2 * pi)
+        #se acao = virar para direita e se movimentar para frente
+        elif comando == 3:
+            new_orientacao = (self.orientacao - pi/2 + self.ruido_virar) % (2 * pi)   
+        elif comando == 4:
+            new_orientacao = (self.orientacao + pi + self.ruido_virar) % (2 * pi)  
+
+        new_x = self.x + dist * cos(new_orientacao)
+        new_y = self.y + dist * sin(new_orientacao)        
 
         # Criando um novo resultado como uma nova partícula
         result = Particle()
