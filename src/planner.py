@@ -94,7 +94,7 @@ class Planner(Node):
         #enquanto o robo nao chegar na regiao objetivo, faca:
         #E a orientacao?
         if(regiao_nova_robo != self.regiao_objetivo):
-            #if(regiao_nova_robo >= 30 and regiao_nova_robo <= 59):
+            #if(regiao_nova_robo >= 32 and regiao_nova_robo <= 79):
             print('if do move') 
             self.move_forward()             
             if self.current_timer:

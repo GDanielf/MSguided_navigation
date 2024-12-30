@@ -16,72 +16,100 @@ class Mapa:
 
         self.regioes = {
             # Vermelha (Baixo)
-            (-10, -8, -7.5, -5.5): 0,   #"vermelha_baixo_0"
-            (-10, -8, -5.5, -3.5): 1,   #"vermelha_baixo_1"
-            (-10, -8, -3.5, -1.5): 2,   #"vermelha_baixo_2"
-            (-10, -8, -1.5, 0.5): 3,    #"vermelha_baixo_3"
-            (-8, -6, -7.5, -5.5): 4,    #"vermelha_baixo_4"
-            (-6, -4, -7.5, -5.5): 5,    #"vermelha_baixo_5"
-            (-4, -2, -7.5, -5.5): 6,    #"vermelha_baixo_6"
-            (-2, 0, -7.5, -5.5): 7,     #"vermelha_baixo_7"
-            (0, 2, -7.5, -5.5): 8,      #"vermelha_baixo_8"
-            (2, 4, -7.5, -5.5): 9,      #"vermelha_baixo_9"
-            (4, 6, -7.5, -5.5): 10,     #"vermelha_baixo_10"
-            (6, 8, -7.5, -5.5): 11,     #"vermelha_baixo_11"
-            (8, 10, -7.5, -5.5): 12,    #"vermelha_baixo_12"
-            (8, 10, -5.5, -3.5): 13,    #"vermelha_baixo_13"
-            (8, 10, -3.5, -1.5): 14,    #"vermelha_baixo_14"
-            (8, 10, -1.5, 0.5): 15,     #"vermelha_baixo_15"
-
-            # Vermelha (Cima)
-            (-10, -8, 0.5, 2.5): 16,    #"vermelha_cima_0"
-            (-10, -8, 2.5, 4.5): 17,    #"vermelha_cima_1"
-            (-10, -8, 4.5, 6.5): 18,    #"vermelha_cima_2"
-            (-8, -6, 4.5, 6.5): 19,     #"vermelha_cima_4"
-            (-6, -4, 4.5, 6.5): 20,     #"vermelha_cima_5"
-            (-4, -2, 4.5, 6.5): 21,     #"vermelha_cima_6"
-            (-2, 0, 4.5, 6.5): 22,      #"vermelha_cima_7"
-            (0, 2, 4.5, 6.5): 23,       #"vermelha_cima_8"
-            (2, 4, 4.5, 6.5): 24,       #"vermelha_cima_9"
-            (4, 6, 4.5, 6.5): 25,       #"vermelha_cima_10"
-            (6, 8, 4.5, 6.5): 26,       #"vermelha_cima_11"
-            (8, 10, 0.5, 2.5): 27,      #"vermelha_cima_12"
-            (8, 10, 2.5, 4.5): 28,      #"vermelha_cima_13"
-            (8, 10, 4.5, 6.5): 29,      #"vermelha_cima_14"
-
-            # Amarelo
-            (-8, -6, -5.5, -3.5): 30,   #"amarelo"
-            (-6, -4, -5.5, -3.5): 31,   #"amarelo"
-            (-6, -4, 2.5, 4.5): 32,     #"amarelo"
-            (-4, -2, -5.5, -3.5): 33,   #"amarelo"
-            (-4, -2, 2.5, 4.5): 34,     #"amarelo"
+            (-10, -8, -7.5, -5.5): 0,   #"vermelha_baixo_0"   
+            (-8, -6, -7.5, -5.5): 1,    #"vermelha_baixo_1"  
+            (-6, -4, -7.5, -5.5): 2,    #"vermelha_baixo_2" 
+            (-4, -2, -7.5, -5.5): 3,    #"vermelha_baixo_3" 
+            (-2, 0, -7.5, -5.5): 4,     #"vermelha_baixo_4"              
+            (0, 2, -7.5, -5.5): 5,      #"vermelha_baixo_5"
+            (2, 4, -7.5, -5.5): 6,      #"vermelha_baixo_6"
+            (4, 6, -7.5, -5.5): 7,     #"vermelha_baixo_7"
+            (6, 8, -7.5, -5.5): 8,     #"vermelha_baixo_8"
+            (8, 10, -7.5, -5.5): 9,    #"vermelha_baixo_9"
+            # vermelho esquerda
+            (-10, -8, -5.5, -3.5): 10,   #"vermelha_esquerda_10"
+            (-10, -8, -3.5, -1.5): 11,   #"vermelha_esquerda_11"
+            (-10, -8, -1.5, 0.5): 12,    #"vermelha_esquerda_12"
+            (-10, -8, 0.5, 2.5): 13,    #"vermelha_esquerda_13"
+            (-10, -8, 2.5, 4.5): 14,    #"vermelha_esquerda_14"
+            (-10, -8, 4.5, 6.5): 15,    #"vermelha_esquerda_15"
+            # Vermelha Cima
+            (-10, -8, 6.5, 8.5): 16,     #"vermelha_cima_16"
+            (-8, -6, 6.5, 8.5): 17,      #"vermelha_cima_17
+            (-6, -4, 6.5, 8.5): 18,      #"vermelha_cima_18"
+            (-4, -2, 6.5, 8.5): 19,      #"vermelha_cima_19"
+            (-2, 0, 6.5, 8.5): 20,       #"vermelha_cima_20"
+            (0, 2, 6.5, 8.5): 21,       #"vermelha_cima_21"
+            (2, 4, 6.5, 8.5): 22,       #"vermelha_cima_22"
+            (4, 6, 6.5, 8.5): 23,       #"vermelha_cima_23"
+            (6, 8, 6.5, 8.5): 24,       #"vermelha_cima_24"
+            (8, 10, 6.5, 8.5): 25,      #"vermelha_cima_25"
+            # vermelho direita
+            (8, 10, -5.5, -3.5): 26,     #"vermelha_direita_26"
+            (8, 10, -3.5, -1.5): 27,    #"vermelha_direita_27"
+            (8, 10, -1.5, 0.5): 28,     #"vermelha_direita_28"
+            (8, 10, 0.5, 2.5): 29,      #"vermelha_direita_29"
+            (8, 10, 2.5, 4.5): 30,      #"vermelha_direita_30"
+            (8, 10, 4.5, 6.5): 31,      #"vermelha_direita_31"          
+            
+            # Amarelo baixo
+            (-8, -6, -5.5, -3.5): 32,   #"amarelo"
+            (-6, -4, -5.5, -3.5): 33,   #"amarelo"
+            (-4, -2, -5.5, -3.5): 34,   #"amarelo"
             (-2, 0, -5.5, -3.5): 35,    #"amarelo"
-            (-2, 0, 2.5, 4.5): 36,      #"amarelo"
-            (0, 2, -5.5, -3.5): 37,     #"amarelo"
-            (0, 2, 2.5, 4.5): 38,       #"amarelo"
-            (2, 4, -5.5, -3.5): 39,     #"amarelo"
-            (2, 4, 2.5, 4.5): 40,       #"amarelo"
-            (4, 6, -5.5, -3.5): 41,     #"amarelo"
-            (4, 6, 2.5, 4.5): 42,       #"amarelo"
-            (6, 8, -5.5, -3.5): 43,     #"amarelo"
-            (6, 8, -3.5, -1.5): 44,     #"amarelo"
-            (6, 8, -1.5, 0.5): 45,      #"amarelo"
-            (6, 8, 0.5, 2.5): 46,       #"amarelo"
-            (6, 8, 2.5, 4.5): 47,       #"amarelo"
+            (0, 2, -5.5, -3.5): 36,     #"amarelo"
+            (2, 4, -5.5, -3.5): 37,     #"amarelo"
+            (4, 6, -5.5, -3.5): 38,     #"amarelo"
+            (6, 8, -5.5, -3.5): 39,     #"amarelo" 
+            #amarelo esquerda  
+            (-8, -6, -3.5, -1.5): 40,    #"amarelo"
+            (-8, -6, -1.5, 0.5): 41,     #"amarelo"
+            (-8, -6, 0.5, 2.5): 42,      #"amarelo"
+            (-8, -6, 2.5, 4.5): 43,      #"amarelo"            
+            #amarelo cima
+            (-8, -6, 4.5, 6.5): 44,      #"amarelo"
+            (-6, -4, 4.5, 6.5): 45,     #"amarelo"
+            (-4, -2, 4.5, 6.5): 46,     #"amarelo"
+            (-2, 0, 4.5, 6.5): 47,      #"amarelo"
+            (0, 2, 4.5, 6.5): 48,       #"amarelo"
+            (2, 4, 4.5, 6.5): 49,       #"amarelo"
+            (4, 6, 4.5, 6.5): 50,       #"amarelo"
+            (6, 8, 4.5, 6.5): 51,       #"amarelo"
+            #amarelo direita
+            (6, 8, 2.5, 4.5): 52,       #"amarelo"
+            (6, 8, 0.5, 2.5): 53,       #"amarelo"
+            (6, 8, -1.5, 0.5): 54,      #"amarelo"
+            (6, 8, -3.5, -1.5): 55,     #"amarelo"
+             
+            # Verde baixo
+            (-6, -4, -3.5, -1.5): 56,   #"verde"
+            (-4, -2, -3.5, -1.5): 57,   #"verde"
+            (-2, 0, -3.5, -1.5): 58,    #"verde"
+            (0, 2, -3.5, -1.5): 59,     #"verde"
+            (2, 4, -3.5, -1.5): 60,     #"verde"
+            (4, 6, -3.5, -1.5): 61,     #"verde"
+            #verde esquerda
+            (-6, -4, -1.5, 0.5): 62,    #"verde"
+            (-6, -4, 0.5, 2.5): 63,    #"verde"
+            #verde cima
+            (-6, -4, 2.5, 4.5): 64,    #"verde"
+            (-4, -2, 2.5, 4.5): 65,    #"verde"
+            (-2, 0, 2.5, 4.5): 66,    #"verde"
+            (0, 2, 2.5, 4.5): 67,    #"verde"
+            (2, 4, 2.5, 4.5): 68,    #"verde"
+            (4, 6, 2.5, 4.5): 69,    #"verde"
+            #verde direita
+            (4, 6, 0.5, 2.5): 70,    #"verde"
+            (4, 6, -1.5, 0.5): 71,    #"verde"
+            (-4, -2, -1.5, 0.5): 72,
+            (-2, 0, -1.5, 0.5): 73,
+            (0, 2, -1.5, 0.5): 74,
+            (2, 4, -1.5, 0.5): 75,
+            (-4, -2, 0.5, 2.5): 76,
+            (-2, 0, 0.5, 2.5): 77,
+            (0, 2, 0.5, 2.5): 78,
+            (2, 4, 0.5, 2.5): 79
 
-            # Verde
-            (-6, -4, -3.5, -1.5): 48,   #"verde"
-            (-6, -4, -1.5, 0.5): 49,    #"verde"
-            (-4, -2, -3.5, -1.5): 50,   #"verde"
-            (-4, -2, -1.5, 0.5): 51,    #"verde"
-            (-2, 0, -3.5, -1.5): 52,    #"verde"
-            (-2, 0, -1.5, 0.5): 53,     #"verde"
-            (0, 2, -3.5, -1.5): 54,     #"verde"
-            (0, 2, -1.5, 0.5): 55,      #"verde"
-            (2, 4, -3.5, -1.5): 56,     #"verde"
-            (2, 4, -1.5, 0.5): 57,      #"verde"
-            (4, 6, -3.5, -1.5): 58,     #"verde"
-            (4, 6, -1.5, 0.5): 59,      #"verde"
         }
 
 
@@ -141,20 +169,25 @@ class Mapa:
         path = mpath.Path(self.pontos_mapa)
         return path.contains_point((ponto.x, ponto.y))
 
-    def obter_cor_regiao(self, x, y):
+    def obter_cor_regiao(self, x, y, tolerancia=1e-6):
         """
         Retorna a cor da região onde o ponto (x, y) está localizado.
+        Inclui depuração para verificar os valores.
 
         Parâmetros:
             x (float): Coordenada X do ponto.
             y (float): Coordenada Y do ponto.
+            tolerancia (float): Margem de erro para comparar floats.
 
         Retorna:
-            str: Nome da região ou 'fora_do_mapa' se o ponto não pertence a nenhuma região.
+            int: Identificador da região ou 500 se o ponto não estiver em nenhuma região.
         """
         for (x_min, x_max, y_min, y_max), regiao in self.regioes.items():
-            if x_min <= x <= x_max and y_min <= y <= y_max:
+            print(f"Verificando região: ({x_min}, {x_max}, {y_min}, {y_max}) para ponto ({x}, {y})")
+            if (x_min - tolerancia) <= x <= (x_max + tolerancia) and (y_min - tolerancia) <= y <= (y_max + tolerancia):
+                print(f"Ponto ({x}, {y}) encontrado na região {regiao}")
                 return regiao
+        print(f"Ponto ({x}, {y}) não encontrado em nenhuma região.")
         return 500
 
     def desenhar_mapa(self, ax):
@@ -176,6 +209,7 @@ class Mapa:
             elif cor == 'verde':
                 ax.add_patch(plt.Rectangle((x, y), self.tamanho_celula, self.tamanho_celula, color='green', alpha=0.3))
 
+    
     def __repr__(self):
         return f'MapaComLimites(pontos={self.pontos_mapa})'
 
@@ -187,12 +221,11 @@ if __name__ == "__main__":
 
     # Teste para verificar a cor de uma posição
     x, y = 1.7732411925348928, 0.6024850223445085
-    cor = mapa.obter_cor_regiao(x, y)
-    print(type(cor))
-    print(f"A posição ({x}, {y}) está na região: {cor}")
-
+    #x, y = -9.8464545465, -7.34534535
+    cor = mapa.obter_cor_regiao(round(x,2), round(y,2))
     # Plotar o mapa
     fig, ax = plt.subplots()
+    ax.plot(x, y, 'o', color='blue', label=f'Ponto ({x}, {y})')
     mapa.desenhar_mapa(ax)
     plt.axis('equal')
     plt.legend()
