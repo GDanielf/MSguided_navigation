@@ -15,7 +15,7 @@ class Particle:
         self.ruido_frente  = 0.05 # initialize bearing noise to zero
         self.ruido_virar = 0.087 # initialize steering noise to zero
         self.erro_pose_est = 0.8 #posicao estimada do robo com valor aleatorio de 0.8m representando o erro da posicao real
-        self.sigma_atualizacao = 5.0
+        self.sigma_atualizacao = 1.5
         self.sigma_translacao = 0.2
         self.w = 0.0
 

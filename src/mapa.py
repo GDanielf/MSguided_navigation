@@ -183,11 +183,11 @@ class Mapa:
             int: Identificador da região ou 500 se o ponto não estiver em nenhuma região.
         """
         for (x_min, x_max, y_min, y_max), regiao in self.regioes.items():
-            print(f"Verificando região: ({x_min}, {x_max}, {y_min}, {y_max}) para ponto ({x}, {y})")
+            #print(f"Verificando região: ({x_min}, {x_max}, {y_min}, {y_max}) para ponto ({x}, {y})")
             if (x_min - tolerancia) <= x <= (x_max + tolerancia) and (y_min - tolerancia) <= y <= (y_max + tolerancia):
-                print(f"Ponto ({x}, {y}) encontrado na região {regiao}")
+                #print(f"Ponto ({x}, {y}) encontrado na região {regiao}")
                 return regiao
-        print(f"Ponto ({x}, {y}) não encontrado em nenhuma região.")
+        #print(f"Ponto ({x}, {y}) não encontrado em nenhuma região.")
         return 500
 
     def desenhar_mapa(self, ax):
@@ -220,8 +220,9 @@ if __name__ == "__main__":
     mapa = Mapa()
 
     # Teste para verificar a cor de uma posição
-    x, y = 1.7732411925348928, 0.6024850223445085
+    #x, y = 1.7732411925348928, 0.6024850223445085
     #x, y = -9.8464545465, -7.34534535
+    x,y = 5.06, 5.50
     cor = mapa.obter_cor_regiao(round(x,2), round(y,2))
     # Plotar o mapa
     fig, ax = plt.subplots()

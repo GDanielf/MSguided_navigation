@@ -50,7 +50,8 @@ class Planner(Node):
         #retorno do filtro de particulas
         self.ponto_final = [0.0, 0.0, 0.0]   
         self.mapa = Mapa() 
-        self.regiao_objetivo = self.mapa.obter_cor_regiao(5.06, 5.50) 
+        self.ponto_objetivo = [5.06, 5.50]
+        self.regiao_objetivo = self.mapa.obter_cor_regiao(self.ponto_objetivo[0], self.ponto_objetivo[1]) 
         self.regiao_antiga = 500
         self.movement_in_progress = True
         self.start_planner = True
@@ -60,6 +61,8 @@ class Planner(Node):
         self.new_pose_received = False
         self.get_logger().info('Planner inicializado. Enviando comandos para o Navigation...')  
         self.publisher_filtro = self.create_publisher(MarkerArray, 'visualization_marker', 10)
+        #starvars
+        self.m = 16
         #definicoes filtro de particula
         self.particle_number = 500
         self.p = []
@@ -104,6 +107,8 @@ class Planner(Node):
             self.p = self.predicao(self.dist, 1)
             self.p = self.reamostragem()
             self.publish_particles(self.p)
+            
+            print('direcao: ', self.obter_direcao(self.ponto_atual, self.obter_ponto_filtro(self.p)[2], self.ponto_objetivo))
             #self.plot_particles(self.p)
             #print(len(self.p))                    
         else:
@@ -128,6 +133,7 @@ class Planner(Node):
         w = []
         for i in range(self.particle_number):
             w.append(self.p[i].measurement_prob(self.ponto_atual))
+        #print(w)
         
         #print(w)
         p3 = []
@@ -142,7 +148,42 @@ class Planner(Node):
             p3.append(self.p[index])
 
         return p3
+
     
+    def obter_ponto_filtro(self, lista_particulas):
+        x = 0
+        y = 0
+        orientation = 0.0
+        for i in range(len(lista_particulas)):
+            x = x + lista_particulas[i].x
+            y = y + lista_particulas[i].y
+            orientation += (((lista_particulas[i].orientacao - lista_particulas[0].orientacao  + math.pi) % (2.0 * math.pi)) 
+                        + lista_particulas[0].orientacao  - math.pi)
+
+        return [x, y, orientation]
+
+    def obter_direcao(self, ponto_estimado, direcao_filtro, ponto_objetivo):
+        #divisao de star vars, admitindo que a orientacao do filtro esteja normalizada
+        esquerda = [(self.m * direcao_filtro)/ 8, (3 * self.m * direcao_filtro)/ 8]
+        atras = [(3 * self.m * direcao_filtro)/ 8, (5 * self.m * direcao_filtro)/ 8]
+        direita = [(5 * self.m * direcao_filtro)/ 8, (7 * self.m * direcao_filtro)/ 8]
+        frente = [(7 * self.m * direcao_filtro)/ 8, (self.m * direcao_filtro)/ 8]
+
+        ponto_inicio = np.array([ponto_estimado[0], ponto_estimado[1]])
+        ponto_fim = np.array([ponto_objetivo[0], ponto_objetivo[1]])
+        vetor_objetivo = (ponto_fim - ponto_inicio)/np.linalg.norm(ponto_fim - ponto_inicio)
+
+        theta = np.dot(np.array([np.cos(direcao_filtro), np.sin(direcao_filtro)]), vetor_objetivo)
+        comando = 0
+        if theta >= esquerda[0] and theta < esquerda[1]:
+            comando = 1
+        elif theta >= atras[0] and theta < atras[1]:
+            comando = 2
+        elif theta >= direita[0] and theta < direita[1]:
+            comando = 3
+        elif theta >= frente[0] and theta < frente[1]:
+            comando = 4
+        return theta, direcao_filtro
 
     #comandos para enviar para o robo
     def moving_status(self, status):
