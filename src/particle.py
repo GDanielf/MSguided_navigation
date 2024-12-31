@@ -54,7 +54,7 @@ class Particle:
         dist = sqrt((pose_est[0] - self.x) ** 2 + (pose_est[1] - self.y) ** 2)     
         
         # update Gaussian
-        prob = self.gaussian(dist, self.sigma_atualizacao, 0)
+        prob = self.gaussian(0, self.sigma_atualizacao, dist)
         #print(prob)
         return prob
     

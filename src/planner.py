@@ -16,16 +16,23 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+import copy
 
 class Planner(Node):
     def __init__(self):
         super().__init__('planner')
-        self.subscription_pose_atual = self.create_subscription(
+        self.subscription_pose_estimate = self.create_subscription(
             PoseEstimate,
             '/pose_estimate',
             self.pose_callback,
             10
         ) 
+        self.simulation_subscriber = self.create_subscription(
+            Bool,
+            '/simulation_status',
+            self.simulation_callback,
+            10
+        )
         #self.cmd_vel_subscriber = self.create_subscription(
         #    Twist,
         #    '/cmd_vel',
@@ -64,29 +71,29 @@ class Planner(Node):
         #starvars
         self.m = 16
         #definicoes filtro de particula
-        self.particle_number = 500
+        self.particle_number = 1000
         self.p = []
         for i in range(self.particle_number):
             r = Particle()
             r.set_noise(0.05, 0.087)
             self.p.append(r) 
-        self.publish_particles(self.p)   
         self.publisher_ponto_est = self.create_publisher(Marker, 'topic_pose_est', 10)
         self.ponto_antigo = None
         self.new_pose_received = False
         self.start_timer = None
         self.finish_timer = None   
-        self.dist = 0      
+        self.dist = 0   
+
+    def simulation_callback(self, msg):        
+        if(self.start_planner):
+            self.start_planner = False            
+            self.publish_particles(self.p)   
 
     #obtem o ponto final para determinar onde o robo deve ir
     def pose_callback(self, msg):    
         self.ponto_atual = [msg.x, msg.y]
         self.dist = msg.dist
-        print('ponto recebido: ', self.ponto_atual)
-        if(self.start_planner):
-            self.start_planner = False
-            self.ponto_antigo = self.ponto_atual
-            self.publish_particles(self.p)
+        self.ponto_antigo = self.ponto_atual
         self.publish_ponto_pose_estimada()
         #self.get_logger().info(f'Ponto recebido: {self.ponto_atual}')
         #self.particle_filter(self.particle_number, self.ponto_atual)
@@ -124,7 +131,7 @@ class Planner(Node):
         #predicao
         p2 = []       
         for i in range(self.particle_number):
-            p2.append(self.p[i].move(dist_ponto, acao))
+            p2.append((copy.deepcopy(self.p[i])).move(dist_ponto, acao))
         return p2
     
     def reamostragem(self):
@@ -145,7 +152,7 @@ class Planner(Node):
             while beta > w[index]:
                 beta -= w[index]
                 index = (index + 1) % self.particle_number
-            p3.append(self.p[index])
+            p3.append(copy.deepcopy(self.p[index]))
 
         return p3
 
@@ -160,7 +167,7 @@ class Planner(Node):
             orientation += (((lista_particulas[i].orientacao - lista_particulas[0].orientacao  + math.pi) % (2.0 * math.pi)) 
                         + lista_particulas[0].orientacao  - math.pi)
 
-        return [x, y, orientation]
+        return [x, y, orientation/(len(lista_particulas))]
 
     def obter_direcao(self, ponto_estimado, direcao_filtro, ponto_objetivo):
         #divisao de star vars, admitindo que a orientacao do filtro esteja normalizada
@@ -173,7 +180,7 @@ class Planner(Node):
         ponto_fim = np.array([ponto_objetivo[0], ponto_objetivo[1]])
         vetor_objetivo = (ponto_fim - ponto_inicio)/np.linalg.norm(ponto_fim - ponto_inicio)
 
-        theta = np.dot(np.array([np.cos(direcao_filtro), np.sin(direcao_filtro)]), vetor_objetivo)
+        theta = direcao_filtro + np.dot(np.array([np.cos(direcao_filtro), np.sin(direcao_filtro)]), vetor_objetivo)
         comando = 0
         if theta >= esquerda[0] and theta < esquerda[1]:
             comando = 1
@@ -183,7 +190,7 @@ class Planner(Node):
             comando = 3
         elif theta >= frente[0] and theta < frente[1]:
             comando = 4
-        return theta, direcao_filtro
+        return theta, direcao_filtro, comando
 
     #comandos para enviar para o robo
     def moving_status(self, status):
