@@ -131,7 +131,6 @@ class Triangulation(Node):
         msg = PoseEstimate()
         msg.x = float(self.pose_x)  
         msg.y = float(self.pose_y) 
-        msg.dist = float(self.dist)
         self.pose_publisher.publish(msg)    
 
     def yaw_rotation(self,x,y,z):

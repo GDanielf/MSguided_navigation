@@ -73,28 +73,25 @@ class Planner(Node):
         #definicoes filtro de particula
         self.particle_number = 1000
         self.p = []
-        for i in range(self.particle_number):
-            r = Particle()
-            r.set_noise(0.05, 0.087)
-            self.p.append(r) 
         self.publisher_ponto_est = self.create_publisher(Marker, 'topic_pose_est', 10)
         self.ponto_antigo = None
         self.new_pose_received = False
         self.start_timer = None
         self.finish_timer = None   
-        self.dist = 0   
 
     def simulation_callback(self, msg):        
         if(self.start_planner):
-            self.start_planner = False            
+            self.start_planner = False              
+            for i in range(self.particle_number):
+                self.p.append(Particle(0.5, 0.05, 1.5, 0.5))           
             self.publish_particles(self.p)   
 
     #obtem o ponto final para determinar onde o robo deve ir
     def pose_callback(self, msg):    
         self.ponto_atual = [msg.x, msg.y]
-        self.dist = msg.dist
         self.ponto_antigo = self.ponto_atual
         self.publish_ponto_pose_estimada()
+        self.publish_particles(self.p)   
         #self.get_logger().info(f'Ponto recebido: {self.ponto_atual}')
         #self.particle_filter(self.particle_number, self.ponto_atual)
         #qual regiao esta o ponto?
@@ -102,18 +99,32 @@ class Planner(Node):
         #libera particulas
         
         #enquanto o robo nao chegar na regiao objetivo, faca:
-        #E a orientacao?
+        #E a yaw?
         if(regiao_nova_robo != self.regiao_objetivo):
             #if(regiao_nova_robo >= 32 and regiao_nova_robo <= 79):
             print('if do move') 
+            #mover o robo
             self.move_forward()             
             if self.current_timer:
-                self.current_timer.cancel()
-            self.current_timer = self.create_timer(self.tal, self.stop)        
+                self.current_timer.cancel()            
+            self.current_timer = self.create_timer(self.tal, self.stop)
             self.contador_de_comando += 1  
-            self.p = self.predicao(self.dist, 1)
-            self.p = self.reamostragem()
-            self.publish_particles(self.p)
+            #filtro de particula
+            for i in range(self.particle_number):
+                self.p[i].move(0)
+            
+            for i in range(self.particle_number):
+                self.p[i].measurement_prob(self.ponto_atual)
+
+            p_nova = []
+            for i in range(self.particle_number):
+                particula = self.selecionar_particula(self.p)
+                particula.x = particula.x + random.gauss(0, 0.5)
+                particula.y = particula.y + random.gauss(0, 0.5)
+                particula.yaw = particula.yaw + random.gauss(0, 0.05)
+                p_nova.append(copy.deepcopy(particula))
+
+            self.p = p_nova            
             
             print('direcao: ', self.obter_direcao(self.ponto_atual, self.obter_ponto_filtro(self.p)[2], self.ponto_objetivo))
             #self.plot_particles(self.p)
@@ -126,36 +137,11 @@ class Planner(Node):
             self.contador_de_comando += 1 
     
     #funcoes parciais do filtro de particulas
-    #{0: "parar_robo", 1: "andar_para_frente", 2: "andar_para_tras", 3: "rotacionar_clockwise", 4: "rotacionar_counter_clockwise"}
-    def predicao(self, dist_ponto, acao):
-        #predicao
-        p2 = []       
-        for i in range(self.particle_number):
-            p2.append((copy.deepcopy(self.p[i])).move(dist_ponto, acao))
-        return p2
-    
-    def reamostragem(self):
-        #print(self.ponto_atual)
-        # measurement update
-        w = []
-        for i in range(self.particle_number):
-            w.append(self.p[i].measurement_prob(self.ponto_atual))
-        #print(w)
-        
-        #print(w)
-        p3 = []
-        index = int(random.random() * self.particle_number)
-        beta = 0.0
-        mw = max(w)
-        for i in range(self.particle_number):
-            beta += random.random() * 2.0 * mw
-            while beta > w[index]:
-                beta -= w[index]
-                index = (index + 1) % self.particle_number
-            p3.append(copy.deepcopy(self.p[index]))
-
-        return p3
-
+    def selecionar_particula(self, lista):
+        w_soma = sum([particula.w for particula in lista])
+        probs = [particula.w / w_soma for particula in lista]
+        return lista[np.random.choice(len(lista), p = probs)]
+    #{0: "parar_robo", 1: "andar_para_frente", 2: "andar_para_tras", 3: "rotacionar_clockwise", 4: "rotacionar_counter_clockwise"}  
     
     def obter_ponto_filtro(self, lista_particulas):
         x = 0
@@ -164,13 +150,13 @@ class Planner(Node):
         for i in range(len(lista_particulas)):
             x = x + lista_particulas[i].x
             y = y + lista_particulas[i].y
-            orientation += (((lista_particulas[i].orientacao - lista_particulas[0].orientacao  + math.pi) % (2.0 * math.pi)) 
-                        + lista_particulas[0].orientacao  - math.pi)
+            orientation += (((lista_particulas[i].yaw - lista_particulas[0].yaw  + math.pi) % (2.0 * math.pi)) 
+                        + lista_particulas[0].yaw  - math.pi)
 
         return [x, y, orientation/(len(lista_particulas))]
 
     def obter_direcao(self, ponto_estimado, direcao_filtro, ponto_objetivo):
-        #divisao de star vars, admitindo que a orientacao do filtro esteja normalizada
+        #divisao de star vars, admitindo que a yaw do filtro esteja normalizada
         esquerda = [(self.m * direcao_filtro)/ 8, (3 * self.m * direcao_filtro)/ 8]
         atras = [(3 * self.m * direcao_filtro)/ 8, (5 * self.m * direcao_filtro)/ 8]
         direita = [(5 * self.m * direcao_filtro)/ 8, (7 * self.m * direcao_filtro)/ 8]
@@ -311,7 +297,7 @@ class Planner(Node):
             marker.pose.position.x = point.x
             marker.pose.position.y = point.y
             marker.pose.position.z = 0.0
-            marker.pose.orientation = self.euler_to_quaternion(point.orientacao)
+            marker.pose.orientation = self.euler_to_quaternion(point.yaw)
             marker.scale.x = 1.0
             marker.scale.y = 0.05
             marker.scale.z = 0.05
@@ -330,7 +316,7 @@ class Planner(Node):
         """
         Plota as partículas usando Matplotlib.
 
-        :param points_array: Lista de partículas, onde cada partícula tem atributos x, y e orientacao.
+        :param points_array: Lista de partículas, onde cada partícula tem atributos x, y e yaw.
         """
         # Criar uma nova figura
         plt.figure(figsize=(8, 8))
