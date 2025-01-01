@@ -83,7 +83,8 @@ class Planner(Node):
         if(self.start_planner):
             self.start_planner = False              
             for i in range(self.particle_number):
-                self.p.append(Particle(0.5, 0.05, 1.5, 0.5))           
+                #(ruido_frente, ruido_virar, sigma_atualizacao, sigma_translacao, tamanho = 30.0)
+                self.p.append(Particle(0.5, 0.05, 0.5, 0.5))           
             self.publish_particles(self.p)   
 
     #obtem o ponto final para determinar onde o robo deve ir
