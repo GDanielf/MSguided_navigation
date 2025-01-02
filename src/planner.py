@@ -50,7 +50,7 @@ class Planner(Node):
             4: "rotacionar_counter_clockwise",
         }
         self.stop_duration = 2.0
-        self.rotate_duration = 9
+        self.rotate_duration = 18
         self.tal = 5.0 
         self.current_timer = None
         self.action_queue = []  # Fila de ações a serem executadas
@@ -76,8 +76,7 @@ class Planner(Node):
         self.publisher_ponto_est = self.create_publisher(Marker, 'topic_pose_est', 10)
         self.ponto_antigo = None
         self.new_pose_received = False
-        self.start_timer = None
-        self.finish_timer = None   
+        self.direcao = 0
 
     def simulation_callback(self, msg):        
         if(self.start_planner):
@@ -101,41 +100,64 @@ class Planner(Node):
         
         #enquanto o robo nao chegar na regiao objetivo, faca:
         #E a yaw?
+        print('direcao: ', self.direcao)
         if(regiao_nova_robo != self.regiao_objetivo):
-            #if(regiao_nova_robo >= 32 and regiao_nova_robo <= 79):
-            print('if do move') 
-            #mover o robo
-            self.move_forward()             
-            if self.current_timer:
-                self.current_timer.cancel()            
-            self.current_timer = self.create_timer(self.tal, self.stop)
-            self.contador_de_comando += 1  
-            #filtro de particula
-            for i in range(self.particle_number):
-                self.p[i].move(0)
-            
-            for i in range(self.particle_number):
-                self.p[i].measurement_prob(self.ponto_atual)
+            #if(regiao_nova_robo <= 79):
+            if(self.direcao == 0):                               
+                #mover o robo
+                self.move_forward()             
+                if self.current_timer:
+                    self.current_timer.cancel()            
+                self.current_timer = self.create_timer(self.tal, self.stop)
+                self.contador_de_comando += 1  
+                #filtro de particula
+                self.filtro_de_particulas(0)
+            elif(self.direcao == 1):
+                #rotacione para esquerda e ande para frente
+                self.rotate_counter_clockwise()
+                if self.current_timer:
+                    self.current_timer.cancel()            
+                self.current_timer = self.create_timer(self.rotate_duration, self.stop)
+                self.filtro_de_particulas(1.57)
 
-            p_nova = []
-            for i in range(self.particle_number):
-                particula = self.selecionar_particula(self.p)
-                particula.x = particula.x + random.gauss(0, 0.5)
-                particula.y = particula.y + random.gauss(0, 0.5)
-                particula.yaw = particula.yaw + random.gauss(0, 0.05)
-                p_nova.append(copy.deepcopy(particula))
+            #if(regiao_nova_robo != self.regiao_antiga and self.regiao_antiga != 500):
+            #    self.stop()
+            #    self.regiao_antiga = regiao_nova_robo
+                    
 
-            self.p = p_nova            
-            
-            print('direcao: ', self.obter_direcao(self.ponto_atual, self.obter_ponto_filtro(self.p)[2], self.ponto_objetivo))
-            #self.plot_particles(self.p)
-            #print(len(self.p))                    
+                #if self.regiao_antiga          
+                
+                
+                #self.plot_particles(self.p)
+                #print(len(self.p))                    
         else:
             print('chegou')
             self.stop()
             #obter direcao 
             #rotacionar o robo 
             self.contador_de_comando += 1 
+
+    def filtro_de_particulas(self, rotacao):
+        #filtro de particula
+        # predicao
+        for i in range(self.particle_number):
+            self.p[i].move(rotacao)
+        
+        # atualizacao
+        for i in range(self.particle_number):
+            self.p[i].measurement_prob(self.ponto_atual)
+
+        #
+        p_nova = []
+        for i in range(self.particle_number):
+            particula = self.selecionar_particula(self.p)
+            particula.x = particula.x + random.gauss(0, 0.5)
+            particula.y = particula.y + random.gauss(0, 0.5)
+            particula.yaw = particula.yaw + random.gauss(0, 0.05)
+            p_nova.append(copy.deepcopy(particula))
+
+        self.p = p_nova 
+        self.direcao = self.obter_direcao(self.ponto_atual, self.obter_ponto_filtro(self.p)[2], self.ponto_objetivo)
     
     #funcoes parciais do filtro de particulas
     def selecionar_particula(self, lista):
@@ -177,7 +199,7 @@ class Planner(Node):
             comando = 3
         elif theta >= frente[0] and theta < frente[1]:
             comando = 4
-        return theta, direcao_filtro, comando
+        return comando
 
     #comandos para enviar para o robo
     def moving_status(self, status):
@@ -208,15 +230,13 @@ class Planner(Node):
             next_action = self.action_queue.pop(0)
             next_action()         
 
-    def stop(self):     
-        self.finish_timer = time.time()     
+    def stop(self):      
         self.get_logger().info(f'Robo parado')
         self.velocity_sender(0.0, 0.0)
         self.movement_in_progress = False
         self.moving_status(self.movement_in_progress)
 
     def move_forward(self):        
-        self.start_timer = time.time() 
         self.get_logger().info(f'Movendo o robo para frente')
         self.velocity_sender(1.0, 0.0)  
         self.movement_in_progress = True
@@ -228,18 +248,21 @@ class Planner(Node):
         self.velocity_sender(-1.0, 0.0)
         self.schedule_action(self.stop, self.tal) 
         self.movement_in_progress = True
+        self.moving_status(self.movement_in_progress)
 
     def rotate_clockwise(self):
         self.get_logger().info(f'Rotacionando no sentido horario')
         self.velocity_sender(0.0, -0.5)
         self.schedule_action(self.stop, self.rotate_duration)
         self.movement_in_progress = True
+        self.moving_status(self.movement_in_progress)
 
     def rotate_counter_clockwise(self):
         self.get_logger().info(f'Rotacionando no sentido anti-horario')
         self.velocity_sender(0.0, 0.5)
         self.schedule_action(self.stop, self.rotate_duration)
         self.movement_in_progress = True
+        self.moving_status(self.movement_in_progress)
 
     def euler_to_quaternion(self, angulo):
         qx = 0.0
@@ -293,18 +316,16 @@ class Planner(Node):
             marker.header.stamp = self.get_clock().now().to_msg()      
             marker.ns = "filtro_points"
             marker.id = i
-            marker.type = Marker.ARROW
+            marker.type = Marker.SPHERE
             marker.action = Marker.ADD
             marker.pose.position.x = point.x
             marker.pose.position.y = point.y
-            marker.pose.position.z = 0.0
-            marker.pose.orientation = self.euler_to_quaternion(point.yaw)
-            marker.scale.x = 1.0
-            marker.scale.y = 0.05
-            marker.scale.z = 0.05
-            marker.color.a = 1.0
-            marker.color.r = 0.0
-            marker.color.g = 1.0
+            marker.scale.x = 0.2  # Tamanho do ponto
+            marker.scale.y = 0.2
+            marker.scale.z = 0.2
+            marker.color.a = 1.0  # Opacidade total
+            marker.color.r = 0.0  # Cor vermelha
+            marker.color.g = 0.0
             marker.color.b = 1.0
             i += 1
 
