@@ -7,6 +7,8 @@ from std_msgs.msg import Bool
 from geometry_msgs.msg import Pose, Twist, Quaternion
 from visualization_msgs.msg import Marker, MarkerArray
 from guided_navigation.msg import PoseEstimate
+from geometry_msgs.msg import PoseArray
+from scipy.spatial.transform import Rotation
 
 from std_msgs.msg import Int32
 from particle import Particle
@@ -31,6 +33,12 @@ class Planner(Node):
             Bool,
             '/simulation_status',
             self.simulation_callback,
+            10
+        )
+        self.subscription = self.create_subscription(
+            PoseArray,
+            '/model/marble_husky_sensor_config_5/pose',
+            self.robot_real_pose_callback,
             10
         )
         #self.cmd_vel_subscriber = self.create_subscription(
@@ -74,23 +82,33 @@ class Planner(Node):
         self.particle_number = 1000
         self.p = []
         self.publisher_ponto_est = self.create_publisher(Marker, 'topic_pose_est', 10)
+        self.publisher_real_pose = self.create_publisher(Marker, 'topic_real_pose', 10)
+
         self.ponto_antigo = None
         self.new_pose_received = False
         self.direcao = 0
+        #robo real
+        self.robot_real_pose = None
 
     def simulation_callback(self, msg):        
         if(self.start_planner):
             self.start_planner = False              
             for i in range(self.particle_number):
                 #(ruido_frente, ruido_virar, sigma_atualizacao, sigma_translacao, tamanho = 30.0)
-                self.p.append(Particle(0.5, 0.05, 0.5, 0.5))           
+                self.p.append(Particle(0.5, 0.025, 0.5, 0.5))           
             self.publish_particles(self.p)   
+
+    def robot_real_pose_callback(self, msg):
+        if msg.poses:
+            self.robot_real_pose = msg.poses[-1]
+
+        self.publish_real_robot_pose()
 
     #obtem o ponto final para determinar onde o robo deve ir
     def pose_callback(self, msg):    
         self.ponto_atual = [msg.x, msg.y]
         self.ponto_antigo = self.ponto_atual
-        self.publish_ponto_pose_estimada()
+        #self.publish_ponto_pose_estimada()
         self.publish_particles(self.p)   
         #self.get_logger().info(f'Ponto recebido: {self.ponto_atual}')
         #self.particle_filter(self.particle_number, self.ponto_atual)
@@ -103,7 +121,7 @@ class Planner(Node):
         print('direcao: ', self.direcao)
         if(regiao_nova_robo != self.regiao_objetivo):
             #if(regiao_nova_robo <= 79):
-            if(self.direcao == 0):                               
+            if(self.direcao == 0 or self.direcao == 4):                               
                 #mover o robo
                 self.move_forward()             
                 if self.current_timer:
@@ -112,6 +130,10 @@ class Planner(Node):
                 self.contador_de_comando += 1  
                 #filtro de particula
                 self.filtro_de_particulas(0)
+                self.publish_ponto_pose_estimada()
+                print('melhor particula: ', self.selecionar_particula(self.p))
+                print('media: ', self.obter_ponto_filtro_media(self.p))
+                print('pose real: ', self.robot_real_pose.position.x, self.robot_real_pose.position.y, self.robot_real_pose.orientation.z)
             elif(self.direcao == 1):
                 #rotacione para esquerda e ande para frente
                 self.rotate_counter_clockwise()
@@ -119,6 +141,7 @@ class Planner(Node):
                     self.current_timer.cancel()            
                 self.current_timer = self.create_timer(self.rotate_duration, self.stop)
                 self.filtro_de_particulas(1.57)
+                self.publish_ponto_pose_estimada()
 
             #if(regiao_nova_robo != self.regiao_antiga and self.regiao_antiga != 500):
             #    self.stop()
@@ -141,7 +164,7 @@ class Planner(Node):
         #filtro de particula
         # predicao
         for i in range(self.particle_number):
-            self.p[i].move(rotacao)
+            self.p[i].move(rotacao)        
         
         # atualizacao
         for i in range(self.particle_number):
@@ -153,11 +176,11 @@ class Planner(Node):
             particula = self.selecionar_particula(self.p)
             particula.x = particula.x + random.gauss(0, 0.5)
             particula.y = particula.y + random.gauss(0, 0.5)
-            particula.yaw = particula.yaw + random.gauss(0, 0.05)
+            particula.yaw = particula.yaw + random.gauss(0, 0.025)
             p_nova.append(copy.deepcopy(particula))
 
         self.p = p_nova 
-        self.direcao = self.obter_direcao(self.ponto_atual, self.obter_ponto_filtro(self.p)[2], self.ponto_objetivo)
+        self.direcao = self.obter_direcao(self.ponto_atual, self.obter_ponto_filtro_media(self.p)[2], self.ponto_objetivo)
     
     #funcoes parciais do filtro de particulas
     def selecionar_particula(self, lista):
@@ -166,17 +189,18 @@ class Planner(Node):
         return lista[np.random.choice(len(lista), p = probs)]
     #{0: "parar_robo", 1: "andar_para_frente", 2: "andar_para_tras", 3: "rotacionar_clockwise", 4: "rotacionar_counter_clockwise"}  
     
-    def obter_ponto_filtro(self, lista_particulas):
+    def obter_ponto_filtro_media(self, lista_particulas):
         x = 0
         y = 0
-        orientation = 0.0
+        yaw_sin = 0
+        yaw_cos = 0
         for i in range(len(lista_particulas)):
             x = x + lista_particulas[i].x
             y = y + lista_particulas[i].y
-            orientation += (((lista_particulas[i].yaw - lista_particulas[0].yaw  + math.pi) % (2.0 * math.pi)) 
-                        + lista_particulas[0].yaw  - math.pi)
+            yaw_sin = yaw_sin + math.sin(lista_particulas[i].yaw)
+            yaw_cos = yaw_cos + math.cos(lista_particulas[i].yaw)
 
-        return [x, y, orientation/(len(lista_particulas))]
+        return [x/(len(lista_particulas)), y/(len(lista_particulas)), math.atan2(yaw_sin, yaw_cos)]
 
     def obter_direcao(self, ponto_estimado, direcao_filtro, ponto_objetivo):
         #divisao de star vars, admitindo que a yaw do filtro esteja normalizada
@@ -189,7 +213,7 @@ class Planner(Node):
         ponto_fim = np.array([ponto_objetivo[0], ponto_objetivo[1]])
         vetor_objetivo = (ponto_fim - ponto_inicio)/np.linalg.norm(ponto_fim - ponto_inicio)
 
-        theta = direcao_filtro + np.dot(np.array([np.cos(direcao_filtro), np.sin(direcao_filtro)]), vetor_objetivo)
+        theta = direcao_filtro + np.arccos(np.dot(np.array([np.cos(direcao_filtro), np.sin(direcao_filtro)]), vetor_objetivo))
         comando = 0
         if theta >= esquerda[0] and theta < esquerda[1]:
             comando = 1
@@ -264,28 +288,29 @@ class Planner(Node):
         self.movement_in_progress = True
         self.moving_status(self.movement_in_progress)
 
-    def euler_to_quaternion(self, angulo):
-        qx = 0.0
-        qy = 0.0
-        qz = math.sin(angulo / 2.0)
-        qw = math.cos(angulo / 2.0)
-        return Quaternion(x=qx, y=qy, z=qz, w=qw)  
-
     def publish_ponto_pose_estimada(self):
+        quaternion_euler = Rotation.from_euler('xyz', [0, 0, self.obter_ponto_filtro_media(self.p)[2]]).as_quat()
+        quat_msg = Quaternion()
+        quat_msg.x = quaternion_euler[0]
+        quat_msg.y = quaternion_euler[1]
+        quat_msg.z = quaternion_euler[2]
+        quat_msg.w = quaternion_euler[3]
         marker = Marker()
         marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
         marker.header.stamp = self.get_clock().now().to_msg()
         marker.ns = "single_point"
         marker.id = 0  # Mantenha o mesmo ID para substituir o ponto anterior
-        marker.type = Marker.SPHERE  # Ou Marker.POINTS, mas um único ponto será suficiente
+        marker.type = Marker.ARROW  # Ou Marker.POINTS, mas um único ponto será suficiente
         marker.action = Marker.ADD 
         # Adicionar o ponto atualizado
         marker.pose.position.x = self.ponto_atual[0]
         marker.pose.position.y = self.ponto_atual[1]
+        marker.pose.position.z = 1.0
+        marker.pose.orientation = quat_msg
         # Definindo a cor e tamanho
-        marker.scale.x = 0.2  # Tamanho do ponto
-        marker.scale.y = 0.2
-        marker.scale.z = 0.2
+        marker.scale.x = 1.0  # Tamanho do ponto
+        marker.scale.y = 0.125
+        marker.scale.z = 0.125
         marker.color.a = 1.0  # Opacidade total
         marker.color.r = 1.0  # Cor vermelha
         marker.color.g = 0.0
@@ -320,46 +345,46 @@ class Planner(Node):
             marker.action = Marker.ADD
             marker.pose.position.x = point.x
             marker.pose.position.y = point.y
-            marker.scale.x = 0.2  # Tamanho do ponto
-            marker.scale.y = 0.2
-            marker.scale.z = 0.2
+            marker.scale.x = 0.1  # Tamanho do ponto
+            marker.scale.y = 0.1
+            marker.scale.z = 0.1
             marker.color.a = 1.0  # Opacidade total
             marker.color.r = 0.0  # Cor vermelha
-            marker.color.g = 0.0
-            marker.color.b = 1.0
+            marker.color.g = 1.0
+            marker.color.b = 0.0
             i += 1
 
             marker_array.markers.append(marker)
 
         self.publisher_filtro.publish(marker_array)   
 
-        
-    def plot_particles(self, points_array):
-        """
-        Plota as partículas usando Matplotlib.
-
-        :param points_array: Lista de partículas, onde cada partícula tem atributos x, y e yaw.
-        """
-        # Criar uma nova figura
-        plt.figure(figsize=(8, 8))
-        plt.title("Distribuição de Partículas")
-        plt.xlabel("X")
-        plt.ylabel("Y")
-
-        # Extrair as posições e orientações
-        x_positions = [point.x for point in points_array]
-        y_positions = [point.y for point in points_array]
-
-        # Adicionar as partículas ao gráfico como pontos
-        plt.scatter(x_positions, y_positions, c='blue', label="Partículas", alpha=0.7)
-
-        # Configurações adicionais
-        plt.grid(True)
-        plt.axhline(0, color='black', linewidth=0.5)
-        plt.axvline(0, color='black', linewidth=0.5)
-        plt.legend()
-        plt.axis('equal')  # Escala igual para X e Y
-        plt.show()
+    def publish_real_robot_pose(self):
+        marker = Marker()
+        marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = "robot_point"
+        marker.id = 0  # Mantenha o mesmo ID para substituir o ponto anterior
+        marker.type = Marker.ARROW  # Ou Marker.POINTS, mas um único ponto será suficiente
+        marker.action = Marker.ADD 
+        # Adicionar o ponto atualizado
+        marker.pose.position.x = self.robot_real_pose.position.x
+        marker.pose.position.y = self.robot_real_pose.position.y
+        marker.pose.position.z = 1.0
+        marker.pose.orientation = self.robot_real_pose.orientation
+        # Definindo a cor e tamanho
+        marker.scale.x = 1.0  # Tamanho do ponto
+        marker.scale.y = 0.125
+        marker.scale.z = 0.125
+        marker.color.a = 1.0  # Opacidade total
+        marker.color.r = 1.0  # Cor vermelha
+        marker.color.g = 0.0
+        marker.color.b = 1.0
+            
+        self.publisher_real_pose.publish(marker)
+        # Apagar o ponto antigo se necessário
+        delete_marker = Marker()
+        delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
+        self.publisher_real_pose.publish(delete_marker) 
 
 def main(args=None):
     rclpy.init(args=args)
