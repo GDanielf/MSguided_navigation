@@ -8,12 +8,11 @@ class Particle:
     #    creates robot and initializes location/yaw 
     #
 
-    def __init__(self, ruido_frente, ruido_virar, sigma_atualizacao, sigma_translacao, tamanho = 30.0):
+    def __init__(self, ruido_virar, sigma_atualizacao, sigma_translacao, tamanho = 30.0):
         self.tamanho = tamanho
         self.x = random.uniform(-tamanho, tamanho)
         self.y = random.uniform(-tamanho, tamanho) # initial y position
         self.yaw = random.random() * 2.0 * pi # initial yaw
-        self.ruido_frente  = ruido_frente # initialize bearing noise to zero
         self.ruido_virar = ruido_virar # initialize steering noise to zero
         self.sigma_atualizacao = sigma_atualizacao
         self.sigma_translacao = sigma_translacao

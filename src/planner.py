@@ -95,7 +95,7 @@ class Planner(Node):
             self.start_planner = False              
             for i in range(self.particle_number):
                 #(ruido_frente, ruido_virar, sigma_atualizacao, sigma_translacao, tamanho = 30.0)
-                self.p.append(Particle(0.5, 0.025, 0.5, 0.5))           
+                self.p.append(Particle(0.05, 0.5, 0.5))           
             self.publish_particles(self.p)   
 
     def robot_real_pose_callback(self, msg):
@@ -121,7 +121,7 @@ class Planner(Node):
         print('direcao: ', self.direcao)
         if(regiao_nova_robo != self.regiao_objetivo):
             #if(regiao_nova_robo <= 79):
-            if(self.direcao == 0 or self.direcao == 4):                               
+            if(self.direcao == 0 or self.direcao == 4 or self.direcao == 3 or self.direcao == 2 or self.direcao == 1):                               
                 #mover o robo
                 self.move_forward()             
                 if self.current_timer:
@@ -134,7 +134,7 @@ class Planner(Node):
                 print('melhor particula: ', self.selecionar_particula(self.p))
                 print('media: ', self.obter_ponto_filtro_media(self.p))
                 print('pose real: ', self.robot_real_pose.position.x, self.robot_real_pose.position.y, self.robot_real_pose.orientation.z)
-            elif(self.direcao == 1):
+            else:
                 #rotacione para esquerda e ande para frente
                 self.rotate_counter_clockwise()
                 if self.current_timer:
