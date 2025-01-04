@@ -92,7 +92,6 @@ class Triangulation(Node):
         self.xlimit = [-25, 25]
         self.ylimit = [-15, 15]       
         self.hfov_limit = 0.2182 
-        self.dist = 0
 
         self.last_pose = [0.0, 0.0]
         self.tolerance = 0.01
@@ -103,14 +102,7 @@ class Triangulation(Node):
             '/image_angles',
             self.triangulation_callback,
             10
-        )     
-        self.robot_moving = False
-        self.subscription_robo_movendo = self.create_subscription(
-            Bool,
-            '/robot_moving',
-            self.robot_moving_callback,
-            10
-        )    
+        )        
 
         # Desativar mensagens de retorno de chamada não utilizadas
         self.image_angle_subscription
@@ -119,12 +111,6 @@ class Triangulation(Node):
         self.rviz_publisher = self.create_publisher(MarkerArray, 'visualization_marker_array', 10)
         self.pose_x = 0
         self.pose_y = 0
-        
-        
-
-    def robot_moving_callback(self, msg):
-        msg = Bool()
-        self.robot_moving = msg.data
 
     def publish_pose_estimate(self):
         # Cria a mensagem de pose estimada e publica
@@ -135,55 +121,7 @@ class Triangulation(Node):
 
     def yaw_rotation(self,x,y,z):
         w = np.sqrt(1 - x**2 - y**2 - z**2)
-        return np.arctan2(2 * (w * z + x * y), 1 - 2 * (y**2 + z**2))
-    
-    def compara_ponto(self, camera_list, camera_desejada, ponto):
-        a = round(ponto[0],2)
-        b = round(ponto[1],2)
-        if (camera_desejada == 0 or camera_desejada == 1 or camera_desejada == 2 or camera_desejada == 3 or camera_desejada == 4 or camera_desejada == 5
-            or camera_desejada == 6 or camera_desejada == 7 or camera_desejada == 8 or camera_desejada == 9):
-            return (b >= round(camera_list[0][1],2))
-        elif (camera_desejada == 10 or camera_desejada == 11 or camera_desejada == 12 or camera_desejada == 13 or camera_desejada == 14 or camera_desejada == 15 
-              or camera_desejada == 16 or camera_desejada == 17  or camera_desejada == 18):
-            return (b <= round(camera_list[10][1],2))
-        elif (camera_desejada == 19 or camera_desejada == 20 or camera_desejada == 21 or camera_desejada == 22 or camera_desejada == 23 or camera_desejada == 24 
-              or camera_desejada == 25):
-            return (a <= round(camera_list[19][0],2))
-        elif (camera_desejada == 26 or camera_desejada == 27 or camera_desejada == 28 or camera_desejada == 29 or camera_desejada == 30 or camera_desejada == 31 
-              or camera_desejada == 32 or camera_desejada == 33 or camera_desejada == 34):
-            return (a >= round(camera_list[26][0],2))
-    
-    def intersecao_retas(self, A1, B1, C1, A2, B2, C2, camera_list, camera1, camera2):
-        try:
-            # Montagem das matrizes
-            A = np.array([[A1, B1],
-                        [A2, B2]])
-            C = np.array([-C1, -C2])
-
-            # Verificar se as retas são paralelas
-            det = np.linalg.det(A)
-            if det == 0:
-                #print("As retas são paralelas ou coincidentes. Não há interseção única.")
-                return None
-
-            # Resolver a equação para encontrar a interseção
-            ponto = np.linalg.solve(A, C)
-            #print(ponto)
-            if(self.compara_ponto(camera_list, camera1, ponto) and self.compara_ponto(camera_list, camera2, ponto)):
-                return ponto
-            else:
-                return None
-        except np.linalg.LinAlgError:
-            #print("Erro: Matriz singular. Não é possível calcular a interseção.")
-            return None
-
-    def verificar_direcao(self, ponto, origem, direcao):
-        produto_escalar = 0
-        if not isnan(direcao[0]):
-            vetor_intersecao = ponto - origem
-            produto_escalar = np.dot(vetor_intersecao, direcao)   
-            #print(produto_escalar > 0)         
-        return produto_escalar > 0   
+        return np.arctan2(2 * (w * z + x * y), 1 - 2 * (y**2 + z**2))   
     
     def baricentro(self, lista_pontos_interseccao):
         x = 0
@@ -424,8 +362,6 @@ class Triangulation(Node):
         result = (est_1 + est_2)/2
 
         return result  
-    
-            
 
     def triangulation_callback(self, msg):        
         camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos, self.camera3_pos,
@@ -522,9 +458,8 @@ class Triangulation(Node):
         #print('retas: ', retas)
         #print('ang: ', image_angles)
         #print('ang tratado: ', image_angles_res)
-        #print('pos tratado: ', camera_rotations)       
-              
-        
+        #print('pos tratado: ', camera_rotations)  
+
         pontos_interseccao = []
         ponto = []
         pares_ortogonais = {(0, 3), (3, 0), (1, 3), (3, 1), (1, 2), (2, 1), (0, 2), (2, 0)}
@@ -552,12 +487,11 @@ class Triangulation(Node):
         
         bar_x, bar_y = self.baricentro(pontos_interseccao)
         self.pose_x = float(bar_x)
-        self.pose_y = float(bar_y) 
-        self.dist = sqrt((((self.pose_x - self.last_pose[0])**2 + (self.pose_y - self.last_pose[1])**2)))  
-        if((self.pose_x != 0.0 and self.pose_y != 0.0) and not self.robot_moving and (self.dist >= self.tolerance)):
+        self.pose_y = float(bar_y)         
+        if((self.pose_x != 0.0 and self.pose_y != 0.0)):
             self.publish_pose_estimate()
-            self.last_pose = [self.pose_x, self.pose_y]    
-        #self.plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)
+            #self.last_pose = [self.pose_x, self.pose_y]    
+        self.plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)
         #self.matplt_plotting_all(camera_position, camera_rotations, hfov_limit, image_angles_res, pontos_interseccao, self.pose_x, self.pose_y)
         #print('pontos de intersec: ', pontos_interseccao)
         #print('baricentro: ', [bar_x, bar_y])

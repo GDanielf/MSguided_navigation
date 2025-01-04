@@ -79,10 +79,11 @@ class Planner(Node):
         #starvars
         self.m = 16
         #definicoes filtro de particula
-        self.particle_number = 1000
+        self.particle_number = 10000
         self.p = []
         self.publisher_ponto_est = self.create_publisher(Marker, 'topic_pose_est', 10)
         self.publisher_real_pose = self.create_publisher(Marker, 'topic_real_pose', 10)
+        self.publisher_filto_media = self.create_publisher(Marker, 'topic_filtro_media', 10)
 
         self.ponto_antigo = None
         self.new_pose_received = False
@@ -94,8 +95,8 @@ class Planner(Node):
         if(self.start_planner):
             self.start_planner = False              
             for i in range(self.particle_number):
-                #(ruido_frente, ruido_virar, sigma_atualizacao, sigma_translacao, tamanho = 30.0)
-                self.p.append(Particle(0.05, 0.5, 0.5))           
+                #ruido_virar, sigma_atualizacao, sigma_translacao
+                self.p.append(Particle(0.5, 0.5, 0.5))           
             self.publish_particles(self.p)   
 
     def robot_real_pose_callback(self, msg):
@@ -131,6 +132,7 @@ class Planner(Node):
                 #filtro de particula
                 self.filtro_de_particulas(0)
                 self.publish_ponto_pose_estimada()
+                self.publish_filtro_media()
                 print('melhor particula: ', self.selecionar_particula(self.p))
                 print('media: ', self.obter_ponto_filtro_media(self.p))
                 print('pose real: ', self.robot_real_pose.position.x, self.robot_real_pose.position.y, self.robot_real_pose.orientation.z)
@@ -177,9 +179,11 @@ class Planner(Node):
             particula.x = particula.x + random.gauss(0, 0.5)
             particula.y = particula.y + random.gauss(0, 0.5)
             particula.yaw = particula.yaw + random.gauss(0, 0.025)
-            p_nova.append(copy.deepcopy(particula))
+            p_nova.append(copy.deepcopy(particula)) 
 
         self.p = p_nova 
+        for i in range(5):
+            print(self.p[i])
         self.direcao = self.obter_direcao(self.ponto_atual, self.obter_ponto_filtro_media(self.p)[2], self.ponto_objetivo)
     
     #funcoes parciais do filtro de particulas
@@ -213,7 +217,7 @@ class Planner(Node):
         ponto_fim = np.array([ponto_objetivo[0], ponto_objetivo[1]])
         vetor_objetivo = (ponto_fim - ponto_inicio)/np.linalg.norm(ponto_fim - ponto_inicio)
 
-        theta = direcao_filtro + np.arccos(np.dot(np.array([np.cos(direcao_filtro), np.sin(direcao_filtro)]), vetor_objetivo))
+        theta = (direcao_filtro + np.arccos(np.dot(np.array([np.cos(direcao_filtro), np.sin(direcao_filtro)]), vetor_objetivo))) % 2 * math.pi
         comando = 0
         if theta >= esquerda[0] and theta < esquerda[1]:
             comando = 1
@@ -385,6 +389,40 @@ class Planner(Node):
         delete_marker = Marker()
         delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
         self.publisher_real_pose.publish(delete_marker) 
+
+    def publish_filtro_media(self):
+        quaternion_euler_2 = Rotation.from_euler('xyz', [0, 0, self.obter_ponto_filtro_media(self.p)[2]]).as_quat()
+        marker = Marker()
+        quat_msg_2 = Quaternion()
+        quat_msg_2.x = quaternion_euler_2[0]
+        quat_msg_2.y = quaternion_euler_2[1]
+        quat_msg_2.z = quaternion_euler_2[2]
+        quat_msg_2.w = quaternion_euler_2[3]
+        marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = "filtro_media"
+        marker.id = 0  # Mantenha o mesmo ID para substituir o ponto anterior
+        marker.type = Marker.ARROW  # Ou Marker.POINTS, mas um único ponto será suficiente
+        marker.action = Marker.ADD 
+        # Adicionar o ponto atualizado
+        marker.pose.position.x = self.obter_ponto_filtro_media(self.p)[0]
+        marker.pose.position.y = self.obter_ponto_filtro_media(self.p)[1]
+        marker.pose.position.z = 1.0
+        marker.pose.orientation = quat_msg_2
+        # Definindo a cor e tamanho
+        marker.scale.x = 1.0  # Tamanho do ponto
+        marker.scale.y = 0.125
+        marker.scale.z = 0.125
+        marker.color.a = 1.0  # Opacidade total
+        marker.color.r = 0.0  # Cor vermelha
+        marker.color.g = 1.0
+        marker.color.b = 1.0
+            
+        self.publisher_filto_media.publish(marker)
+        # Apagar o ponto antigo se necessário
+        delete_marker = Marker()
+        delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
+        self.publisher_filto_media.publish(delete_marker) 
 
 def main(args=None):
     rclpy.init(args=args)

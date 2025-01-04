@@ -20,27 +20,31 @@ def generate_launch_description():
             executable='parameter_bridge',
             name='cmd_vel_bridge',
             arguments=['/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist'],
-            output='screen'
+            output='screen',
+            parameters=[{'use_sim_time': True}]
         ),
         Node(package='ros_gz_bridge',
              executable='parameter_bridge',
              name='robot_real_pose',
              arguments=['/model/marble_husky_sensor_config_5/pose@geometry_msgs/msg/PoseArray[gz.msgs.Pose_V'],
-             output='screen'
+             output='screen',
+             parameters=[{'use_sim_time': True}]
         ),
         Node(
             package='ros_gz_bridge',
             executable='parameter_bridge',
             name='clock_simulation_bridge',
             arguments=['/clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock'],
-            output='screen'
+            output='screen',
+            parameters=[{'use_sim_time': True}]
         ),                
         Node(
             package='ros_gz_bridge',
             executable='parameter_bridge',
             name='husky_odometry_bridge',
             arguments=['/model/marble_husky_sensor_config_5/odometry@nav_msgs/msg/Odometry@ignition.msgs.Odometry'],
-            output='screen'
+            output='screen',
+            parameters=[{'use_sim_time': True}]
         ),
 
     ]
@@ -52,7 +56,8 @@ def generate_launch_description():
             executable='parameter_bridge',
             name=f'camera_{i}_bridge',
             arguments=[f'/world/empty/model/rgbd_camera_{i}/link/link_{i}/sensor/camera_sensor_{i}/image@sensor_msgs/msg/Image@gz.msgs.Image'],
-            output='screen'
+            output='screen',
+            parameters=[{'use_sim_time': True}]
         ) for i in range(35)  # Vai de 0 até 34
     ]
 

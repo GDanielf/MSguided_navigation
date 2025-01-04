@@ -11,6 +11,8 @@ import cv2
 import inference
 import numpy as np
 import math
+from message_filters import Subscriber, TimeSynchronizer
+from rosgraph_msgs.msg import Clock
 
 #from guided_navigation.msg import Rectangle
 class MultiCamera(Node):
@@ -31,284 +33,58 @@ class MultiCamera(Node):
         self.start_point = (self.mid_x, 0)  # Ponto de início (meio da imagem, topo)
         self.end_point = (self.mid_x, self.image_height)
         self.line_color = (0, 0, 0)
-        self.thickness = 2        
+        self.thickness = 2       
 
         # Configuração do Modelo
         self.model = inference.get_model("husky_test/3")
 
-        
-
-        def simulation_callback(self, msg):
-            if msg.data:
-                self.publish_pose_estimate()
+        self.subscription_robo_movendo = self.create_subscription(
+            Bool, '/robot_moving', self.robot_moving_callback, 10
+        )   
+        self.simulation_subscriber = self.create_subscription(
+            Bool, '/simulation_status', self.simulation_callback, 10
+        ) 
+        self.create_subscription(
+            Clock, '/clock', self.clock_callback, 10  
+        )
 
         #angle_publisher para enviar os valores dos angulos timer_publition publica msg a cada 1 seg
         self.angle_publisher = self.create_publisher(ImagesAngles, 'image_angles', 10)
 
         self.angles = [float('nan')] * 35 
-        self.active_cameras = {i: False for i in range(35)}
+        self.active_cameras = {i: False for i in range(35)}     
 
-        self.simulation_subscriber = self.create_subscription(
-            Bool,
-            '/simulation_status',
-            self.simulation_callback,
-            10
-        )
+        self.robot_moving = False 
+        self.simulation_active = False         
+        self.simulation_time = None 
+        self.robot_stopped_time = None
 
-        # Subscrições para os tópicos de imagem
+        # Subscrições para os tópicos de imagem        
+        self.camera_subscribers = []
+        for i in range(35):
+            topic_name = f'/world/empty/model/rgbd_camera_{i}/link/link_{i}/sensor/camera_sensor_{i}/image'
+            subscriber = Subscriber(self, Image, topic_name)
+            self.camera_subscribers.append(subscriber)
         
-        # Aqui criamos a assinatura para cada câmera
-        self.subscription0 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_0/link/link_0/sensor/camera_sensor_0/image',
-            lambda msg: self.camera_callback(msg, 0),  
-            10
-        )
-
-        self.subscription1 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_1/link/link1/sensor/camera_sensor_1/image',
-            lambda msg: self.camera_callback(msg, 1),  
-            10
-        )
-
-        self.subscription2 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_2/link/link_2/sensor/camera_sensor_2/image',
-            lambda msg: self.camera_callback(msg, 2),  
-            10
-        )
-
-        self.subscription3 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_3/link/link_3/sensor/camera_sensor_3/image',
-            lambda msg: self.camera_callback(msg, 3),  
-            10
-        )
-
-        self.subscription4 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_4/link/link_4/sensor/camera_sensor_4/image',
-            lambda msg: self.camera_callback(msg, 4),  
-            10
-        )
-
-        self.subscription5 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_5/link/link_5/sensor/camera_sensor_5/image',
-            lambda msg: self.camera_callback(msg, 5),  
-            10
-        )
-
-        self.subscription6 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_6/link/link_6/sensor/camera_sensor_6/image',
-            lambda msg: self.camera_callback(msg, 6),  
-            10
-        )
-
-        self.subscription7 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_7/link/link_7/sensor/camera_sensor_7/image',
-            lambda msg: self.camera_callback(msg, 7),  
-            10
-        )
-
-        self.subscription8 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_8/link/link_8/sensor/camera_sensor_8/image',
-            lambda msg: self.camera_callback(msg, 8),  
-            10
-        )
-
-        self.subscription9 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_9/link/link_9/sensor/camera_sensor_9/image',
-            lambda msg: self.camera_callback(msg, 9),  
-            10
-        )
-
-        self.subscription10 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_10/link/link_10/sensor/camera_sensor_10/image',
-            lambda msg: self.camera_callback(msg, 10),  
-            10
-        )
-
-        self.subscription11 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_11/link/link_11/sensor/camera_sensor_11/image',
-            lambda msg: self.camera_callback(msg, 11),  
-            10
-        )
-
-        self.subscription12 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_12/link/link_12/sensor/camera_sensor_12/image',
-            lambda msg: self.camera_callback(msg, 12),  
-            10
-        )
-
-        self.subscription13 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_13/link/link_13/sensor/camera_sensor_13/image',
-            lambda msg: self.camera_callback(msg, 13),  
-            10
-        )
-
-        self.subscription14 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_14/link/link_14/sensor/camera_sensor_14/image',
-            lambda msg: self.camera_callback(msg, 14),  
-            10
-        )
-
-        self.subscription15 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_15/link/link_15/sensor/camera_sensor_15/image',
-            lambda msg: self.camera_callback(msg, 15),  
-            10
-        )
-
-        self.subscription16 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_16/link/link_16/sensor/camera_sensor_16/image',
-            lambda msg: self.camera_callback(msg, 16),  
-            10
-        )
-
-        self.subscription17 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_17/link/link_17/sensor/camera_sensor_17/image',
-            lambda msg: self.camera_callback(msg, 17),  
-            10
-        )
-
-        self.subscription18 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_18/link/link_18/sensor/camera_sensor_18/image',
-            lambda msg: self.camera_callback(msg, 18),  
-            10
-        )
-
-        self.subscription19 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_19/link/link_19/sensor/camera_sensor_19/image',
-            lambda msg: self.camera_callback(msg, 19),  
-            10
-        )
-
-        self.subscription20 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_20/link/link_20/sensor/camera_sensor_20/image',
-            lambda msg: self.camera_callback(msg, 20),  
-            10
-        )
-
-        self.subscription21 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_21/link/link_21/sensor/camera_sensor_21/image',
-            lambda msg: self.camera_callback(msg, 21),  
-            10
-        )
-
-        self.subscription22 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_22/link/link_22/sensor/camera_sensor_22/image',
-            lambda msg: self.camera_callback(msg, 22),  
-            10
-        )
-        
-        self.subscription23 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_23/link/link_23/sensor/camera_sensor_23/image',
-            lambda msg: self.camera_callback(msg, 23),  
-            10
-        )
-
-        self.subscription24 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_24/link/link_24/sensor/camera_sensor_24/image',
-            lambda msg: self.camera_callback(msg, 24),  
-            10
-        )
-
-        self.subscription25 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_25/link/link_25/sensor/camera_sensor_25/image',
-            lambda msg: self.camera_callback(msg, 25),  
-            10
-        )
-
-        self.subscription26 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_26/link/link_26/sensor/camera_sensor_26/image',
-            lambda msg: self.camera_callback(msg, 26),  
-            10
-        )
-
-        self.subscription27 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_27/link/link_27/sensor/camera_sensor_27/image',
-            lambda msg: self.camera_callback(msg, 27),  
-            10
-        )
-
-        self.subscription28 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_28/link/link_28/sensor/camera_sensor_28/image',
-            lambda msg: self.camera_callback(msg, 28),  
-            10
-        )
-
-        self.subscription29 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_29/link/link_29/sensor/camera_sensor_29/image',
-            lambda msg: self.camera_callback(msg, 29),  
-            10
-        )
-
-        self.subscription30 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_30/link/link_30/sensor/camera_sensor_30/image',
-            lambda msg: self.camera_callback(msg, 30),  
-            10
-        )
-
-        self.subscription31 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_31/link/link_31/sensor/camera_sensor_31/image',
-            lambda msg: self.camera_callback(msg, 31),  
-            10
-        )
-
-        self.subscription32 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_32/link/link_32/sensor/camera_sensor_32/image',
-            lambda msg: self.camera_callback(msg, 32),  
-            10
-        )
-
-        self.subscription33 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_33/link/link_33/sensor/camera_sensor_33/image',
-            lambda msg: self.camera_callback(msg, 33),  
-            10
-        )
-
-        self.subscription34 = self.create_subscription(
-            Image,
-            '/world/empty/model/rgbd_camera_34/link/link_34/sensor/camera_sensor_34/image',
-            lambda msg: self.camera_callback(msg, 34),  
-            10
-        ) 
+        queue_size = 10
+        #sincronizacao das imagens
+        self.sync = TimeSynchronizer(self.camera_subscribers, 10)
+        self.sync.registerCallback(self.camera_callback)
         
         # Criar o servidor de serviço para ativar/desativar câmeras
         self.srv = self.create_service(SetCameraActive, 'set_camera_active', self.set_camera_active)
         
+    def clock_callback(self, msg):
+        # Recebe o tempo de simulação
+        self.simulation_time = msg.clock
+
     def simulation_callback(self, msg):
-        if msg.data:
-            self.publish_camera_angles()
+        self.simulation_active = msg.data
+
+    def robot_moving_callback(self, msg):
+        self.robot_moving = msg.data
+        if not msg.data:  
+            self.robot_stopped_time = self.simulation_time
 
     def publish_camera_angles(self):
         msg = ImagesAngles()
@@ -323,31 +99,36 @@ class MultiCamera(Node):
         angle = math.atan(tang)
         return angle
 
-    def camera_callback(self, msg, camera_id):
-        # Converte a imagem ROS para OpenCV
-        cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+    def camera_callback(self, *camera_images):   
+        for camera_id, msg in enumerate(camera_images):
+            # Converte a imagem ROS para OpenCV
+            cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+            
+            # Realiza a inferência
+            predict = self.model.infer(image=cv_image)
+            
+            if not predict[0].predictions:
+                self.angles[camera_id] = float('nan')
+            else:
+                for prediction in predict[0].predictions:
+                    x, y = int(prediction.x), int(prediction.y)
+                    self.angles[camera_id] = self.angulo_centro(x, y)
+                    width, height = int(prediction.width), int(prediction.height)
+                    top_left = (abs(int(width / 2) - x), abs(int(height / 2) - y))
+                    bottom_right = (int(width / 2) + x, int(height / 2) + y)
+                    cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)
+                    label = f"{prediction.class_name}: {prediction.confidence:.5f}"
+                    cv2.putText(cv_image, label, top_left, 
+                            cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
+            
+            # Apenas exibir se a câmera for ativada
+            if self.is_camera_active(camera_id):
+                self.visualize_camera(cv_image, camera_id)
+            
+        if(self.simulation_active and not self.robot_moving): 
+            self.publish_camera_angles()    
         
-        # Realiza a inferência
-        predict = self.model.infer(image=cv_image)
-        
-        if not predict[0].predictions:
-            self.angles[camera_id] = float('nan')
-        else:
-            for prediction in predict[0].predictions:
-                x, y = int(prediction.x), int(prediction.y)
-                self.angles[camera_id] = self.angulo_centro(x, y)
-                width, height = int(prediction.width), int(prediction.height)
-                top_left = (abs(int(width / 2) - x), abs(int(height / 2) - y))
-                bottom_right = (int(width / 2) + x, int(height / 2) + y)
-                cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)
-                label = f"{prediction.class_name}: {prediction.confidence:.5f}"
-                cv2.putText(cv_image, label, top_left, 
-                        cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
-    
-        
-        # Apenas exibir se a câmera for ativada
-        if self.is_camera_active(camera_id):
-            self.visualize_camera(cv_image, camera_id)
+            
 
     def set_camera_active(self, request, response):
         camera_id = request.camera_id

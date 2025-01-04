@@ -57,7 +57,7 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        single_point: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -90,7 +90,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        filtro_points: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -102,7 +102,7 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        robot_point: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -110,6 +110,19 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /topic_real_pose
+      Value: true
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: Marker
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /topic_filtro_media
       Value: true
   Enabled: true
   Global Options:
