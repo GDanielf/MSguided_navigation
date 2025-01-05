@@ -23,7 +23,7 @@ colcon build --packages-select guided_navigation
 
 source install/local_setup.bash
 
-ign gazebo ros_ws/src/src/guided_navigation/world/camera_world.sdf
+gz sim ros2_ws/src/guided_navigation/world/camera_world.sdf
 
 ros2 launch guided_navigation guided_simulation.launch.py
 

@@ -741,7 +741,7 @@
       <self_collide>false</self_collide>
     </model>
     <include>
-      <uri>file:///home/daniel/ros_ws/src/src/guided_navigation/models/room</uri>
+      <uri>file:///home/daniel/ros2_ws/src/guided_navigation/models/room</uri>
       <name>urban_room_2way</name>
       <pose>0 0 0 0 -0 0</pose>
     </include>
