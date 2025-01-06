@@ -1,5 +1,3 @@
-<?xml version="1.0"?>
-
 <sdf version='1.10'>
   <world name='empty'>
     <physics name='1ms' type='ignored'>
@@ -69,7 +67,7 @@
       <pose>0 0 0 0 0 0</pose>
       <self_collide>false</self_collide>
     </model>
-        <model name='marble_husky_sensor_config_5'>
+    <model name='marble_husky_sensor_config_5'>
       <plugin name='gz::sim::v8::systems::DiffDrive' filename='gz-sim8-diff-drive-system'>
         <left_joint>front_left_wheel_joint</left_joint>
         <left_joint>rear_left_wheel_joint</left_joint>
@@ -82,7 +80,7 @@
       </plugin>
       <link name='base_link'>
         <inertial>
-          <pose>0 0 0.13228 0 -0 0</pose>
+          <pose>0 0 0.13228000000000001 0 0 0</pose>
           <mass>50</mass>
           <inertia>
             <ixx>0.61539699999999997</ixx>
@@ -97,7 +95,7 @@
           <pose>0 0 0.12 0 0 0</pose>
           <geometry>
             <box>
-              <size>0.9874 0.5709 0.05</size>
+              <size>0.98740000000000006 0.57089999999999996 0.050000000000000003</size>
             </box>
           </geometry>
           <surface>
@@ -109,10 +107,10 @@
           </surface>
         </collision>
         <collision name='base_link_collision_bottom'>
-          <pose>0 0 0.046 0 0 0</pose>
+          <pose>0 0 0.045999999999999999 0 0 0</pose>
           <geometry>
             <box>
-              <size>0.8 0.5709 0.095</size>
+              <size>0.80000000000000004 0.57089999999999996 0.095000000000000001</size>
             </box>
           </geometry>
           <surface>
@@ -124,10 +122,10 @@
           </surface>
         </collision>
         <collision name='base_link_collision_1'>
-          <pose>0 0 0.185625 0 -0 0</pose>
+          <pose>0 0 0.18562500000000001 0 0 0</pose>
           <geometry>
             <box>
-              <size>0.78992 0.5709 0.12375</size>
+              <size>0.78991999999999996 0.57089999999999996 0.12375</size>
             </box>
           </geometry>
           <surface>
@@ -147,7 +145,7 @@
           </geometry>
         </visual>
         <visual name='base_link_fixed_joint_lump__front_bumper_link_visual_3'>
-          <pose>0.48 0 0.091 0 -0 0</pose>
+          <pose>0.47999999999999998 0 0.090999999999999998 0 0 0</pose>
           <geometry>
             <mesh>
               <scale>1 1 1</scale>
@@ -156,7 +154,7 @@
           </geometry>
         </visual>
         <visual name='base_link_fixed_joint_lump__rear_bumper_link_visual_4'>
-          <pose>-0.48 0 0.091 0 -0 3.14159</pose>
+          <pose>-0.47999999999999998 0 0.090999999999999998 0 0 3.1415899999999999</pose>
           <geometry>
             <mesh>
               <scale>1 1 1</scale>
@@ -173,7 +171,7 @@
           </geometry>
         </visual>
         <visual name='base_link_fixed_joint_lump__user_rail_link_visual_13'>
-          <pose>0.272 0 0.245 0 -0 0</pose>
+          <pose>0.27200000000000002 0 0.245 0 0 0</pose>
           <geometry>
             <mesh>
               <scale>1 1 1</scale>
@@ -184,7 +182,7 @@
         <gravity>true</gravity>
         <velocity_decay/>
         <sensor name='imu_sensor' type='imu'>
-          <pose>0 0 0 0 -0 0</pose>
+          <pose>0 0 0 0 0 0</pose>
           <topic>/imu</topic>
           <update_rate>200</update_rate>
           <enable_metrics>false</enable_metrics>
@@ -268,86 +266,86 @@
           </imu>
         </sensor>
         <light name='flashlight_flashlight_light_source_lamp_light_front' type='spot'>
-          <pose>0.5179 0 0.53718 -3e-06 1.57069 -3.14159</pose>
+          <pose>0.51790000000000003 0 0.53717999999999999 -2.999999999991991e-06 1.5706900000000439 -3.1415899999999999</pose>
           <cast_shadows>false</cast_shadows>
           <intensity>1</intensity>
           <direction>0 0 -1</direction>
-          <diffuse>0.8 0.8 0.5 1</diffuse>
-          <specular>0.8 0.8 0.5 1</specular>
+          <diffuse>0.800000012 0.800000012 0.5 1</diffuse>
+          <specular>0.800000012 0.800000012 0.5 1</specular>
           <attenuation>
             <range>35</range>
             <linear>0</linear>
-            <constant>0.10000000000000001</constant>
-            <quadratic>0.0025000000000000001</quadratic>
+            <constant>0.10000000149011612</constant>
+            <quadratic>0.0024999999441206455</quadratic>
           </attenuation>
           <spot>
-            <inner_angle>1.8</inner_angle>
-            <outer_angle>1.8999999999999999</outer_angle>
+            <inner_angle>1.7999999523162842</inner_angle>
+            <outer_angle>1.8999999761581421</outer_angle>
             <falloff>1</falloff>
           </spot>
         </light>
         <light name='flashlight_flashlight_light_source_lamp_light_left' type='spot'>
-          <pose>0.4379 0.12 0.53718 1.5708 -0 0</pose>
+          <pose>0.43790000000000001 0.12 0.53717999999999999 1.5708 0 0</pose>
           <cast_shadows>false</cast_shadows>
           <intensity>1</intensity>
           <direction>0 0 -1</direction>
-          <diffuse>0.8 0.8 0.5 1</diffuse>
-          <specular>0.8 0.8 0.5 1</specular>
+          <diffuse>0.800000012 0.800000012 0.5 1</diffuse>
+          <specular>0.800000012 0.800000012 0.5 1</specular>
           <attenuation>
             <range>35</range>
             <linear>0</linear>
-            <constant>0.10000000000000001</constant>
-            <quadratic>0.0025000000000000001</quadratic>
+            <constant>0.10000000149011612</constant>
+            <quadratic>0.0024999999441206455</quadratic>
           </attenuation>
           <spot>
-            <inner_angle>1.8</inner_angle>
-            <outer_angle>1.8999999999999999</outer_angle>
+            <inner_angle>1.7999999523162842</inner_angle>
+            <outer_angle>1.8999999761581421</outer_angle>
             <falloff>1</falloff>
           </spot>
         </light>
         <light name='flashlight_flashlight_light_source_lamp_light_right' type='spot'>
-          <pose>0.4379 -0.12 0.53718 -1.5708 0 0</pose>
+          <pose>0.43790000000000001 -0.12 0.53717999999999999 -1.5708 0 0</pose>
           <cast_shadows>false</cast_shadows>
           <intensity>1</intensity>
           <direction>0 0 -1</direction>
-          <diffuse>0.8 0.8 0.5 1</diffuse>
-          <specular>0.8 0.8 0.5 1</specular>
+          <diffuse>0.800000012 0.800000012 0.5 1</diffuse>
+          <specular>0.800000012 0.800000012 0.5 1</specular>
           <attenuation>
             <range>35</range>
             <linear>0</linear>
-            <constant>0.10000000000000001</constant>
-            <quadratic>0.0025000000000000001</quadratic>
+            <constant>0.10000000149011612</constant>
+            <quadratic>0.0024999999441206455</quadratic>
           </attenuation>
           <spot>
-            <inner_angle>1.8</inner_angle>
-            <outer_angle>1.8999999999999999</outer_angle>
+            <inner_angle>1.7999999523162842</inner_angle>
+            <outer_angle>1.8999999761581421</outer_angle>
             <falloff>1</falloff>
           </spot>
         </light>
         <light name='flashlight_flashlight_light_source_lamp_light_back' type='spot'>
-          <pose>0.3579 0 0.53718 -3e-06 -1.57069 3.14159</pose>
+          <pose>0.3579 0 0.53717999999999999 -2.999999999991991e-06 -1.5706900000000439 3.1415899999999999</pose>
           <cast_shadows>false</cast_shadows>
           <intensity>1</intensity>
           <direction>0 0 -1</direction>
-          <diffuse>0.8 0.8 0.5 1</diffuse>
-          <specular>0.8 0.8 0.5 1</specular>
+          <diffuse>0.800000012 0.800000012 0.5 1</diffuse>
+          <specular>0.800000012 0.800000012 0.5 1</specular>
           <attenuation>
             <range>35</range>
             <linear>0</linear>
-            <constant>0.10000000000000001</constant>
-            <quadratic>0.0025000000000000001</quadratic>
+            <constant>0.10000000149011612</constant>
+            <quadratic>0.0024999999441206455</quadratic>
           </attenuation>
           <spot>
-            <inner_angle>1.8</inner_angle>
-            <outer_angle>1.8999999999999999</outer_angle>
+            <inner_angle>1.7999999523162842</inner_angle>
+            <outer_angle>1.8999999761581421</outer_angle>
             <falloff>1</falloff>
           </spot>
         </light>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <enable_wind>false</enable_wind>
       </link>
       <link name='front_left_wheel_link'>
-        <pose>0.256 0.2854 0.032821 -1.9e-05 -1.41023 2.1e-05</pose>
+        <pose>0.25600000000000001 0.28540000000000004 0.032820999999999795 -3.1415895917796886 0.12566007365630427 -3.1415900254553457</pose>
         <inertial>
           <mass>2.637</mass>
           <inertia>
@@ -358,10 +356,10 @@
             <iyz>0</iyz>
             <izz>0.024670000000000001</izz>
           </inertia>
-          <pose>0 0 0 0 -0 0</pose>
+          <pose>0 0 0 0 0 0</pose>
         </inertial>
         <collision name='front_left_wheel_link_collision'>
-          <pose>0 0 0 1.5707963267948966 -0 0</pose>
+          <pose>0 0 0 1.5707963267948963 0 0</pose>
           <geometry>
             <cylinder>
               <length>0.1143</length>
@@ -403,7 +401,7 @@
         <child>front_left_wheel_link</child>
         <parent>base_link</parent>
         <axis>
-          <xyz>0 1 0</xyz>
+          <xyz>5.2939559203393771e-22 1 4.2351647362715012e-22</xyz>
           <limit>
             <lower>-10000000000000000</lower>
             <upper>10000000000000000</upper>
@@ -419,10 +417,10 @@
             <friction>0</friction>
           </dynamics>
         </axis>
-        <pose>-0 0 -0 0 0 -0</pose>
+        <pose>5.5511199999999995e-17 1.11022e-16 -1.47072e-16 4.2351600000000001e-22 7.9076099999999995e-17 -5.5586499999999999e-22</pose>
       </joint>
       <link name='front_right_wheel_link'>
-        <pose>0.256 -0.2854 0.03282 -0.000231 1.55973 -0.000229</pose>
+        <pose>0.25600000000000012 -0.28539999999999993 0.032820000000000293 -2.9500959194699759e-06 -0.52264121159849575 3.4584564441642054e-06</pose>
         <inertial>
           <mass>2.637</mass>
           <inertia>
@@ -433,10 +431,10 @@
             <iyz>0</iyz>
             <izz>0.024670000000000001</izz>
           </inertia>
-          <pose>0 0 0 0 -0 0</pose>
+          <pose>0 0 0 0 0 0</pose>
         </inertial>
         <collision name='front_right_wheel_link_collision'>
-          <pose>0 0 0 1.5707963267948966 -0 0</pose>
+          <pose>0 0 0 1.5707963267948963 0 0</pose>
           <geometry>
             <cylinder>
               <length>0.1143</length>
@@ -478,7 +476,7 @@
         <child>front_right_wheel_link</child>
         <parent>base_link</parent>
         <axis>
-          <xyz>-0 1 0</xyz>
+          <xyz>-5.2939559203393771e-23 1 1.9820989604989484e-39</xyz>
           <limit>
             <lower>-10000000000000000</lower>
             <upper>10000000000000000</upper>
@@ -494,10 +492,10 @@
             <friction>0</friction>
           </dynamics>
         </axis>
-        <pose>-0 0 -0 0 0 0</pose>
+        <pose>-1.38778e-16 -5.5511199999999995e-17 -5.5511199999999995e-17 0 2.7215599999999999e-17 0</pose>
       </joint>
       <link name='rear_left_wheel_link'>
-        <pose>-0.256 0.2854 0.03282 -1.4e-05 1.39499 -1.7e-05</pose>
+        <pose>-0.25599999999999995 0.28539999999999993 0.032820000000000127 -2.7354456317663443e-06 -0.46203272735331002 -1.9964225480507704e-06</pose>
         <inertial>
           <mass>2.637</mass>
           <inertia>
@@ -508,10 +506,10 @@
             <iyz>0</iyz>
             <izz>0.024670000000000001</izz>
           </inertia>
-          <pose>0 0 0 0 -0 0</pose>
+          <pose>0 0 0 0 0 0</pose>
         </inertial>
         <collision name='rear_left_wheel_link_collision'>
-          <pose>0 0 0 1.5707963267948966 -0 0</pose>
+          <pose>0 0 0 1.5707963267948963 0 0</pose>
           <geometry>
             <cylinder>
               <length>0.1143</length>
@@ -569,10 +567,10 @@
             <friction>0</friction>
           </dynamics>
         </axis>
-        <pose>-0 0 0 0 0 0</pose>
+        <pose>-8.3266699999999998e-17 -5.5511199999999995e-17 0 0 1.46993e-17 0</pose>
       </joint>
       <link name='rear_right_wheel_link'>
-        <pose>-0.256 -0.2854 0.03282 3.14158 1.33542 3.14158</pose>
+        <pose>-0.25599999999999995 -0.28540000000000004 0.032820000000000099 3.0671794590165351e-06 -0.27619855880138716 -1.1853225435347709e-06</pose>
         <inertial>
           <mass>2.637</mass>
           <inertia>
@@ -583,10 +581,10 @@
             <iyz>0</iyz>
             <izz>0.024670000000000001</izz>
           </inertia>
-          <pose>0 0 0 0 -0 0</pose>
+          <pose>0 0 0 0 0 0</pose>
         </inertial>
         <collision name='rear_right_wheel_link_collision'>
-          <pose>0 0 0 1.5707963267948966 -0 0</pose>
+          <pose>0 0 0 1.5707963267948963 0 0</pose>
           <geometry>
             <cylinder>
               <length>0.1143</length>
@@ -628,7 +626,7 @@
         <child>rear_right_wheel_link</child>
         <parent>base_link</parent>
         <axis>
-          <xyz>0 1 0</xyz>
+          <xyz>2.1175823681357508e-22 1 2.1175823681357504e-22</xyz>
           <limit>
             <lower>-10000000000000000</lower>
             <upper>10000000000000000</upper>
@@ -644,24 +642,42 @@
             <friction>0</friction>
           </dynamics>
         </axis>
-        <pose>0 0 0 0 0 -0</pose>
+        <pose>8.3266699999999998e-17 0 2.7755599999999997e-17 -3.9704700000000002e-23 1.2560599999999999e-16 -1.05879e-22</pose>
       </joint>
-      <pose>0 0 0.13228 0 -0 0</pose>
+      <pose>-0.34343755915303176 0.0052771495817150694 0.13228012211418244 -7.5032257075911515e-08 5.9650277954125871e-08 0.024206024365386363</pose>
       <static>false</static>
       <self_collide>false</self_collide>
-      <plugin
-        filename="gz-sim-pose-publisher-system"
-        name="gz::sim::systems::PosePublisher">
+      <plugin name='gz::sim::systems::PosePublisher' filename='gz-sim-pose-publisher-system'>
         <use_pose_vector_msg>true</use_pose_vector_msg>
         <publish_nested_model_pose>true</publish_nested_model_pose>
       </plugin>
     </model>
     <model name='rgbd_camera_3'>
-      <link name='link_3'>
+      <joint name='camera_base_joint3' type='fixed'>
+        <parent>world</parent>
+        <child>base_link_3</child>
+        <pose>0 0 0 0 0 0</pose>
+      </joint>
+      <link name='base_link_3'>
+        <gravity>false</gravity>
+        <visual name='visual_link_3'>
+          <geometry>
+            <box>
+              <size>0.0250000000000000003 0 0.0250000000000000003</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.5 0.5 0.5 1</diffuse>
+          </material>
+        </visual>
+      </link>      
+      <link name='camera_link_3'>
+        <gravity>false</gravity>
         <visual name='camera_visual_3'>
           <geometry>
             <box>
-              <size>0.1 0.1 0.1</size>
+              <size>0.10000000000000001 0.10000000000000001 0.10000000000000001</size>
             </box>
           </geometry>
           <material>
@@ -670,12 +686,12 @@
           </material>
         </visual>
         <sensor name='camera_sensor_3' type='camera'>
-          <pose>0 0 0 0 -0 0</pose>
+          <pose>0 0 0 0 0 0</pose>
           <topic>__default__</topic>
-          <update_rate>5</update_rate>
+          <update_rate>30</update_rate>
           <enable_metrics>false</enable_metrics>
-          <camera name='__default__'>
-            <pose>0 0 0 0 -0 0</pose>
+          <camera>
+            <pose>0 0 0 0 0 0</pose>
             <horizontal_fov>1.0469999999999999</horizontal_fov>
             <image>
               <width>1920</width>
@@ -710,15 +726,15 @@
             <lens>
               <type>stereographic</type>
               <scale_to_hfov>true</scale_to_hfov>
-              <cutoff_angle>1.5708</cutoff_angle>
+              <cutoff_angle>1.5707963267948966</cutoff_angle>
               <env_texture_size>256</env_texture_size>
             </lens>
             <optical_frame_id></optical_frame_id>
           </camera>
         </sensor>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>-1.7763568394002505e-15 8.8817841970012523e-16 4.4408920985006262e-16 8.3266726846886741e-17 0 0</pose>
         <inertial>
-          <pose>0 0 0 0 -0 0</pose>
+          <pose>0 0 0 0 0 0</pose>
           <mass>1</mass>
           <inertia>
             <ixx>1</ixx>
@@ -731,168 +747,43 @@
         </inertial>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>-3.0 -7.4687 3.4983 0 0.4392 1.57</pose>
-      <static>true</static>
+      <pose>-3 -7.4687000000000001 3.4983 3.3732624918440754e-16 0.43920000000000048 1.570000000000001</pose>
+      <static>false</static>
       <self_collide>false</self_collide>
+      <joint name='camera_j3' type='revolute'>
+        <pose>0 0 0 0 0 0</pose>
+        <parent>base_link_3</parent>
+        <child>camera_link_3</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-1.5708</lower>
+            <upper>1.5708</upper>
+            <effort>10</effort>
+            <velocity>1</velocity>
+            <stiffness>100000000</stiffness>
+            <dissipation>1</dissipation>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+            <damping>0.10000000000000001</damping>
+            <friction>0.01</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin name='ignition::gazebo::systems::JointPositionController' filename='ignition-gazebo-joint-position-controller-system'>
+        <joint_name>camera_j3</joint_name>
+        <p_gain>50</p_gain>
+        <d_gain>20</d_gain>
+        <i_gain>0</i_gain>
+        <i_min>-1</i_min>
+        <i_max>1</i_max>
+        <cmd_min>-87</cmd_min>
+        <cmd_max>87</cmd_max>
+      </plugin>
     </model>
-    <model name='rgbd_camera_16'>
-      <link name='link_16'>
-        <visual name='camera_visual_16'>
-          <geometry>
-            <box>
-              <size>0.1 0.1 0.1</size>
-            </box>
-          </geometry>
-          <material>
-            <ambient>0.5 0.5 0.5 1</ambient>
-            <diffuse>0.5 0.5 0.5 1</diffuse>
-          </material>
-        </visual>
-        <sensor name='camera_sensor_16' type='camera'>
-          <pose>0 0 0 0 -0 0</pose>
-          <topic>__default__</topic>
-          <update_rate>5</update_rate>
-          <enable_metrics>false</enable_metrics>
-          <camera name='__default__'>
-            <pose>0 0 0 0 -0 0</pose>
-            <horizontal_fov>1.0469999999999999</horizontal_fov>
-            <image>
-              <width>1920</width>
-              <height>1080</height>
-              <format>RGB_INT8</format>
-              <anti_aliasing>4</anti_aliasing>
-            </image>
-            <camera_info_topic>__default__</camera_info_topic>
-            <trigger_topic></trigger_topic>
-            <triggered>false</triggered>
-            <clip>
-              <near>0.10000000000000001</near>
-              <far>100</far>
-            </clip>
-            <save enabled='false'>
-              <path>__default__</path>
-            </save>
-            <visibility_mask>4294967295</visibility_mask>
-            <noise>
-              <type>none</type>
-              <mean>0</mean>
-              <stddev>0</stddev>
-            </noise>
-            <distortion>
-              <k1>0</k1>
-              <k2>0</k2>
-              <k3>0</k3>
-              <p1>0</p1>
-              <p2>0</p2>
-              <center>0.5 0.5</center>
-            </distortion>
-            <lens>
-              <type>stereographic</type>
-              <scale_to_hfov>true</scale_to_hfov>
-              <cutoff_angle>1.5708</cutoff_angle>
-              <env_texture_size>256</env_texture_size>
-            </lens>
-            <optical_frame_id></optical_frame_id>
-          </camera>
-        </sensor>
-        <pose>0 0 0 0 -0 0</pose>
-        <inertial>
-          <pose>0 0 0 0 -0 0</pose>
-          <mass>1</mass>
-          <inertia>
-            <ixx>1</ixx>
-            <ixy>0</ixy>
-            <ixz>0</ixz>
-            <iyy>1</iyy>
-            <iyz>0</iyz>
-            <izz>1</izz>
-          </inertia>
-        </inertial>
-        <enable_wind>false</enable_wind>
-      </link>
-      <pose>4.0 7.4687 3.4983 -0 0.4392 -1.57</pose>
-      <static>true</static>
-      <self_collide>false</self_collide>
-    </model>
-    <model name='rgbd_camera_28'>
-      <link name='link_28'>
-        <visual name='camera_visual_28'>
-          <geometry>
-            <box>
-              <size>0.1 0.1 0.1</size>
-            </box>
-          </geometry>
-          <material>
-            <ambient>0.5 0.5 0.5 1</ambient>
-            <diffuse>0.5 0.5 0.5 1</diffuse>
-          </material>
-        </visual>
-        <sensor name='camera_sensor_28' type='camera'>
-          <pose>0 0 0 0 -0 0</pose>
-          <topic>__default__</topic>
-          <update_rate>5</update_rate>
-          <enable_metrics>false</enable_metrics>
-          <camera name='__default__'>
-            <pose>0 0 0 0 -0 0</pose>
-            <horizontal_fov>1.0469999999999999</horizontal_fov>
-            <image>
-              <width>1920</width>
-              <height>1080</height>
-              <format>RGB_INT8</format>
-              <anti_aliasing>4</anti_aliasing>
-            </image>
-            <camera_info_topic>__default__</camera_info_topic>
-            <trigger_topic></trigger_topic>
-            <triggered>false</triggered>
-            <clip>
-              <near>0.10000000000000001</near>
-              <far>100</far>
-            </clip>
-            <save enabled='false'>
-              <path>__default__</path>
-            </save>
-            <visibility_mask>4294967295</visibility_mask>
-            <noise>
-              <type>none</type>
-              <mean>0</mean>
-              <stddev>0</stddev>
-            </noise>
-            <distortion>
-              <k1>0</k1>
-              <k2>0</k2>
-              <k3>0</k3>
-              <p1>0</p1>
-              <p2>0</p2>
-              <center>0.5 0.5</center>
-            </distortion>
-            <lens>
-              <type>stereographic</type>
-              <scale_to_hfov>true</scale_to_hfov>
-              <cutoff_angle>1.5708</cutoff_angle>
-              <env_texture_size>256</env_texture_size>
-            </lens>
-            <optical_frame_id></optical_frame_id>
-          </camera>
-        </sensor>
-        <pose>0 0 0 0 -0 0</pose>
-        <inertial>
-          <pose>0 0 0 0 -0 0</pose>
-          <mass>1</mass>
-          <inertia>
-            <ixx>1</ixx>
-            <ixy>0</ixy>
-            <ixz>0</ixz>
-            <iyy>1</iyy>
-            <iyz>0</iyz>
-            <izz>1</izz>
-          </inertia>
-        </inertial>
-        <enable_wind>false</enable_wind>
-      </link>
-      <pose>-9.983 -2.75 3.4983 0 0.4392 0</pose>
-      <static>true</static>
-      <self_collide>false</self_collide>
-    </model>
+    
     <light name='sun' type='directional'>
       <pose>0 0 10 0 0 0</pose>
       <cast_shadows>true</cast_shadows>
@@ -902,9 +793,9 @@
       <specular>0.200000003 0.200000003 0.200000003 1</specular>
       <attenuation>
         <range>1000</range>
-        <linear>0.01</linear>
-        <constant>0.90000000000000002</constant>
-        <quadratic>0.001</quadratic>
+        <linear>0.0099999997764825821</linear>
+        <constant>0.89999997615814209</constant>
+        <quadratic>0.0010000000474974513</quadratic>
       </attenuation>
       <spot>
         <inner_angle>0</inner_angle>
