@@ -652,15 +652,11 @@
         <publish_nested_model_pose>true</publish_nested_model_pose>
       </plugin>
     </model>
-    <model name='rgbd_camera_3'>
-      <joint name='camera_base_joint3' type='fixed'>
-        <parent>world</parent>
-        <child>base_link_3</child>
-        <pose>0 0 0 0 0 0</pose>
-      </joint>
-      <link name='base_link_3'>
+    <model name='rgbd_camera_0'>
+      <pose>-3 -7.4687000000000001 3.4983 3.3732624918440754e-16 0.43920000000000048 1.570000000000001</pose>
+      <link name='base_link_0'>
         <gravity>false</gravity>
-        <visual name='visual_link_3'>
+        <visual name='visual_link_0'>
           <geometry>
             <box>
               <size>0.0250000000000000003 0 0.0250000000000000003</size>
@@ -671,10 +667,64 @@
             <diffuse>0.5 0.5 0.5 1</diffuse>
           </material>
         </visual>
-      </link>      
-      <link name='camera_link_3'>
+      </link>    
+      <joint name='camera_base_joint0' type='fixed'>
+        <parent>world</parent>
+        <child>base_link_0</child>
+        <pose>0 0 0 0 0 0</pose>
+      </joint>       
+      <link name='camera_neck_0'>
         <gravity>false</gravity>
-        <visual name='camera_visual_3'>
+        <visual name='camera_visual_0'>
+          <geometry>
+            <box>
+              <size>0.10000000000000001 0.10000000000000001 0.10000000000000001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.5 0.5 0.5 0</ambient>
+            <diffuse>0.5 0.5 0.5 0</diffuse>
+          </material>
+        </visual> 
+        <inertial>
+          <pose>0 0 0 0 0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link> 
+      <joint name='camera_j0_z' type='revolute'>
+        <pose>0 0 0 0 0 0</pose>
+        <parent>base_link_0</parent>
+        <child>camera_neck_0</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-1.5708</lower>
+            <upper>1.5708</upper>
+            <effort>10</effort>
+            <velocity>1</velocity>
+            <stiffness>100000000</stiffness>
+            <dissipation>1</dissipation>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+            <damping>0.10000000000000001</damping>
+            <friction>0.01</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <link name='camera_head_0'>
+        <gravity>false</gravity>
+        <visual name='camera_visual_0'>
           <geometry>
             <box>
               <size>0.10000000000000001 0.10000000000000001 0.10000000000000001</size>
@@ -685,7 +735,7 @@
             <diffuse>0.5 0.5 0.5 1</diffuse>
           </material>
         </visual>
-        <sensor name='camera_sensor_3' type='camera'>
+        <sensor name='camera_sensor_0' type='camera'>
           <pose>0 0 0 0 0 0</pose>
           <topic>__default__</topic>
           <update_rate>30</update_rate>
@@ -732,7 +782,6 @@
             <optical_frame_id></optical_frame_id>
           </camera>
         </sensor>
-        <pose>-1.7763568394002505e-15 8.8817841970012523e-16 4.4408920985006262e-16 8.3266726846886741e-17 0 0</pose>
         <inertial>
           <pose>0 0 0 0 0 0</pose>
           <mass>1</mass>
@@ -746,14 +795,105 @@
           </inertia>
         </inertial>
         <enable_wind>false</enable_wind>
-      </link>
+      </link> 
+      <joint name='camera_j0_y' type='revolute'>
+        <pose>0 0 0 0 0 0</pose>
+        <parent>camera_neck_0</parent>
+        <child>camera_head_0</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <limit>
+            <lower>-1.5708</lower>
+            <upper>1.5708</upper>
+            <effort>10</effort>
+            <velocity>1</velocity>
+            <stiffness>100000000</stiffness>
+            <dissipation>1</dissipation>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+            <damping>0.10000000000000001</damping>
+            <friction>0.01</friction>
+          </dynamics>
+        </axis>
+      </joint>      
       <pose>-3 -7.4687000000000001 3.4983 3.3732624918440754e-16 0.43920000000000048 1.570000000000001</pose>
       <static>false</static>
-      <self_collide>false</self_collide>
-      <joint name='camera_j3' type='revolute'>
+      <self_collide>false</self_collide>      
+      <plugin name='ignition::gazebo::systems::JointPositionController' filename='ignition-gazebo-joint-position-controller-system'>
+        <joint_name>camera_j0_z</joint_name>
+        <p_gain>50</p_gain>
+        <d_gain>20</d_gain>
+        <i_gain>0</i_gain>
+        <i_min>-1</i_min>
+        <i_max>1</i_max>
+        <cmd_min>-87</cmd_min>
+        <cmd_max>87</cmd_max>
+      </plugin>     
+      <plugin name='ignition::gazebo::systems::JointPositionController' filename='ignition-gazebo-joint-position-controller-system'>
+        <joint_name>camera_j0_y</joint_name>
+        <p_gain>50</p_gain>
+        <d_gain>20</d_gain>
+        <i_gain>0</i_gain>
+        <i_min>-1</i_min>
+        <i_max>1</i_max>
+        <cmd_min>-87</cmd_min>
+        <cmd_max>87</cmd_max>
+      </plugin>   
+    </model>
+    <model name='rgbd_camera_1'>
+      <pose>4.0 7.4687 3.4983 -0 0.4392 -1.57</pose>
+      <link name='base_link_1'>
+        <gravity>false</gravity>
+        <visual name='visual_link_1'>
+          <geometry>
+            <box>
+              <size>0.0250000000000000003 0 0.0250000000000000003</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.5 0.5 0.5 1</diffuse>
+          </material>
+        </visual>
+      </link>    
+      <joint name='camera_base_joint1' type='fixed'>
+        <parent>world</parent>
+        <child>base_link_1</child>
         <pose>0 0 0 0 0 0</pose>
-        <parent>base_link_3</parent>
-        <child>camera_link_3</child>
+      </joint>       
+      <link name='camera_neck_1'>
+        <gravity>false</gravity>
+        <visual name='camera_visual_1'>
+          <geometry>
+            <box>
+              <size>0.10000000000000001 0.10000000000000001 0.10000000000000001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.5 0.5 0.5 0</ambient>
+            <diffuse>0.5 0.5 0.5 0</diffuse>
+          </material>
+        </visual> 
+        <inertial>
+          <pose>0 0 0 0 0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link> 
+      <joint name='camera_j1_z' type='revolute'>
+        <pose>0 0 0 0 0 0</pose>
+        <parent>base_link_1</parent>
+        <child>camera_neck_1</child>
         <axis>
           <xyz>0 0 1</xyz>
           <limit>
@@ -772,8 +912,107 @@
           </dynamics>
         </axis>
       </joint>
+      <link name='camera_head_1'>
+        <gravity>false</gravity>
+        <visual name='camera_visual_1'>
+          <geometry>
+            <box>
+              <size>0.10000000000000001 0.10000000000000001 0.10000000000000001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.5 0.5 0.5 1</diffuse>
+          </material>
+        </visual>
+        <sensor name='camera_sensor_1' type='camera'>
+          <pose>0 0 0 0 0 0</pose>
+          <topic>__default__</topic>
+          <update_rate>30</update_rate>
+          <enable_metrics>false</enable_metrics>
+          <camera>
+            <pose>0 0 0 0 0 0</pose>
+            <horizontal_fov>1.0469999999999999</horizontal_fov>
+            <image>
+              <width>1920</width>
+              <height>1080</height>
+              <format>RGB_INT8</format>
+              <anti_aliasing>4</anti_aliasing>
+            </image>
+            <camera_info_topic>__default__</camera_info_topic>
+            <trigger_topic></trigger_topic>
+            <triggered>false</triggered>
+            <clip>
+              <near>0.10000000000000001</near>
+              <far>100</far>
+            </clip>
+            <save enabled='false'>
+              <path>__default__</path>
+            </save>
+            <visibility_mask>4294967295</visibility_mask>
+            <noise>
+              <type>none</type>
+              <mean>0</mean>
+              <stddev>0</stddev>
+            </noise>
+            <distortion>
+              <k1>0</k1>
+              <k2>0</k2>
+              <k3>0</k3>
+              <p1>0</p1>
+              <p2>0</p2>
+              <center>0.5 0.5</center>
+            </distortion>
+            <lens>
+              <type>stereographic</type>
+              <scale_to_hfov>true</scale_to_hfov>
+              <cutoff_angle>1.5707963267948966</cutoff_angle>
+              <env_texture_size>256</env_texture_size>
+            </lens>
+            <optical_frame_id></optical_frame_id>
+          </camera>
+        </sensor>
+        <inertial>
+          <pose>0 0 0 0 0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link> 
+      <joint name='camera_j1_y' type='revolute'>
+        <pose>0 0 0 0 0 0</pose>
+        <parent>camera_neck_1</parent>
+        <child>camera_head_1</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <limit>
+            <lower>-1.5708</lower>
+            <upper>1.5708</upper>
+            <effort>10</effort>
+            <velocity>1</velocity>
+            <stiffness>100000000</stiffness>
+            <dissipation>1</dissipation>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+            <damping>0.10000000000000001</damping>
+            <friction>0.01</friction>
+          </dynamics>
+        </axis>
+      </joint>      
+      <pose>4.0 7.4687 3.4983 -0 0.4392 -1.57</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>      
       <plugin name='ignition::gazebo::systems::JointPositionController' filename='ignition-gazebo-joint-position-controller-system'>
-        <joint_name>camera_j3</joint_name>
+        <joint_name>camera_j1_z</joint_name>
         <p_gain>50</p_gain>
         <d_gain>20</d_gain>
         <i_gain>0</i_gain>
@@ -781,8 +1020,208 @@
         <i_max>1</i_max>
         <cmd_min>-87</cmd_min>
         <cmd_max>87</cmd_max>
-      </plugin>
+      </plugin>     
+      <plugin name='ignition::gazebo::systems::JointPositionController' filename='ignition-gazebo-joint-position-controller-system'>
+        <joint_name>camera_j1_y</joint_name>
+        <p_gain>50</p_gain>
+        <d_gain>20</d_gain>
+        <i_gain>0</i_gain>
+        <i_min>-1</i_min>
+        <i_max>1</i_max>
+        <cmd_min>-87</cmd_min>
+        <cmd_max>87</cmd_max>
+      </plugin>   
     </model>
+    <model name='rgbd_camera_2'>
+      <pose>-9.983 -1.25 3.4983 0 0.4392 0</pose>
+      <link name='base_link_2'>
+        <gravity>false</gravity>
+        <visual name='visual_link_2'>
+          <geometry>
+            <box>
+              <size>0.0250000000000000003 0 0.0250000000000000003</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.5 0.5 0.5 1</diffuse>
+          </material>
+        </visual>
+      </link>    
+      <joint name='camera_base_joint2' type='fixed'>
+        <parent>world</parent>
+        <child>base_link_2</child>
+        <pose>0 0 0 0 0 0</pose>
+      </joint>       
+      <link name='camera_neck_2'>
+        <gravity>false</gravity>
+        <visual name='camera_visual_2'>
+          <geometry>
+            <box>
+              <size>0.10000000000000001 0.10000000000000001 0.10000000000000001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.5 0.5 0.5 0</ambient>
+            <diffuse>0.5 0.5 0.5 0</diffuse>
+          </material>
+        </visual> 
+        <inertial>
+          <pose>0 0 0 0 0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link> 
+      <joint name='camera_j2_z' type='revolute'>
+        <pose>0 0 0 0 0 0</pose>
+        <parent>base_link_2</parent>
+        <child>camera_neck_2</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-1.5708</lower>
+            <upper>1.5708</upper>
+            <effort>10</effort>
+            <velocity>1</velocity>
+            <stiffness>100000000</stiffness>
+            <dissipation>1</dissipation>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+            <damping>0.10000000000000001</damping>
+            <friction>0.01</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <link name='camera_head_2'>
+        <gravity>false</gravity>
+        <visual name='camera_visual_2'>
+          <geometry>
+            <box>
+              <size>0.10000000000000001 0.10000000000000001 0.10000000000000001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.5 0.5 0.5 1</diffuse>
+          </material>
+        </visual>
+        <sensor name='camera_sensor_2' type='camera'>
+          <pose>0 0 0 0 0 0</pose>
+          <topic>__default__</topic>
+          <update_rate>30</update_rate>
+          <enable_metrics>false</enable_metrics>
+          <camera>
+            <pose>0 0 0 0 0 0</pose>
+            <horizontal_fov>1.0469999999999999</horizontal_fov>
+            <image>
+              <width>1920</width>
+              <height>1080</height>
+              <format>RGB_INT8</format>
+              <anti_aliasing>4</anti_aliasing>
+            </image>
+            <camera_info_topic>__default__</camera_info_topic>
+            <trigger_topic></trigger_topic>
+            <triggered>false</triggered>
+            <clip>
+              <near>0.10000000000000001</near>
+              <far>100</far>
+            </clip>
+            <save enabled='false'>
+              <path>__default__</path>
+            </save>
+            <visibility_mask>4294967295</visibility_mask>
+            <noise>
+              <type>none</type>
+              <mean>0</mean>
+              <stddev>0</stddev>
+            </noise>
+            <distortion>
+              <k1>0</k1>
+              <k2>0</k2>
+              <k3>0</k3>
+              <p1>0</p1>
+              <p2>0</p2>
+              <center>0.5 0.5</center>
+            </distortion>
+            <lens>
+              <type>stereographic</type>
+              <scale_to_hfov>true</scale_to_hfov>
+              <cutoff_angle>1.5707963267948966</cutoff_angle>
+              <env_texture_size>256</env_texture_size>
+            </lens>
+            <optical_frame_id></optical_frame_id>
+          </camera>
+        </sensor>
+        <inertial>
+          <pose>0 0 0 0 0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link> 
+      <joint name='camera_j2_y' type='revolute'>
+        <pose>0 0 0 0 0 0</pose>
+        <parent>camera_neck_2</parent>
+        <child>camera_head_2</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <limit>
+            <lower>-1.5708</lower>
+            <upper>1.5708</upper>
+            <effort>10</effort>
+            <velocity>1</velocity>
+            <stiffness>100000000</stiffness>
+            <dissipation>1</dissipation>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+            <damping>0.10000000000000001</damping>
+            <friction>0.01</friction>
+          </dynamics>
+        </axis>
+      </joint>      
+      <pose>-9.983 -1.25 3.4983 0 0.4392 0</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>      
+      <plugin name='ignition::gazebo::systems::JointPositionController' filename='ignition-gazebo-joint-position-controller-system'>
+        <joint_name>camera_j2_z</joint_name>
+        <p_gain>50</p_gain>
+        <d_gain>20</d_gain>
+        <i_gain>0</i_gain>
+        <i_min>-1</i_min>
+        <i_max>1</i_max>
+        <cmd_min>-87</cmd_min>
+        <cmd_max>87</cmd_max>
+      </plugin>     
+      <plugin name='ignition::gazebo::systems::JointPositionController' filename='ignition-gazebo-joint-position-controller-system'>
+        <joint_name>camera_j2_y</joint_name>
+        <p_gain>50</p_gain>
+        <d_gain>20</d_gain>
+        <i_gain>0</i_gain>
+        <i_min>-1</i_min>
+        <i_max>1</i_max>
+        <cmd_min>-87</cmd_min>
+        <cmd_max>87</cmd_max>
+      </plugin>   
+    </model>   
     
     <light name='sun' type='directional'>
       <pose>0 0 10 0 0 0</pose>
