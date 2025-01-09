@@ -46,6 +46,17 @@ def generate_launch_description():
             output='screen',
             parameters=[{'use_sim_time': True}]
         ),
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='camera_0_jy',
+            arguments=[
+                '/model/rgbd_camera_0/joint/camera_j0_y/0/cmd_pos@std_msgs/msg/Float64@gz.msgs.Double '
+                ':/model/rgbd_camera_0/joint/camera_j0_y/cmd_pos'
+            ],
+            output='screen',
+            parameters=[{'use_sim_time': True}]
+        ),
 
     ]
 
@@ -58,7 +69,7 @@ def generate_launch_description():
             arguments=[f'/world/empty/model/rgbd_camera_{i}/link/link_{i}/sensor/camera_sensor_{i}/image@sensor_msgs/msg/Image@gz.msgs.Image'],
             output='screen',
             parameters=[{'use_sim_time': True}]
-        ) for i in range(35)  # Vai de 0 até 34
+        ) for i in range(3)  
     ]
 
     # Combina os nós estáticos e dinâmicos

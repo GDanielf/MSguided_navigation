@@ -821,7 +821,7 @@
       <pose>-3 -7.4687000000000001 3.4983 3.3732624918440754e-16 0.43920000000000048 1.570000000000001</pose>
       <static>false</static>
       <self_collide>false</self_collide>      
-      <plugin name='ignition::gazebo::systems::JointPositionController' filename='ignition-gazebo-joint-position-controller-system'>
+      <plugin name='ignition::gazebo::systems::JointPositionController' filename='gz-sim8-joint-position-controller-system'>
         <joint_name>camera_j0_z</joint_name>
         <p_gain>50</p_gain>
         <d_gain>20</d_gain>
@@ -840,6 +840,10 @@
         <i_max>1</i_max>
         <cmd_min>-87</cmd_min>
         <cmd_max>87</cmd_max>
+      </plugin>    
+      <plugin name='gz::sim::systems::PosePublisher' filename='gz-sim-pose-publisher-system'>
+        <use_pose_vector_msg>true</use_pose_vector_msg>
+        <publish_nested_model_pose>true</publish_nested_model_pose>
       </plugin>   
     </model>
     <model name='rgbd_camera_1'>
