@@ -17,6 +17,10 @@ https://github.com/gazebosim/ros_gz/tree/ros2/ros_gz_bridge
 ### Colocar isso no bashrc:
 export GZ_SIM_RESOURCE_PATH=~/ros2_wc/src/guided_navigation/models
 
+## JOINT:
+ros2 run ros_gz_bridge parameter_bridge /world/empty/model/rgbd_camera_0/joint_state@sensor_msgs/msg/JointState@ignition.msgs.Model
+
+
 ## Rodar simulacao:
 
 colcon build --packages-select guided_navigation

@@ -9,7 +9,7 @@
     <plugin name='gz::sim::systems::UserCommands' filename='gz-sim-user-commands-system'/>
     <plugin name='gz::sim::systems::SceneBroadcaster' filename='gz-sim-scene-broadcaster-system'/>
     <plugin name='gz::sim::systems::Contact' filename='gz-sim-contact-system'/>
-    <plugin name='gz::sim::systems::Sensors' filename='gz-sim8-sensors-system'/>
+    <plugin name='gz::sim::systems::Sensors' filename='ignition-gazebo6-sensors-system'/>
     <gravity>0 0 -9.8000000000000007</gravity>
     <magnetic_field>5.5644999999999998e-06 2.2875799999999999e-05 -4.2388400000000002e-05</magnetic_field>
     <atmosphere type='adiabatic'/>
@@ -68,7 +68,7 @@
       <self_collide>false</self_collide>
     </model>
     <model name='marble_husky_sensor_config_5'>
-      <plugin name='gz::sim::v8::systems::DiffDrive' filename='gz-sim8-diff-drive-system'>
+      <plugin name='ignition::gazebo::systems::DiffDrive' filename='libignition-gazebo-diff-drive-system.so'>
         <left_joint>front_left_wheel_joint</left_joint>
         <left_joint>rear_left_wheel_joint</left_joint>
         <right_joint>front_right_wheel_joint</right_joint>
@@ -821,7 +821,7 @@
       <pose>-3 -7.4687000000000001 3.4983 3.3732624918440754e-16 0.43920000000000048 1.570000000000001</pose>
       <static>false</static>
       <self_collide>false</self_collide>      
-      <plugin name='ignition::gazebo::systems::JointPositionController' filename='gz-sim8-joint-position-controller-system'>
+      <plugin name='ignition::gazebo::systems::JointPositionController' filename='ignition-gazebo-joint-position-controller-system'>
         <joint_name>camera_j0_z</joint_name>
         <p_gain>50</p_gain>
         <d_gain>20</d_gain>
@@ -830,7 +830,7 @@
         <i_max>1</i_max>
         <cmd_min>-87</cmd_min>
         <cmd_max>87</cmd_max>
-      </plugin>     
+      </plugin>
       <plugin name='ignition::gazebo::systems::JointPositionController' filename='ignition-gazebo-joint-position-controller-system'>
         <joint_name>camera_j0_y</joint_name>
         <p_gain>50</p_gain>
@@ -841,10 +841,11 @@
         <cmd_min>-87</cmd_min>
         <cmd_max>87</cmd_max>
       </plugin>    
-      <plugin name='gz::sim::systems::PosePublisher' filename='gz-sim-pose-publisher-system'>
-        <use_pose_vector_msg>true</use_pose_vector_msg>
-        <publish_nested_model_pose>true</publish_nested_model_pose>
-      </plugin>   
+      <plugin
+        filename="ignition-gazebo-joint-state-publisher-system"
+        name="ignition::gazebo::systems::JointStatePublisher">
+      </plugin>
+      
     </model>
     <model name='rgbd_camera_1'>
       <pose>4.0 7.4687 3.4983 -0 0.4392 -1.57</pose>
