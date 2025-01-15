@@ -58,7 +58,7 @@ class Planner(Node):
             4: "rotacionar_counter_clockwise",
         }
         self.ponto_antigo = None
-        self.distance_threshold = 0.2
+        self.distance_threshold = 0.1
         self.dist = -10
         self.stop_duration = 10.0
         self.rotate_duration = 5
@@ -83,7 +83,7 @@ class Planner(Node):
         #starvars
         self.m = 16
         #definicoes filtro de particula
-        self.particle_number = 10000
+        self.particle_number = 1000
         self.p = []
         self.publisher_ponto_est = self.create_publisher(Marker, 'topic_pose_est', 10)
         self.publisher_real_pose = self.create_publisher(Marker, 'topic_real_pose', 10)
@@ -126,15 +126,15 @@ class Planner(Node):
         #E a yaw?
         if(self.ponto_antigo is not None):
             self.dist = self.distance(self.ponto_atual, self.ponto_antigo)
-        
+
+        self.publish_ponto_pose_estimada()
+        self.publish_particles(self.p)   
+        self.publish_filtro_media()          
         if(self.ponto_antigo is None or self.dist > self.distance_threshold):
             if(regiao_nova_robo != self.regiao_objetivo):
                 #if(regiao_nova_robo <= 79):
                 if(self.direcao == 0 or self.direcao == 4 or self.direcao == 3 or self.direcao == 2 or self.direcao == 1):                               
-                    #mover o robo  
-                    self.publish_ponto_pose_estimada()
-                    self.publish_particles(self.p)   
-                    self.publish_filtro_media()                 
+                    #mover o robo                                     
                     self.move_forward()             
                     if self.current_timer:
                         self.current_timer.cancel()            
@@ -224,16 +224,25 @@ class Planner(Node):
         
         vetor_objetivo = (ponto_fim - ponto_inicio) / np.linalg.norm(ponto_fim - ponto_inicio)        
         theta_objetivo = np.arctan2(vetor_objetivo[1], vetor_objetivo[0])        
-        delta_theta = (theta_objetivo - direcao_filtro + np.pi) % (2 * np.pi) - np.pi
-        
-        if -np.pi / 4 <= delta_theta <= np.pi / 4:  # Frente
-            comando = 4
-        elif np.pi / 4 < delta_theta <= 3 * np.pi / 4:  # Esquerda
+        delta_theta = (theta_objetivo - direcao_filtro) % (2 * math.pi)
+
+        step = 2 * math.pi / self.m
+
+        pizza = int(delta_theta // step)
+
+        comando = 0
+        #esquerda
+        if ((self.m / 8) <= pizza < 3 * (self.m / 8)):
             comando = 1
-        elif -3 * np.pi / 4 <= delta_theta < -np.pi / 4:  # Direita
-            comando = 3
-        else:  # Trás
+        #atras
+        elif (3 * (self.m / 8) <= pizza < 5 * (self.m / 8)):
             comando = 2
+        #direita
+        elif (5 * (self.m / 8) <= pizza < 7 * (self.m / 8)):
+            comando = 3
+        #frente
+        elif (7 * (self.m / 8) <= pizza < (self.m / 8)):
+            comando = 4
 
         return comando, direcao_filtro, delta_theta
         
