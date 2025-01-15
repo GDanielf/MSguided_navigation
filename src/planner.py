@@ -126,22 +126,22 @@ class Planner(Node):
         #E a yaw?
         if(self.ponto_antigo is not None):
             self.dist = self.distance(self.ponto_atual, self.ponto_antigo)
-
-        print('bagulho doido: ', self.obter_direcao(self.ponto_atual, self.obter_ponto_filtro_media(self.p)[2], self.ponto_objetivo))
+        
         if(self.ponto_antigo is None or self.dist > self.distance_threshold):
             if(regiao_nova_robo != self.regiao_objetivo):
                 #if(regiao_nova_robo <= 79):
                 if(self.direcao == 0 or self.direcao == 4 or self.direcao == 3 or self.direcao == 2 or self.direcao == 1):                               
-                    #mover o robo
-                    self.publish_particles(self.p) 
+                    #mover o robo  
                     self.publish_ponto_pose_estimada()
-                    self.publish_filtro_media()
+                    self.publish_particles(self.p)   
+                    self.publish_filtro_media()                 
                     self.move_forward()             
                     if self.current_timer:
                         self.current_timer.cancel()            
                     self.current_timer = self.create_timer(self.tal, self.stop)                
                     #filtro de particula
-                    self.filtro_de_particulas(0)                    
+                    self.filtro_de_particulas(0)
+                    print('bagulho doido: ', self.obter_direcao(self.ponto_atual, self.obter_ponto_filtro_media(self.p)[2], self.ponto_objetivo))
                     print('melhor particula: ', self.selecionar_particula(self.p))
                     print('media: ', self.obter_ponto_filtro_media(self.p))
                     print('pose real: ', self.robot_real_pose.position.x, self.robot_real_pose.position.y, self.robot_real_pose.orientation.z)
@@ -215,32 +215,27 @@ class Planner(Node):
         for i in range(len(lista_particulas)):
             x = x + lista_particulas[i].x
             y = y + lista_particulas[i].y
-            yaw = ((lista_particulas[i].yaw - lista_particulas[0].yaw + math.pi) % (2 * math.pi)) + (lista_particulas[0].yaw - math.pi)
-
-        return [x/(len(lista_particulas)), y/(len(lista_particulas)), yaw/(len(lista_particulas))]
+            yaw = yaw + lista_particulas[i].yaw
+        return [x/(len(lista_particulas)), y/(len(lista_particulas)), (yaw/(len(lista_particulas))  + math.pi) % (2* math.pi)]
 
     def obter_direcao(self, ponto_estimado, direcao_filtro, ponto_objetivo):
-        #divisao de star vars, admitindo que a yaw do filtro esteja normalizada
-        esquerda = [(self.m * direcao_filtro)/ 8, (3 * self.m * direcao_filtro)/ 8]
-        atras = [(3 * self.m * direcao_filtro)/ 8, (5 * self.m * direcao_filtro)/ 8]
-        direita = [(5 * self.m * direcao_filtro)/ 8, (7 * self.m * direcao_filtro)/ 8]
-        frente = [(7 * self.m * direcao_filtro)/ 8, (self.m * direcao_filtro)/ 8]
-
         ponto_inicio = np.array([ponto_estimado[0], ponto_estimado[1]])
         ponto_fim = np.array([ponto_objetivo[0], ponto_objetivo[1]])
-        vetor_objetivo = (ponto_fim - ponto_inicio)/np.linalg.norm(ponto_fim - ponto_inicio)
-
-        theta = (direcao_filtro + np.arccos(np.dot(np.array([np.cos(direcao_filtro), np.sin(direcao_filtro)]), vetor_objetivo))) % 2 * math.pi
-        comando = 0
-        if theta >= esquerda[0] or theta < esquerda[1]:
-            comando = 1
-        elif theta >= atras[0] or theta < atras[1]:
-            comando = 2
-        elif theta >= direita[0] or theta < direita[1]:
-            comando = 3
-        elif theta >= frente[0] or theta < frente[1]:
+        
+        vetor_objetivo = (ponto_fim - ponto_inicio) / np.linalg.norm(ponto_fim - ponto_inicio)        
+        theta_objetivo = np.arctan2(vetor_objetivo[1], vetor_objetivo[0])        
+        delta_theta = (theta_objetivo - direcao_filtro + np.pi) % (2 * np.pi) - np.pi
+        
+        if -np.pi / 4 <= delta_theta <= np.pi / 4:  # Frente
             comando = 4
-        return comando, direcao_filtro, theta
+        elif np.pi / 4 < delta_theta <= 3 * np.pi / 4:  # Esquerda
+            comando = 1
+        elif -3 * np.pi / 4 <= delta_theta < -np.pi / 4:  # Direita
+            comando = 3
+        else:  # Trás
+            comando = 2
+
+        return comando, direcao_filtro, delta_theta
         
 
     #comandos para enviar para o robo
