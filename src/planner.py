@@ -104,7 +104,8 @@ class Planner(Node):
             for i in range(self.particle_number):
                 #ruido_virar, sigma_atualizacao, sigma_translacao
                 self.p.append(Particle(1.0, 0.5, 0.5))           
-            self.publish_particles(self.p)   
+            self.publish_particles(self.p)  
+            self.publish_ponto_pose_estimada()  
 
     def robot_real_pose_callback(self, msg):
         if msg.poses:
@@ -126,14 +127,11 @@ class Planner(Node):
         #E a yaw?
         if(self.ponto_antigo is not None):
             self.dist = self.distance(self.ponto_atual, self.ponto_antigo)
-
-        self.publish_ponto_pose_estimada()
-        self.publish_particles(self.p)   
-        self.publish_filtro_media()          
+                 
         if(self.ponto_antigo is None or self.dist > self.distance_threshold):
             if(regiao_nova_robo != self.regiao_objetivo):
                 #if(regiao_nova_robo <= 79):
-                if(self.direcao == 0 or self.direcao == 4 or self.direcao == 3 or self.direcao == 2 or self.direcao == 1):                               
+                if(self.direcao == 0 or self.direcao == 4 or self.direcao == 3 or self.direcao == 2 or self.direcao == 1):                                        
                     #mover o robo                                     
                     self.move_forward()             
                     if self.current_timer:
@@ -141,6 +139,9 @@ class Planner(Node):
                     self.current_timer = self.create_timer(self.tal, self.stop)                
                     #filtro de particula
                     self.filtro_de_particulas(0)
+                    self.publish_particles(self.p)   
+                    self.publish_filtro_media()
+                    self.publish_ponto_pose_estimada() 
                     print('bagulho doido: ', self.obter_direcao(self.ponto_atual, self.obter_ponto_filtro_media(self.p)[2], self.ponto_objetivo))
                     print('melhor particula: ', self.selecionar_particula(self.p))
                     print('media: ', self.obter_ponto_filtro_media(self.p))
