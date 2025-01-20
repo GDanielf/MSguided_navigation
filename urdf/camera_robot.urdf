@@ -41,13 +41,19 @@
       </geometry>
     </collision>
   </link>
-
+  
   <!-- Joint for head rotation (Y-axis) -->
   <joint name="head_yaw_joint" type="continuous">
     <parent link="base_link"/>
     <child link="head_link"/>
     <origin xyz="0 0 3.5" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" effort="10" velocity="1"/>
+    <dynamics damping="0.5" friction="0.1"/>
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <ros2_control>
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+    </ros2_control>
   </joint>
 
   <!-- Camera link -->
@@ -72,11 +78,17 @@
   </link>
 
   <!-- Joint for camera tilt (Z-axis) -->
-  <joint name="camera_tilt_joint" type="continuous">
-    <parent link="head_link"/>
+  <joint name="camera_tilt_joint" type="revolute">
+    <parent link="base_link"/>
     <child link="camera_link"/>
-    <origin xyz="0 0 0.2" rpy="0 0 0"/>
+    <origin xyz="0 0 3.5" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
+    <limit lower="-1.57" upper="1.57" effort="10" velocity="1"/>
+    <dynamics damping="0.5" friction="0.1"/>
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <ros2_control>
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+    </ros2_control>
   </joint>
 
   <!-- Disable gravity for camera and head links -->
@@ -106,5 +118,11 @@
       <always_on>true</always_on>
       <visualize>true</visualize>
     </sensor>
+  </gazebo>
+  <gazebo>
+    <plugin name="gazebo_ros2_control" filename="/opt/ros/humble/lib/libgazebo_ros2_control.so">
+      <robot_namespace>/camera_robot</robot_namespace>
+      <parameters>/home/daniel/ros2_ws/src/guided_navigation/urdf/camera_robot.urdf</parameters>
+    </plugin>
   </gazebo>
 </robot>
