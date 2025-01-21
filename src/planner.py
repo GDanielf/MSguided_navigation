@@ -8,14 +8,10 @@ from geometry_msgs.msg import Pose, Twist, Quaternion
 from visualization_msgs.msg import Marker, MarkerArray
 from guided_navigation.msg import PoseEstimate
 from geometry_msgs.msg import PoseArray
-from scipy.spatial.transform import Rotation
-
-from std_msgs.msg import Int32
 from particle import Particle
 import random
 from mapa import Mapa
 import math
-import matplotlib.pyplot as plt
 import numpy as np
 import time
 import copy
@@ -61,9 +57,10 @@ class Planner(Node):
         self.distance_threshold = 0.1
         self.dist = -10
         self.stop_duration = 10.0
-        self.rotate_duration = 5
+        self.rotate_duration = 10
+        self.reverse_duration = 25
         self.tal = 5.0 
-        self.espera = 30.0
+        self.espera = 25.0
         self.current_timer = None
         self.action_queue = []  # Fila de ações a serem executadas
         #retorno do filtro de particulas
@@ -83,15 +80,22 @@ class Planner(Node):
         #starvars
         self.m = 16
         #definicoes filtro de particula
-        self.particle_number = 1000
+        self.particle_number = 500
         self.p = []
         self.publisher_ponto_est = self.create_publisher(Marker, 'topic_pose_est', 10)
+        self.publisher_ponto_objetivo = self.create_publisher(Marker, 'topic_ponto_obj', 10)        
         self.publisher_real_pose = self.create_publisher(Marker, 'topic_real_pose', 10)
         self.publisher_filto_media = self.create_publisher(Marker, 'topic_filtro_media', 10)
+        self.buceta_publisher = self.create_publisher(Marker, 'topico_buceta', 10)
+        self.publisher_filtro_melhor = self.create_publisher(Marker, 'topic_filtro_melhor', 10)
 
         self.ponto_antigo = None
         self.new_pose_received = False
-        self.direcao = 0
+        self.direcao_comando = 0
+        self.melhor_particula= [0.0, 0.0, 0.0]
+        self.direcao_array = [0,0,0,0,0,0]
+        self.direcao_filtro_melhor = 0
+        self.direcao_filtro_media = 0
         #robo real
         self.robot_real_pose = None
 
@@ -103,7 +107,7 @@ class Planner(Node):
             self.start_planner = False              
             for i in range(self.particle_number):
                 #ruido_virar, sigma_atualizacao, sigma_translacao
-                self.p.append(Particle(1.0, 0.5, 0.5))           
+                self.p.append(Particle(1.5, 1.5, 2.5))           
             self.publish_particles(self.p)  
             self.publish_ponto_pose_estimada()  
 
@@ -129,36 +133,50 @@ class Planner(Node):
             self.dist = self.distance(self.ponto_atual, self.ponto_antigo)
                  
         if(self.ponto_antigo is None or self.dist > self.distance_threshold):
+            print("regiao do robo:", regiao_nova_robo, " regiao objetivo: ", self.regiao_objetivo)
             if(regiao_nova_robo != self.regiao_objetivo):
                 #if(regiao_nova_robo <= 79):
-                if(self.direcao == 0 or self.direcao == 4 or self.direcao == 3 or self.direcao == 2 or self.direcao == 1):                                        
+                #move pra frente
+                print('bagulho doido: ', self.direcao_comando)
+                if(self.direcao_comando == 0 or self.direcao_comando == 4):                                        
                     #mover o robo                                     
-                    self.move_forward()             
-                    if self.current_timer:
-                        self.current_timer.cancel()            
-                    self.current_timer = self.create_timer(self.tal, self.stop)                
-                    #filtro de particula
+                    self.move_forward()  
                     self.filtro_de_particulas(0)
                     self.publish_particles(self.p)   
                     self.publish_filtro_media()
-                    self.publish_ponto_pose_estimada() 
-                    print('bagulho doido: ', self.obter_direcao(self.ponto_atual, self.obter_ponto_filtro_media(self.p)[2], self.ponto_objetivo))
-                    print('melhor particula: ', self.selecionar_particula(self.p))
-                    print('media: ', self.obter_ponto_filtro_media(self.p))
-                    print('pose real: ', self.robot_real_pose.position.x, self.robot_real_pose.position.y, self.robot_real_pose.orientation.z)
-                    self.movement_in_progress = False
-                    #espera um pouco para mandar a mensagem pro multi_camera
-                    self.moving_status()
-                    self.contador_de_comando += 1  
-                else:
+                    self.publish_ponto_pose_estimada()  
+                    self.publish_filtro_melhor()                   
+                    self.contador_de_comando += 1 
+                #vira para esquerda e vai pra frente 
+                elif(self.direcao_comando == 1):
                     #rotacione para esquerda e ande para frente
                     self.rotate_counter_clockwise()
-                    if self.current_timer:
-                        self.current_timer.cancel()            
-                    self.current_timer = self.create_timer(self.rotate_duration, self.stop)
-                    self.filtro_de_particulas(1.57)
+                    self.filtro_de_particulas((math.pi)/2)
+                    self.publish_particles(self.p) 
+                    self.publish_filtro_media()
                     self.publish_ponto_pose_estimada()
-
+                    self.publish_filtro_melhor() 
+                    self.contador_de_comando += 1 
+                #Vira 180 para esquerda e vai para frente
+                elif(self.direcao_comando == 2):
+                    #rotacione para esquerda e ande para frente
+                    self.move_backwards()
+                    self.filtro_de_particulas(math.pi)
+                    self.publish_particles(self.p) 
+                    self.publish_filtro_media()
+                    self.publish_ponto_pose_estimada()
+                    self.publish_filtro_melhor()
+                    self.contador_de_comando += 1
+                #vira pra direita e vai pra frente
+                elif(self.direcao_comando == 3):
+                    #rotacione para esquerda e ande para frente
+                    self.rotate_clockwise()
+                    self.filtro_de_particulas(-(math.pi)/2)
+                    self.publish_particles(self.p) 
+                    self.publish_filtro_media()
+                    self.publish_ponto_pose_estimada()
+                    self.publish_filtro_melhor()                    
+                    self.contador_de_comando += 1 
                 #if(regiao_nova_robo != self.regiao_antiga and self.regiao_antiga != 500):
                 #    self.stop()
                 #    self.regiao_antiga = regiao_nova_robo
@@ -168,7 +186,11 @@ class Planner(Node):
                     
                     
                     #self.plot_particles(self.p)
-                    #print(len(self.p))                    
+                    #print(len(self.p)) 
+                print('bagulho doido2: ', self.direcao_comando)
+                print("direcoes: ", self.direcao_array)
+                print("Filtro Melhor: ", self.direcao_filtro_melhor)
+                print("Filtro Media: ", self.direcao_filtro_media)
             else:
                 print('chegou')
                 self.stop()
@@ -198,9 +220,14 @@ class Planner(Node):
             p_nova.append(copy.deepcopy(particula)) 
 
         self.p = p_nova 
-        for i in range(5):
-            print(self.p[i])
-        self.direcao = self.obter_direcao(self.ponto_atual, self.obter_ponto_filtro_media(self.p)[2], self.ponto_objetivo)[0]
+        #selecionar a melhor 
+        melhor = self.selecionar_particula(self.p)
+        self.melhor_particula = [melhor.x, melhor.y, melhor.yaw % 2* math.pi]
+        self.direcao_filtro_melhor = self.melhor_particula[2]
+        #selecionar media
+        self.direcao_filtro_media = self.obter_ponto_filtro_media(self.p)[2]
+        #usando a melhor
+        self.direcao_comando = self.obter_direcao(self.ponto_atual, self.direcao_filtro_melhor, self.ponto_objetivo)[0]
     
     #funcoes parciais do filtro de particulas
     def selecionar_particula(self, lista):
@@ -217,36 +244,42 @@ class Planner(Node):
             x = x + lista_particulas[i].x
             y = y + lista_particulas[i].y
             yaw = yaw + lista_particulas[i].yaw
-        return [x/(len(lista_particulas)), y/(len(lista_particulas)), (yaw/(len(lista_particulas))  + math.pi) % (2* math.pi)]
+        return [x/(len(lista_particulas)), y/(len(lista_particulas)), (yaw/(len(lista_particulas))) % (2* math.pi)]
 
-    def obter_direcao(self, ponto_estimado, direcao_filtro, ponto_objetivo):
-        ponto_inicio = np.array([ponto_estimado[0], ponto_estimado[1]])
-        ponto_fim = np.array([ponto_objetivo[0], ponto_objetivo[1]])
-        
-        vetor_objetivo = (ponto_fim - ponto_inicio) / np.linalg.norm(ponto_fim - ponto_inicio)        
-        theta_objetivo = np.arctan2(vetor_objetivo[1], vetor_objetivo[0])        
-        delta_theta = (theta_objetivo - direcao_filtro) % (2 * math.pi)
+    def obter_direcao(self, ponto_estimado, direcao_filtro, ponto_objetivo):        
+        vetor_a = np.array([np.cos(direcao_filtro), np.sin(direcao_filtro)])
+        vetor_b = np.array([ponto_objetivo[0], ponto_objetivo[1]]) - np.array([ponto_estimado[0], ponto_estimado[1]])
+        produto_escalar = np.dot(vetor_a, vetor_b)
+        norma_a = np.linalg.norm(vetor_a)
+        norma_b = np.linalg.norm(vetor_b)
+        cos_theta = produto_escalar / (norma_a * norma_b)
+        theta_objetivo = np.arccos(np.clip(cos_theta, -1, 1))   
 
-        step = 2 * math.pi / self.m
+        step = (2 * math.pi / self.m)
 
-        pizza = int(delta_theta // step)
+        self.publish_buceta(theta_objetivo)
+
+        self.direcao_array = [direcao_filtro, theta_objetivo, 
+                              (direcao_filtro + step * (self.m / 8)) % 2 * math.pi, 
+                              (direcao_filtro + step * 3 * (self.m / 8))% 2 * math.pi, 
+                              (direcao_filtro + step * 5 * (self.m / 8))% 2 * math.pi, 
+                              (direcao_filtro + step * 7 * (self.m / 8))% 2 * math.pi]
 
         comando = 0
         #esquerda
-        if ((self.m / 8) <= pizza < 3 * (self.m / 8)):
+        if (self.direcao_array[2] <= theta_objetivo < self.direcao_array[3]):
             comando = 1
         #atras
-        elif (3 * (self.m / 8) <= pizza < 5 * (self.m / 8)):
+        elif (self.direcao_array[3] <= theta_objetivo < self.direcao_array[4]):
             comando = 2
         #direita
-        elif (5 * (self.m / 8) <= pizza < 7 * (self.m / 8)):
+        elif (self.direcao_array[4] <= theta_objetivo < self.direcao_array[5]):
             comando = 3
         #frente
-        elif (7 * (self.m / 8) <= pizza < (self.m / 8)):
+        elif (self.direcao_array[5] <= theta_objetivo < 2* math.pi or direcao_filtro <= theta_objetivo < self.direcao_array[2]):
             comando = 4
 
-        return comando, direcao_filtro, delta_theta
-        
+        return comando, direcao_filtro, theta_objetivo        
 
     #comandos para enviar para o robo
     def moving_status(self):
@@ -279,39 +312,40 @@ class Planner(Node):
 
     def stop(self):      
         self.get_logger().info(f'Robo parado')
-        self.velocity_sender(0.0, 0.0)
-        
+        self.velocity_sender(0.0, 0.0)    
+        self.movement_in_progress = False  
+        self.moving_status()  
 
     def move_forward(self):        
         self.get_logger().info(f'Movendo o robo para frente')
-        self.velocity_sender(0.5, 0.0)  
-        self.movement_in_progress = True
-        self.moving_status()
-        
-
-    def move_backward(self):
-        self.get_logger().info(f'Movendo o robo para tras')
-        self.velocity_sender(-0.5, 0.0)
+        self.velocity_sender(0.5, 0.0) 
         self.schedule_action(self.stop, self.tal) 
-        self.movement_in_progress = True
-        self.moving_status()
+        self.movement_in_progress = True  
+        self.moving_status() 
 
     def rotate_clockwise(self):
         self.get_logger().info(f'Rotacionando no sentido horario')
         self.velocity_sender(0.0, -0.5)
-        self.schedule_action(self.stop, self.rotate_duration)
+        self.schedule_action(self.move_forward, self.rotate_duration) 
         self.movement_in_progress = True
-        self.moving_status()
+        self.moving_status()             
+
+    def move_backwards(self):
+        self.get_logger().info(f'Movendo Para tras')
+        self.velocity_sender(0.0, 0.5)
+        self.schedule_action(self.move_forward, self.reverse_duration)  
+        self.movement_in_progress = True
+        self.moving_status()           
 
     def rotate_counter_clockwise(self):
         self.get_logger().info(f'Rotacionando no sentido anti-horario')
         self.velocity_sender(0.0, 0.5)
-        self.schedule_action(self.stop, self.rotate_duration)
+        self.schedule_action(self.move_forward, self.rotate_duration)  
         self.movement_in_progress = True
-        self.moving_status()
+        self.moving_status()              
 
     def publish_ponto_pose_estimada(self):
-        quaternion_euler = Rotation.from_euler('xyz', [0, 0, self.obter_ponto_filtro_media(self.p)[2]]).as_quat()
+        quaternion_euler = self.quaternion_from_euler(0, 0, self.direcao_filtro_melhor)        
         quat_msg = Quaternion()
         quat_msg.x = quaternion_euler[0]
         quat_msg.y = quaternion_euler[1]
@@ -343,6 +377,33 @@ class Planner(Node):
         delete_marker = Marker()
         delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
         self.publisher_ponto_est.publish(delete_marker) 
+
+    def publish_ponto_objetivo(self):
+        marker = Marker()
+        marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = "single_point"
+        marker.id = 0  # Mantenha o mesmo ID para substituir o ponto anterior
+        marker.type = Marker.SPHERE  # Ou Marker.POINTS, mas um único ponto será suficiente
+        marker.action = Marker.ADD 
+        # Adicionar o ponto atualizado
+        marker.pose.position.x = self.ponto_objetivo[0]
+        marker.pose.position.y = self.ponto_objetivo[1]
+        marker.pose.position.z = 1.0
+        # Definindo a cor e tamanho
+        marker.scale.x = 1.5  # Tamanho do ponto
+        marker.scale.y = 0.125
+        marker.scale.z = 0.125
+        marker.color.a = 1.0  # Opacidade total
+        marker.color.r = 0.0  # Cor vermelha
+        marker.color.g = 0.0
+        marker.color.b = 1.0
+            
+        self.publisher_ponto_objetivo.publish(marker)
+        # Apagar o ponto antigo se necessário
+        delete_marker = Marker()
+        delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
+        self.publisher_ponto_objetivo.publish(delete_marker)
 
     def publish_particles(self, points_array):             
         marker_array = MarkerArray()
@@ -409,7 +470,7 @@ class Planner(Node):
         self.publisher_real_pose.publish(delete_marker) 
 
     def publish_filtro_media(self):
-        quaternion_euler_2 = Rotation.from_euler('xyz', [0, 0, self.obter_ponto_filtro_media(self.p)[2]]).as_quat()
+        quaternion_euler_2 = self.quaternion_from_euler(0, 0, self.direcao_filtro_media)
         marker = Marker()
         quat_msg_2 = Quaternion()
         quat_msg_2.x = quaternion_euler_2[0]
@@ -442,6 +503,97 @@ class Planner(Node):
         delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
         self.publisher_filto_media.publish(delete_marker) 
 
+    def publish_buceta(self, caralha):
+        quaternion_euler_2 = self.quaternion_from_euler(0,0,caralha)
+        marker = Marker()
+        quat_msg_2 = Quaternion()
+        quat_msg_2.x = quaternion_euler_2[0]
+        quat_msg_2.y = quaternion_euler_2[1]
+        quat_msg_2.z = quaternion_euler_2[2]
+        quat_msg_2.w = quaternion_euler_2[3]
+        marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = "buceta"
+        marker.id = 0  # Mantenha o mesmo ID para substituir o ponto anterior
+        marker.type = Marker.ARROW  # Ou Marker.POINTS, mas um único ponto será suficiente
+        marker.action = Marker.ADD 
+        # Adicionar o ponto atualizado
+        marker.pose.position.x = self.ponto_atual[0]
+        marker.pose.position.y = self.ponto_atual[1]
+        marker.pose.position.z = 1.0
+        marker.pose.orientation = quat_msg_2
+        # Definindo a cor e tamanho
+        marker.scale.x = 1.0  # Tamanho do ponto
+        marker.scale.y = 0.125
+        marker.scale.z = 0.125
+        marker.color.a = 1.0  # Opacidade total
+        marker.color.r = 0.0  # Cor vermelha
+        marker.color.g = 1.0
+        marker.color.b = 1.0
+            
+        self.buceta_publisher.publish(marker)
+        # Apagar o ponto antigo se necessário
+        delete_marker = Marker()
+        delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
+        self.buceta_publisher.publish(delete_marker) 
+
+    def publish_filtro_melhor(self):
+        quaternion_euler_2 = self.quaternion_from_euler(0, 0, self.melhor_particula[2])
+        marker = Marker()
+        quat_msg_2 = Quaternion()
+        quat_msg_2.x = quaternion_euler_2[0]
+        quat_msg_2.y = quaternion_euler_2[1]
+        quat_msg_2.z = quaternion_euler_2[2]
+        quat_msg_2.w = quaternion_euler_2[3]
+        marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = "filtro_melhor"
+        marker.id = 0  # Mantenha o mesmo ID para substituir o ponto anterior
+        marker.type = Marker.ARROW  # Ou Marker.POINTS, mas um único ponto será suficiente
+        marker.action = Marker.ADD 
+        # Adicionar o ponto atualizado
+        marker.pose.position.x = self.melhor_particula[0]
+        marker.pose.position.y = self.melhor_particula[1]
+        marker.pose.position.z = 1.0
+        marker.pose.orientation = quat_msg_2
+        # Definindo a cor e tamanho
+        marker.scale.x = 1.0  # Tamanho do ponto
+        marker.scale.y = 0.125
+        marker.scale.z = 0.125
+        marker.color.a = 1.0  # Opacidade total
+        marker.color.r = 0.5  # Cor vermelha
+        marker.color.g = 1.0
+        marker.color.b = 1.0
+            
+        self.publisher_filtro_melhor.publish(marker)
+        # Apagar o ponto antigo se necessário
+        delete_marker = Marker()
+        delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
+        self.publisher_filtro_melhor.publish(delete_marker) 
+
+        
+    def quaternion_from_euler(self, ai, aj, ak):
+        ai /= 2.0
+        aj /= 2.0
+        ak /= 2.0
+        ci = math.cos(ai)
+        si = math.sin(ai)
+        cj = math.cos(aj)
+        sj = math.sin(aj)
+        ck = math.cos(ak)
+        sk = math.sin(ak)
+        cc = ci*ck
+        cs = ci*sk
+        sc = si*ck
+        ss = si*sk
+
+        q = np.empty((4, ))
+        q[0] = cj*sc - sj*cs
+        q[1] = cj*ss + sj*cc
+        q[2] = cj*cs - sj*sc
+        q[3] = cj*cc + sj*ss
+
+        return q
 def main(args=None):
     rclpy.init(args=args)
     planner = Planner()
