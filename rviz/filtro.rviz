@@ -12,6 +12,7 @@ Panels:
         - /Marker2
         - /MarkerArray1
         - /Marker3
+        - /Marker7
       Splitter Ratio: 0.5
     Tree Height: 746
   - Class: rviz_common/Selection
@@ -57,7 +58,7 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        {}
+        single_point: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -90,7 +91,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        {}
+        filtro_points: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -102,7 +103,7 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        {}
+        robot_point: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -115,7 +116,7 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        {}
+        filtro_media: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -128,7 +129,7 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        {}
+        filtro_melhor: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -141,7 +142,7 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        {}
+        obj_point: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -161,7 +162,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /topico_buceta
+        Value: /topic_ponto_obj
       Value: true
   Enabled: true
   Global Options:
