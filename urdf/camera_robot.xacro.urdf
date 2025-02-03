@@ -1,0 +1,156 @@
+<?xml version="1.0"?>
+<robot name="camera_robot">
+  <!-- Base link -->
+  <link name="world"/>
+  <link name="base_link">    
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="1 1 0.5"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="10.0"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="1" iyy="1" izz="1" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <joint name="world_to_base" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>  
+
+  <link name="neck_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="1.0"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="1" iyy="1" izz="1" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <joint name="head_yaw_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="neck_link"/>
+    <origin xyz="0 0 3.5" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-1.57" upper="1.57" effort="1000" velocity="30"/>
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>  
+
+  <!-- Head link at 3.5 meters -->
+  <link name="head_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="1.0"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="1" iyy="1" izz="1" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>  
+
+  <joint name="camera_tilt_joint" type="revolute">
+    <parent link="neck_link"/>  
+    <child link="head_link"/>
+    <origin xyz="0 0 0.3" rpy="0 0 0"/>  
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" effort="1000" velocity="30"/>
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  
+
+  <!-- Desabilita gravidade para os links móveis -->
+  <gazebo reference="head_link">
+    <gravity>0</gravity>
+  </gazebo>
+  <gazebo reference="neck_link">
+    <gravity>0</gravity>
+  </gazebo>
+
+  <gazebo reference="neck_link">
+    <visual>
+      <material>
+        <ambient>0 0.8 0 0</ambient>
+        <diffuse>0 0.8 0 0</diffuse>
+        <specular>0 0.8 0 0</specular>
+      </material>
+    </visual>
+  </gazebo>
+
+  <!-- Configuração do ros2_control -->
+  <ros2_control name="IgnitionSystem" type="system">
+    <hardware>
+      <plugin>ign_ros2_control/IgnitionSystem</plugin>
+    </hardware>
+    <joint name="head_yaw_joint">
+      <command_interface name="effort"/>  <!-- Corrigido! -->
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="camera_tilt_joint">
+      <command_interface name="effort"/>  <!-- Corrigido! -->
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+  </ros2_control>
+
+  <!-- Adicionando transmissão para garantir que o Gazebo reconheça o controle por esforço -->
+  <transmission name="head_yaw_transmission">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="head_yaw_joint">
+      <hardwareInterface>effort</hardwareInterface>
+    </joint>
+  </transmission>
+
+  <transmission name="camera_tilt_transmission">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="camera_tilt_joint">
+      <hardwareInterface>effort</hardwareInterface>
+    </joint>
+  </transmission>
+
+  <!-- Plugin da câmera -->
+  <gazebo reference="head_link">
+    <sensor type="camera" name="camera_sensor">
+      <update_rate>30.0</update_rate>
+      <camera>
+        <horizontal_fov>1.047</horizontal_fov>
+        <image>
+          <width>1920</width>
+          <height>1080</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.1</near>
+          <far>100</far>
+        </clip>
+      </camera>
+      <always_on>true</always_on>
+      <visualize>true</visualize>
+    </sensor>
+  </gazebo>
+
+  <gazebo>
+    <plugin filename="ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">
+      <parameters>$(find guided_navigation)/config/camera_config.yaml</parameters>
+    </plugin>
+  </gazebo>
+
+</robot>

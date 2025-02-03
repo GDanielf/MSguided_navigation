@@ -20,6 +20,9 @@ export GZ_SIM_RESOURCE_PATH=~/ros2_wc/src/guided_navigation/models
 ## JOINT:
 ros2 run ros_gz_bridge parameter_bridge /world/empty/model/rgbd_camera_0/joint_state@sensor_msgs/msg/JointState@ignition.msgs.Model
 
+comando para mudar a joint no gazebo: 
+ros2 topic pub /effort_controller/commands std_msgs/msg/Float64MultiArray '{data: [1.0, 1]}'
+
 
 ## Rodar simulacao:
 
