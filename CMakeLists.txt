@@ -18,7 +18,6 @@ install(
   PROGRAMS
     src/multi_camera.py
     src/triangulation.py
-    src/stereo_camera.py
     src/filtro_particulas.py
     src/compare_position.py
     src/planner.py
@@ -31,6 +30,7 @@ install(DIRECTORY
   launch
   config
   urdf
+  world
   DESTINATION share/${PROJECT_NAME}
 )
 

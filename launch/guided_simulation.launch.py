@@ -19,6 +19,12 @@ def generate_launch_description():
     # Nó fixo para a chave da API do Roboflow
     export_roboflow_key = SetEnvironmentVariable('ROBOFLOW_API_KEY', 'aFkoLbgUAThELZEBkgQ5')
 
+    world_path = os.path.join(
+            get_package_share_directory('guided_navigation'),  
+            'world',
+            'camera_world.sdf'
+        )
+
     use_sim_time = LaunchConfiguration('use_sim_time', default=True)
 
     guided_navigation_path = os.path.join(
@@ -93,12 +99,12 @@ def generate_launch_description():
         #)
 
     # Combina os nós estáticos e dinâmicos
-    return LaunchDescription([
+    return LaunchDescription([        
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 [os.path.join(get_package_share_directory('ros_ign_gazebo'),
                               'launch', 'ign_gazebo.launch.py')]),
-                              launch_arguments=[('gz_args', [' -r -v 3 empty.sdf'])]),            
+                              launch_arguments=[('gz_args', f'-r -v 3 -s {world_path}')]),            
         RegisterEventHandler(
             event_handler=OnProcessExit(
                 target_action=ignition_spawn_entity,

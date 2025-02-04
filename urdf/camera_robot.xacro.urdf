@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <robot name="camera_robot">
-  <!-- Base link -->
   <link name="world"/>
   <link name="base_link">    
     <visual>
@@ -45,7 +44,6 @@
     <dynamics damping="0.0" friction="0.0"/>
   </joint>  
 
-  <!-- Head link at 3.5 meters -->
   <link name="head_link">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -69,8 +67,6 @@
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   
-
-  <!-- Desabilita gravidade para os links móveis -->
   <gazebo reference="head_link">
     <gravity>0</gravity>
   </gazebo>
@@ -88,13 +84,12 @@
     </visual>
   </gazebo>
 
-  <!-- Configuração do ros2_control -->
   <ros2_control name="IgnitionSystem" type="system">
     <hardware>
       <plugin>ign_ros2_control/IgnitionSystem</plugin>
     </hardware>
     <joint name="head_yaw_joint">
-      <command_interface name="effort"/>  <!-- Corrigido! -->
+      <command_interface name="effort"/>  
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -102,7 +97,7 @@
       <state_interface name="effort"/>
     </joint>
     <joint name="camera_tilt_joint">
-      <command_interface name="effort"/>  <!-- Corrigido! -->
+      <command_interface name="effort"/>  
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -111,7 +106,6 @@
     </joint>
   </ros2_control>
 
-  <!-- Adicionando transmissão para garantir que o Gazebo reconheça o controle por esforço -->
   <transmission name="head_yaw_transmission">
     <type>transmission_interface/SimpleTransmission</type>
     <joint name="head_yaw_joint">
@@ -126,7 +120,6 @@
     </joint>
   </transmission>
 
-  <!-- Plugin da câmera -->
   <gazebo reference="head_link">
     <sensor type="camera" name="camera_sensor">
       <update_rate>30.0</update_rate>
