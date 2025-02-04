@@ -30,9 +30,9 @@ colcon build --packages-select guided_navigation
 
 source install/local_setup.bash
 
-gz sim ros2_ws/src/guided_navigation/world/camera_world.sdf
-
 ros2 launch guided_navigation guided_simulation.launch.py
+
+ign gazebo -r -v 4 $(ros2 pkg prefix guided_navigation)/share/guided_navigation/world/camera_world.sdf
 
 ## Configuracao para deteccao com o modelo de treinamento da yolo:
 
