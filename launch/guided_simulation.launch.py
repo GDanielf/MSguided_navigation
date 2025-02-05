@@ -60,10 +60,17 @@ def generate_launch_description():
         output='screen'
     )
 
-    load_joint_effort_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 'effort_controller'],
+    load_joint_trajectory_controller = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 'velocity_controller'],
         output='screen'
     )
+
+    load_imu_sensor_broadcaster = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+             'imu_sensor_broadcaster'],
+        output='screen'
+    )
+
     bridge_cmd_vel = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
@@ -114,7 +121,13 @@ def generate_launch_description():
         RegisterEventHandler(
             event_handler=OnProcessExit(
                 target_action=load_joint_state_broadcaster,
-                on_exit=[load_joint_effort_controller],
+                on_exit=[load_joint_trajectory_controller],
+            )
+        ),
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=load_joint_trajectory_controller,
+                on_exit=[load_imu_sensor_broadcaster],
             )
         ),
         bridge_cmd_vel,

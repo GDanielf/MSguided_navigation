@@ -1,22 +1,43 @@
 controller_manager:
   ros__parameters:
-    update_rate: 1000 
+    update_rate: 1000  
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    effort_controller:
-      type: effort_controllers/JointGroupEffortController
+    imu_sensor_broadcaster:
+      type: imu_sensor_broadcaster/IMUSensorBroadcaster
 
-effort_controller:
+    velocity_controller:
+      type: velocity_controllers/JointGroupVelocityController
+      default: true  
+
+    position_controller:
+      type: position_controllers/JointGroupPositionController
+
+
+velocity_controller:
   ros__parameters:
     joints:
       - head_yaw_joint
       - camera_tilt_joint
-    interface_name: effort  
+    interface_name: velocity  
     command_interfaces:
-      - effort  
+      - velocity  
     state_interfaces:
       - position
       - velocity
       - effort
+    use_sim_time: true
+
+position_controller:
+  ros__parameters:
+    joints:
+      - head_yaw_joint
+      - camera_tilt_joint
+    interface_name: position
+
+imu_sensor_broadcaster:
+  ros__parameters:
+    sensor_name: camera_imu_sensor
+    frame_id: imu
