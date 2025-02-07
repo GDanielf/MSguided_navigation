@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot name="camera_robot">
   <link name="world"/>
-  <link name="base_link">    
+  <link name="base_link_0">    
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -15,13 +15,13 @@
     </inertial>
   </link>
 
-  <joint name="world_to_base" type="fixed">
+  <joint name="world_to_base_0" type="fixed">
     <parent link="world"/>
-    <child link="base_link"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <child link="base_link_0"/>
+    <origin xyz="-3 -7.4687 0" rpy="0 0 0"/>
   </joint>  
 
-  <link name="neck_link">
+  <link name="neck_link_0">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -35,15 +35,15 @@
     </inertial>
   </link>
 
-  <joint name="head_yaw_joint" type="continuous">
-    <parent link="base_link"/>
-    <child link="neck_link"/>
+  <joint name="head_yaw_joint_0" type="continuous">
+    <parent link="base_link_0"/>
+    <child link="neck_link_0"/>
     <origin xyz="0 0 3.5" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>  
 
-  <link name="head_link">
+  <link name="head_link_0">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -57,45 +57,253 @@
     </inertial>
   </link>  
 
-  <joint name="camera_tilt_joint" type="continuous">
-    <parent link="neck_link"/>  
-    <child link="head_link"/>
+  <joint name="camera_tilt_joint_0" type="continuous">
+    <parent link="neck_link_0"/>  
+    <child link="head_link_0"/>
     <origin xyz="0 0 0.3" rpy="0 0 0"/>  
     <axis xyz="0 1 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
-  <link name="imu">
+  <link name="imu_0">
     <inertial>
       <mass value="0.1"/>
       <inertia ixx="1.0" ixy="0" ixz="0" iyy="1.0" iyz="0" izz="1.0"/>
     </inertial>
   </link>
 
-  <joint name="head_to_imu" type="fixed">
+  <joint name="head_to_imu_0" type="fixed">
     <origin xyz="0.0 0.0 0.0"/>
-    <parent link="head_link"/>
-    <child link="imu"/>
+    <parent link="head_link_0"/>
+    <child link="imu_0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   
-  <gazebo reference="head_link">
+  <gazebo reference="head_link_0">
     <gravity>0</gravity>
   </gazebo>
-  <gazebo reference="neck_link">
+  <gazebo reference="neck_link_0">
     <gravity>0</gravity>
   </gazebo>
 
-  <gazebo reference="imu">
-    <sensor name="camera_imu_sensor" type="imu">
+  <gazebo reference="imu_0">
+    <sensor name="camera_imu_sensor_0" type="imu">
       <always_on>1</always_on>
       <update_rate>10.0</update_rate>
       <visualize>true</visualize>
-      <topic>imu</topic>
+      <topic>imu_0</topic>
     </sensor>
   </gazebo>
 
-  <gazebo reference="neck_link">
+  <gazebo reference="neck_link_0">
+    <visual>
+      <material>
+        <ambient>0 0.8 0 0</ambient>
+        <diffuse>0 0.8 0 0</diffuse>
+        <specular>0 0.8 0 0</specular>
+      </material>
+    </visual>
+  </gazebo>
+
+  <link name="base_link_1">    
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="1 1 0.5"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="10.0"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="1" iyy="1" izz="1" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <joint name="world_to_base_1" type="fixed">
+    <parent link="world"/>
+    <child link="base_link_1"/>
+    <origin xyz="4.0 7.4687 0" rpy="0 0 0"/>
+  </joint>  
+
+  <link name="neck_link_1">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="1.0"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="1" iyy="1" izz="1" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <joint name="head_yaw_joint_1" type="continuous">
+    <parent link="base_link_1"/>
+    <child link="neck_link_1"/>
+    <origin xyz="0 0 3.5" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>  
+
+  <link name="head_link_1">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="1.0"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="1" iyy="1" izz="1" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>  
+
+  <joint name="camera_tilt_joint_1" type="continuous">
+    <parent link="neck_link_1"/>  
+    <child link="head_link_1"/>
+    <origin xyz="0 0 0.3" rpy="0 0 0"/>  
+    <axis xyz="0 1 0"/>
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+
+  <link name="imu_1">
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="1.0" ixy="0" ixz="0" iyy="1.0" iyz="0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="head_to_imu_1" type="fixed">
+    <origin xyz="0.0 0.0 0.0"/>
+    <parent link="head_link_1"/>
+    <child link="imu_1"/>
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  
+  <gazebo reference="head_link_1">
+    <gravity>0</gravity>
+  </gazebo>
+  <gazebo reference="neck_link_1">
+    <gravity>0</gravity>
+  </gazebo>
+
+  <gazebo reference="imu_1">
+    <sensor name="camera_imu_sensor_1" type="imu">
+      <always_on>1</always_on>
+      <update_rate>10.0</update_rate>
+      <visualize>true</visualize>
+      <topic>imu_1</topic>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="neck_link_1">
+    <visual>
+      <material>
+        <ambient>0 0.8 0 0</ambient>
+        <diffuse>0 0.8 0 0</diffuse>
+        <specular>0 0.8 0 0</specular>
+      </material>
+    </visual>
+  </gazebo>
+
+  <link name="base_link_2">    
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="1 1 0.5"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="10.0"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="1" iyy="1" izz="1" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <joint name="world_to_base_2" type="fixed">
+    <parent link="world"/>
+    <child link="base_link_2"/>
+    <origin xyz="-9.9830 -1.2500 0" rpy="0 0 0"/>
+  </joint>  
+
+  <link name="neck_link_2">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="1.0"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="1" iyy="1" izz="1" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <joint name="head_yaw_joint_2" type="continuous">
+    <parent link="base_link_2"/>
+    <child link="neck_link_2"/>
+    <origin xyz="0 0 3.5" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>  
+
+  <link name="head_link_2">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="1.0"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="1" iyy="1" izz="1" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>  
+
+  <joint name="camera_tilt_joint_2" type="continuous">
+    <parent link="neck_link_2"/>  
+    <child link="head_link_2"/>
+    <origin xyz="0 0 0.3" rpy="0 0 0"/>  
+    <axis xyz="0 1 0"/>
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+
+  <link name="imu_2">
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="1.0" ixy="0" ixz="0" iyy="1.0" iyz="0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="head_to_imu_2" type="fixed">
+    <origin xyz="0.0 0.0 0.0"/>
+    <parent link="head_link_2"/>
+    <child link="imu_2"/>
+    <dynamics damping="0.0" friction="0.0"/>
+  </joint>
+  
+  <gazebo reference="head_link_2">
+    <gravity>0</gravity>
+  </gazebo>
+  <gazebo reference="neck_link_2">
+    <gravity>0</gravity>
+  </gazebo>
+
+  <gazebo reference="imu_2">
+    <sensor name="camera_imu_sensor_2" type="imu">
+      <always_on>1</always_on>
+      <update_rate>10.0</update_rate>
+      <visualize>true</visualize>
+      <topic>imu_2</topic>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="neck_link_2">
     <visual>
       <material>
         <ambient>0 0.8 0 0</ambient>
@@ -109,7 +317,7 @@
     <hardware>
       <plugin>ign_ros2_control/IgnitionSystem</plugin>
     </hardware>
-    <joint name="head_yaw_joint">
+    <joint name="head_yaw_joint_0">
       <command_interface name="velocity"> 
         <param name="initial_value">0.0</param> 
         <param name="min">-15</param> 
@@ -119,7 +327,7 @@
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
-     <joint name="camera_tilt_joint">
+     <joint name="camera_tilt_joint_0">
       <command_interface name="velocity">  
         <param name="initial_value">0.0</param>
         <param name="min">-15</param> 
@@ -129,7 +337,71 @@
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
-    <sensor name="camera_imu_sensor">
+    <sensor name="camera_imu_sensor_0">
+      <state_interface name="orientation.x"/>
+      <state_interface name="orientation.y"/>
+      <state_interface name="orientation.z"/>
+      <state_interface name="orientation.w"/>
+      <state_interface name="angular_velocity.x"/>
+      <state_interface name="angular_velocity.y"/>
+      <state_interface name="angular_velocity.z"/>
+      <state_interface name="linear_acceleration.x"/>
+      <state_interface name="linear_acceleration.y"/>
+      <state_interface name="linear_acceleration.z"/>
+    </sensor>
+    <joint name="head_yaw_joint_1">
+      <command_interface name="velocity"> 
+        <param name="initial_value">0.0</param> 
+        <param name="min">-15</param> 
+        <param name="max">15</param>   
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+     <joint name="camera_tilt_joint_1">
+      <command_interface name="velocity">  
+        <param name="initial_value">0.0</param>
+        <param name="min">-15</param> 
+        <param name="max">15</param> 
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <sensor name="camera_imu_sensor_1">
+      <state_interface name="orientation.x"/>
+      <state_interface name="orientation.y"/>
+      <state_interface name="orientation.z"/>
+      <state_interface name="orientation.w"/>
+      <state_interface name="angular_velocity.x"/>
+      <state_interface name="angular_velocity.y"/>
+      <state_interface name="angular_velocity.z"/>
+      <state_interface name="linear_acceleration.x"/>
+      <state_interface name="linear_acceleration.y"/>
+      <state_interface name="linear_acceleration.z"/>
+    </sensor>
+    <joint name="head_yaw_joint_2">
+      <command_interface name="velocity"> 
+        <param name="initial_value">0.0</param> 
+        <param name="min">-15</param> 
+        <param name="max">15</param>   
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+     <joint name="camera_tilt_joint_2">
+      <command_interface name="velocity">  
+        <param name="initial_value">0.0</param>
+        <param name="min">-15</param> 
+        <param name="max">15</param> 
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <sensor name="camera_imu_sensor_2">
       <state_interface name="orientation.x"/>
       <state_interface name="orientation.y"/>
       <state_interface name="orientation.z"/>
@@ -143,22 +415,90 @@
     </sensor>
   </ros2_control>
 
-  <transmission name="head_yaw_transmission">
+  <transmission name="head_yaw_transmission_0">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="head_yaw_joint">
+    <joint name="head_yaw_joint_0">
       <hardwareInterface>velocity</hardwareInterface>
     </joint>
   </transmission>
 
-  <transmission name="camera_tilt_transmission">
+  <transmission name="camera_tilt_transmission_0">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="camera_tilt_joint">
+    <joint name="camera_tilt_joint_0">
       <hardwareInterface>velocity</hardwareInterface>
     </joint>
   </transmission>
 
-  <gazebo reference="head_link">
-    <sensor type="camera" name="camera_sensor">
+  <transmission name="head_yaw_transmission_1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="head_yaw_joint_1">
+      <hardwareInterface>velocity</hardwareInterface>
+    </joint>
+  </transmission>
+
+  <transmission name="camera_tilt_transmission_1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="camera_tilt_joint_1">
+      <hardwareInterface>velocity</hardwareInterface>
+    </joint>
+  </transmission>
+
+  <transmission name="head_yaw_transmission_2">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="head_yaw_joint_2">
+      <hardwareInterface>velocity</hardwareInterface>
+    </joint>
+  </transmission>
+
+  <transmission name="camera_tilt_transmission_2">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="camera_tilt_joint_2">
+      <hardwareInterface>velocity</hardwareInterface>
+    </joint>
+  </transmission>
+
+  <gazebo reference="head_link_0">
+    <sensor type="camera" name="camera_sensor_0">
+      <update_rate>30.0</update_rate>
+      <camera>
+        <horizontal_fov>1.047</horizontal_fov>
+        <image>
+          <width>1920</width>
+          <height>1080</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.1</near>
+          <far>100</far>
+        </clip>
+      </camera>
+      <always_on>true</always_on>
+      <visualize>true</visualize>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="head_link_1">
+    <sensor type="camera" name="camera_sensor_1">
+      <update_rate>30.0</update_rate>
+      <camera>
+        <horizontal_fov>1.047</horizontal_fov>
+        <image>
+          <width>1920</width>
+          <height>1080</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.1</near>
+          <far>100</far>
+        </clip>
+      </camera>
+      <always_on>true</always_on>
+      <visualize>true</visualize>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="head_link_2">
+    <sensor type="camera" name="camera_sensor_2">
       <update_rate>30.0</update_rate>
       <camera>
         <horizontal_fov>1.047</horizontal_fov>

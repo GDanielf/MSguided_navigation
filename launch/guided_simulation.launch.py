@@ -54,20 +54,56 @@ def generate_launch_description():
                    '-allow_renaming', 'true'],
     )
 
-    load_joint_state_broadcaster = ExecuteProcess(
+    #camera0
+    load_joint_state_broadcaster_0 = ExecuteProcess(
         cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-             'joint_state_broadcaster'],
+             'joint_state_broadcaster_0'],
         output='screen'
     )
 
-    load_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 'velocity_controller'],
+    load_joint_trajectory_controller_0 = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 'velocity_controller_0'],
         output='screen'
     )
 
-    load_imu_sensor_broadcaster = ExecuteProcess(
+    load_imu_sensor_broadcaster_0 = ExecuteProcess(
         cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-             'imu_sensor_broadcaster'],
+             'imu_sensor_broadcaster_0'],
+        output='screen'
+    )
+
+    #camera1
+    load_joint_state_broadcaster_1 = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+             'joint_state_broadcaster_1'],
+        output='screen'
+    )
+
+    load_joint_trajectory_controller_1 = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 'velocity_controller_1'],
+        output='screen'
+    )
+
+    load_imu_sensor_broadcaster_1 = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+             'imu_sensor_broadcaster_1'],
+        output='screen'
+    )
+    #camera2
+    load_joint_state_broadcaster_2 = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+             'joint_state_broadcaster_2'],
+        output='screen'
+    )
+
+    load_joint_trajectory_controller_2 = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 'velocity_controller_2'],
+        output='screen'
+    )
+
+    load_imu_sensor_broadcaster_2 = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+             'imu_sensor_broadcaster_2'],
         output='screen'
     )
 
@@ -96,14 +132,32 @@ def generate_launch_description():
     )    
 
     # Geração dinâmica dos nós de câmera
-    #bridge_camera =  Node(
-            #package='ros_gz_bridge',
-            #executable='parameter_bridge',
-            #name=f'camera_bridge',
-            #arguments=[f'/world/empty/model/rgbd_camera_{i}/link/link_{i}/sensor/camera_sensor_{i}/image@sensor_msgs/msg/Image@gz.msgs.Image'],
-            #output='screen',
-            #parameters=[{'use_sim_time': True}]
-        #)
+    bridge_camera_0 =  Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        name=f'camera_bridge_0',
+        arguments=[f'/world/empty/model/camera_robot/link/head_link_0/sensor/camera_sensor_0/image@sensor_msgs/msg/Image@gz.msgs.Image'],
+        output='screen',
+        parameters=[{'use_sim_time': True}]
+    )
+
+    bridge_camera_1 =  Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        name=f'camera_bridge_1',
+        arguments=[f'/world/empty/model/camera_robot/link/head_link_1/sensor/camera_sensor_1/image@sensor_msgs/msg/Image@gz.msgs.Image'],
+        output='screen',
+        parameters=[{'use_sim_time': True}]
+    )
+
+    bridge_camera_2 =  Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        name=f'camera_bridge_2',
+        arguments=[f'/world/empty/model/camera_robot/link/head_link_2/sensor/camera_sensor_2/image@sensor_msgs/msg/Image@gz.msgs.Image'],
+        output='screen',
+        parameters=[{'use_sim_time': True}]
+    )
 
     # Combina os nós estáticos e dinâmicos
     return LaunchDescription([        
@@ -115,24 +169,51 @@ def generate_launch_description():
         RegisterEventHandler(
             event_handler=OnProcessExit(
                 target_action=ignition_spawn_entity,
-                on_exit=[load_joint_state_broadcaster],
+                on_exit=[load_joint_state_broadcaster_0, load_joint_state_broadcaster_1, load_joint_state_broadcaster_2],
             )
         ),
         RegisterEventHandler(
             event_handler=OnProcessExit(
-                target_action=load_joint_state_broadcaster,
-                on_exit=[load_joint_trajectory_controller],
+                target_action=load_joint_state_broadcaster_0,
+                on_exit=[load_joint_trajectory_controller_0],
             )
         ),
         RegisterEventHandler(
             event_handler=OnProcessExit(
-                target_action=load_joint_trajectory_controller,
-                on_exit=[load_imu_sensor_broadcaster],
+                target_action=load_joint_trajectory_controller_0,
+                on_exit=[load_imu_sensor_broadcaster_0],
+            )
+        ),
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=load_joint_state_broadcaster_1,
+                on_exit=[load_joint_trajectory_controller_1],
+            )
+        ),
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=load_joint_trajectory_controller_1,
+                on_exit=[load_imu_sensor_broadcaster_1],
+            )
+        ),
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=load_joint_state_broadcaster_2,
+                on_exit=[load_joint_trajectory_controller_2],
+            )
+        ),
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=load_joint_trajectory_controller_2,
+                on_exit=[load_imu_sensor_broadcaster_2],
             )
         ),
         bridge_cmd_vel,
         bridge_robot_real_pose,
         bridge_clock,
+        bridge_camera_0,
+        bridge_camera_1,
+        bridge_camera_2,
         node_robot_state_publisher,
         ignition_spawn_entity,
         export_roboflow_key,

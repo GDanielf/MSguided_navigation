@@ -2,25 +2,51 @@ controller_manager:
   ros__parameters:
     update_rate: 1000  
 
-    joint_state_broadcaster:
+    joint_state_broadcaster_0:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    imu_sensor_broadcaster:
+    imu_sensor_broadcaster_0:
       type: imu_sensor_broadcaster/IMUSensorBroadcaster
 
-    velocity_controller:
+    velocity_controller_0:
       type: velocity_controllers/JointGroupVelocityController
       default: true  
 
-    position_controller:
+    position_controller_0:
+      type: position_controllers/JointGroupPositionController
+
+    joint_state_broadcaster_1:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    imu_sensor_broadcaster_1:
+      type: imu_sensor_broadcaster/IMUSensorBroadcaster
+
+    velocity_controller_1:
+      type: velocity_controllers/JointGroupVelocityController
+      default: true  
+
+    position_controller_1:
+      type: position_controllers/JointGroupPositionController
+
+    joint_state_broadcaster_2:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    imu_sensor_broadcaster_2:
+      type: imu_sensor_broadcaster/IMUSensorBroadcaster
+
+    velocity_controller_2:
+      type: velocity_controllers/JointGroupVelocityController
+      default: true  
+
+    position_controller_2:
       type: position_controllers/JointGroupPositionController
 
 
-velocity_controller:
+velocity_controller_0:
   ros__parameters:
     joints:
-      - head_yaw_joint
-      - camera_tilt_joint
+      - head_yaw_joint_0
+      - camera_tilt_joint_0
     interface_name: velocity  
     command_interfaces:
       - velocity  
@@ -30,14 +56,66 @@ velocity_controller:
       - effort
     use_sim_time: true
 
-position_controller:
+position_controller_0:
   ros__parameters:
     joints:
-      - head_yaw_joint
-      - camera_tilt_joint
+      - head_yaw_joint_0
+      - camera_tilt_joint_0
     interface_name: position
 
-imu_sensor_broadcaster:
+imu_sensor_broadcaster_0:
   ros__parameters:
-    sensor_name: camera_imu_sensor
-    frame_id: imu
+    sensor_name: camera_imu_sensor_0
+    frame_id: imu_0
+
+velocity_controller_1:
+  ros__parameters:
+    joints:
+      - head_yaw_joint_1
+      - camera_tilt_joint_1
+    interface_name: velocity  
+    command_interfaces:
+      - velocity  
+    state_interfaces:
+      - position
+      - velocity
+      - effort
+    use_sim_time: true
+
+position_controller_1:
+  ros__parameters:
+    joints:
+      - head_yaw_joint_1
+      - camera_tilt_joint_1
+    interface_name: position
+
+imu_sensor_broadcaster_1:
+  ros__parameters:
+    sensor_name: camera_imu_sensor_1
+    frame_id: imu_1
+
+velocity_controller_2:
+  ros__parameters:
+    joints:
+      - head_yaw_joint_2
+      - camera_tilt_joint_2
+    interface_name: velocity  
+    command_interfaces:
+      - velocity  
+    state_interfaces:
+      - position
+      - velocity
+      - effort
+    use_sim_time: true
+
+position_controller_2:
+  ros__parameters:
+    joints:
+      - head_yaw_joint_2
+      - camera_tilt_joint_2
+    interface_name: position
+
+imu_sensor_broadcaster_2:
+  ros__parameters:
+    sensor_name: camera_imu_sensor_2
+    frame_id: imu_2
