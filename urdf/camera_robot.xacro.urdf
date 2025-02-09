@@ -18,7 +18,7 @@
   <joint name="world_to_base_0" type="fixed">
     <parent link="world"/>
     <child link="base_link_0"/>
-    <origin xyz="-3 -7.4687 0" rpy="0 0 0"/>
+    <origin xyz="-3 -7.4687 0" rpy="0 0 1.57"/>
   </joint>  
 
   <link name="neck_link_0">
@@ -122,8 +122,8 @@
   <joint name="world_to_base_1" type="fixed">
     <parent link="world"/>
     <child link="base_link_1"/>
-    <origin xyz="4.0 7.4687 0" rpy="0 0 0"/>
-  </joint>  
+    <origin xyz="4.0 7.4687 0" rpy="0 0 -1.57"/>
+  </joint>    
 
   <link name="neck_link_1">
     <visual>
