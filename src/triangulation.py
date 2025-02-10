@@ -11,6 +11,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from math import *
 from mapa import Mapa
+from sensor_msgs.msg import JointState
+
 
 class Triangulation(Node):
     def __init__(self):
@@ -95,6 +97,13 @@ class Triangulation(Node):
 
         self.last_pose = [0.0, 0.0]
         self.tolerance = 0.01
+
+        self.subscription = self.create_subscription(
+            JointState,
+            '/joint_states',
+            self.joint_state_callback,
+            10)
+        self.subscription  # Evita que o garbage collector remova a assinatura
         
         #subscriber dos angulos das cameras
         self.image_angle_subscription = self.create_subscription(
@@ -111,6 +120,25 @@ class Triangulation(Node):
         self.rviz_publisher = self.create_publisher(MarkerArray, 'visualization_marker_array', 10)
         self.pose_x = 0
         self.pose_y = 0
+
+    def joint_state_callback(self, msg):
+        joint_positions = {}
+        for i, name in enumerate(msg.name):
+            joint_positions[name] = msg.position[i]
+
+        # Exibir as posições das juntas desejadas
+        joints_of_interest = [
+            "camera_tilt_joint_0",
+            "head_yaw_joint_0",
+            "camera_tilt_joint_1",
+            "head_yaw_joint_1",
+            "camera_tilt_joint_2",
+            "head_yaw_joint_2"
+        ]
+        
+        for joint in joints_of_interest:
+            if joint in joint_positions:
+                self.get_logger().info(f"{joint}: {joint_positions[joint]}")
 
     def publish_pose_estimate(self):
         # Cria a mensagem de pose estimada e publica
