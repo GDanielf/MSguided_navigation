@@ -3,7 +3,7 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Float64MultiArray
 from guided_navigation.msg import ImagesAngles
 from guided_navigation.srv import SetCameraActive
 from cv_bridge import CvBridge
@@ -13,6 +13,8 @@ import numpy as np
 import math
 from message_filters import Subscriber, TimeSynchronizer
 from rosgraph_msgs.msg import Clock
+from sensor_msgs.msg import JointState
+
 
 #from guided_navigation.msg import Rectangle
 class MultiCamera(Node):
@@ -33,7 +35,7 @@ class MultiCamera(Node):
         self.start_point = (self.mid_x, 0)  # Ponto de início (meio da imagem, topo)
         self.end_point = (self.mid_x, self.image_height)
         self.line_color = (0, 0, 0)
-        self.thickness = 2       
+        self.thickness = 2  
 
         # Configuração do Modelo
         self.model = inference.get_model("husky_test/3")
@@ -51,6 +53,28 @@ class MultiCamera(Node):
         #angle_publisher para enviar os valores dos angulos timer_publition publica msg a cada 1 seg
         self.angle_publisher = self.create_publisher(ImagesAngles, 'image_angles', 10)
 
+        #joints
+        self.velocity_publishers = {
+            "camera_tilt_joint_0": self.create_publisher(Float64MultiArray, 'velocity_controller_0/commands', 10),
+            "camera_tilt_joint_1": self.create_publisher(Float64MultiArray, 'velocity_controller_1/commands', 10),
+            "camera_tilt_joint_2": self.create_publisher(Float64MultiArray, 'velocity_controller_2/commands', 10),
+        }
+        self.joint_positions = {}   
+        self.joints_of_interest = [
+            "camera_tilt_joint_0",
+            "head_yaw_joint_0",
+            "camera_tilt_joint_1",
+            "head_yaw_joint_1",
+            "camera_tilt_joint_2",
+            "head_yaw_joint_2"
+        ]
+        self.target_position = 0.5
+        self.kp = 1
+        self.threshold = 0.01
+        self.iniciar_posicao = [False, False, False]
+        self.joint_positions = {}
+        self.joints_to_control = list(self.velocity_publishers.keys())
+
         self.angles = [float('nan')] * 3 
         self.active_cameras = {i: False for i in range(3)}     
 
@@ -58,6 +82,13 @@ class MultiCamera(Node):
         self.simulation_active = False         
         self.simulation_time = None 
         self.robot_stopped_time = None
+
+        self.subscription_joint = self.create_subscription(
+            JointState,
+            '/joint_states',
+            self.joint_state_callback,
+            10)
+        self.subscription_joint  # Evita que o garbage collector remova a assinatura
 
         # Subscrições para os tópicos de imagem        
         self.camera_subscribers = []
@@ -85,6 +116,34 @@ class MultiCamera(Node):
         if not msg.data:  
             self.robot_stopped_time = self.simulation_time
 
+    def joint_state_callback(self, msg):
+        for i, name in enumerate(msg.name):
+            self.joint_positions[name] = msg.position[i]
+
+        for index, joint_name in enumerate(self.joints_to_control):
+            if not self.iniciar_posicao[index]:
+                self.inicializar_posicao_y_joint(joint_name, index)
+                break
+
+    def inicializar_posicao_y_joint(self, joint_name, index):
+        velocity_msg = Float64MultiArray()
+        current_pos = self.joint_positions[joint_name]
+        error = current_pos - self.target_position
+        if abs(error) < self.threshold:
+            self.iniciar_posicao[index] = True
+            velocity_msg = Float64MultiArray()
+            velocity_msg.data = [0.0, 0.0]  
+            self.velocity_publishers[joint_name].publish(velocity_msg)
+            self.get_logger().info(f"{joint_name} ajustada! [{self.iniciar_posicao}]")
+            return 
+        velocity = -self.kp * error
+        velocity_msg = Float64MultiArray()
+        velocity_msg.data = [0.0, velocity]
+        self.velocity_publishers[joint_name].publish(velocity_msg)
+
+        self.get_logger().info(f"Ajustando {joint_name}: pos {current_pos:.3f} → vel {velocity:.3f}")
+
+
     def publish_camera_angles(self):
         msg = ImagesAngles()
         msg.angles = self.angles
@@ -92,13 +151,10 @@ class MultiCamera(Node):
     
     #funcao que recebe o ponto do centro do retangulo e retorna o angulo entre a reta que divide metade da imagem o ponto 
 
-    def angulo_centro(self,x,y):
-        angle = 0
-        tang = (x - 959)/(1080 - y)
-        angle = math.atan(tang)
-        return angle
+    def angulo_centro(self,x,y):        
+        return math.atan((x - 959)/(1080 - y))
 
-    def camera_callback(self, *camera_images):   
+    def camera_callback(self, *camera_images):  
         for camera_id, msg in enumerate(camera_images):
             # Converte a imagem ROS para OpenCV
             cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
