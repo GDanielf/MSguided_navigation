@@ -41,7 +41,7 @@ export ROBOFLOW_API_KEY="aFkoLbgUAThELZEBkgQ5"
 
 ## Service para visualizar a simulacao
 
-ros2 service call /set_camera_active guided_navigation/srv/SetCameraActive "{camera_id: 7, activate: true}"
+ros2 service call /set_camera_active guided_navigation/srv/SetCameraActive "{camera_id: 0, activate: true}"
 
 ## Status da simulacao:
 

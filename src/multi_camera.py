@@ -32,8 +32,11 @@ class MultiCamera(Node):
         #dividir a imagem ao meio
         self.thickness = 0.5
         self.mid_x = self.image_width // 2
-        self.start_point = (self.mid_x, 0)  # Ponto de início (meio da imagem, topo)
-        self.end_point = (self.mid_x, self.image_height)
+        self.mid_y = self.image_height // 2
+        self.start_point_vertical = (self.mid_x, 0) 
+        self.end_point_vertical = (self.mid_x, self.image_height)
+        self.start_point_horiozontal = (0, self.mid_y) 
+        self.end_point_horiozontal = (self.image_width, self.mid_y)
         self.line_color = (0, 0, 0)
         self.thickness = 2  
 
@@ -69,7 +72,7 @@ class MultiCamera(Node):
             "head_yaw_joint_1",
             "head_yaw_joint_2"
         ]
-        self.target_position = 0.5
+        self.initial_target_position = [0.5, 0.5, 0.4]
         self.kp = 1
         self.threshold = 0.01
         self.iniciar_posicao = [False, False, False]
@@ -129,7 +132,7 @@ class MultiCamera(Node):
     def inicializar_posicao_y_joint(self, joint_name, index):
         velocity_msg = Float64MultiArray()
         current_pos = self.joint_positions[joint_name]
-        error = current_pos - self.target_position
+        error = current_pos - self.initial_target_position[index]
         if abs(error) < self.threshold:
             self.iniciar_posicao[index] = True
             velocity_msg = Float64MultiArray()
@@ -155,34 +158,35 @@ class MultiCamera(Node):
     def angulo_centro(self,x,y):        
         return math.atan((x - 959)/(1080 - y))
 
-    def camera_callback(self, *camera_images):  
-        for camera_id, msg in enumerate(camera_images):
-            # Converte a imagem ROS para OpenCV
-            cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
-            
-            # Realiza a inferência
-            predict = self.model.infer(image=cv_image)
-            
-            if not predict[0].predictions:
-                self.angles[camera_id] = float('nan')
-            else:
-                for prediction in predict[0].predictions:
-                    x, y = int(prediction.x), int(prediction.y)
-                    self.angles[camera_id] = self.angulo_centro(x, y)
-                    width, height = int(prediction.width), int(prediction.height)
-                    top_left = (abs(int(width / 2) - x), abs(int(height / 2) - y))
-                    bottom_right = (int(width / 2) + x, int(height / 2) + y)
-                    cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)
-                    label = f"{prediction.class_name}: {prediction.confidence:.5f}"
-                    cv2.putText(cv_image, label, top_left, 
-                            cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
-            
-            # Apenas exibir se a câmera for ativada
-            if self.is_camera_active(camera_id):
-                self.visualize_camera(cv_image, camera_id)
-            
-        if(self.simulation_active and not self.robot_moving): 
-            self.publish_camera_angles()    
+    def camera_callback(self, *camera_images):
+        if all(self.iniciar_posicao):
+            for camera_id, msg in enumerate(camera_images):
+                # Converte a imagem ROS para OpenCV
+                cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+                
+                # Realiza a inferência
+                predict = self.model.infer(image=cv_image)
+                
+                if not predict[0].predictions:
+                    self.get_logger().info(f"Camera {camera_id} nao identificou o robo")
+                else:
+                    for prediction in predict[0].predictions:
+                        x, y = int(prediction.x), int(prediction.y)
+                        self.angles[camera_id] = self.angulo_centro(x, y)
+                        width, height = int(prediction.width), int(prediction.height)
+                        top_left = (abs(int(width / 2) - x), abs(int(height / 2) - y))
+                        bottom_right = (int(width / 2) + x, int(height / 2) + y)
+                        cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)
+                        label = f"{prediction.class_name}: {prediction.confidence:.5f}"
+                        cv2.putText(cv_image, label, top_left, 
+                                cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
+                
+                # Apenas exibir se a câmera for ativada
+                if self.is_camera_active(camera_id):
+                    self.visualize_camera(cv_image, camera_id)
+                
+            if(self.simulation_active and not self.robot_moving): 
+                self.publish_camera_angles()    
         
             
 
@@ -208,7 +212,8 @@ class MultiCamera(Node):
 
     def visualize_camera(self, image, camera_id):
         resized_image = cv2.resize(image, (self.image_width, self.image_height))
-        cv2.line(resized_image, self.start_point, self.end_point, self.line_color, self.thickness)
+        cv2.line(resized_image, self.start_point_vertical, self.end_point_vertical, self.line_color, self.thickness)
+        cv2.line(resized_image, self.start_point_horiozontal, self.end_point_horiozontal, self.line_color, self.thickness)
         cv2.imshow(f'Camera {camera_id}', resized_image)
         cv2.waitKey(1)
 
