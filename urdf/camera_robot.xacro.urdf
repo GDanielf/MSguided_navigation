@@ -105,6 +105,16 @@
     </visual>
   </gazebo>
 
+  <gazebo reference="base_link_0">
+    <visual>
+      <material>
+        <ambient>0 0.8 0 0</ambient>
+        <diffuse>0 0.8 0 0</diffuse>
+        <specular>0 0.8 0 0</specular>
+      </material>
+    </visual>
+  </gazebo>
+
   <link name="base_link_1">    
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -209,6 +219,16 @@
     </visual>
   </gazebo>
 
+   <gazebo reference="base_link_1">
+    <visual>
+      <material>
+        <ambient>0 0.8 0 0</ambient>
+        <diffuse>0 0.8 0 0</diffuse>
+        <specular>0 0.8 0 0</specular>
+      </material>
+    </visual>
+  </gazebo>
+
   <link name="base_link_2">    
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -304,6 +324,16 @@
   </gazebo>
 
   <gazebo reference="neck_link_2">
+    <visual>
+      <material>
+        <ambient>0 0.8 0 0</ambient>
+        <diffuse>0 0.8 0 0</diffuse>
+        <specular>0 0.8 0 0</specular>
+      </material>
+    </visual>
+  </gazebo>
+
+   <gazebo reference="base_link_2">
     <visual>
       <material>
         <ambient>0 0.8 0 0</ambient>

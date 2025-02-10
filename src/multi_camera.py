@@ -51,8 +51,8 @@ class MultiCamera(Node):
         #angle_publisher para enviar os valores dos angulos timer_publition publica msg a cada 1 seg
         self.angle_publisher = self.create_publisher(ImagesAngles, 'image_angles', 10)
 
-        self.angles = [float('nan')] * 35 
-        self.active_cameras = {i: False for i in range(35)}     
+        self.angles = [float('nan')] * 3 
+        self.active_cameras = {i: False for i in range(3)}     
 
         self.robot_moving = False 
         self.simulation_active = False         
@@ -61,12 +61,11 @@ class MultiCamera(Node):
 
         # Subscrições para os tópicos de imagem        
         self.camera_subscribers = []
-        for i in range(35):
-            topic_name = f'/world/empty/model/rgbd_camera_{i}/link/link_{i}/sensor/camera_sensor_{i}/image'
+        for i in range(3):
+            topic_name = f'/world/empty/model/camera_robot/link/head_link_{i}/sensor/camera_sensor_{i}/image'
             subscriber = Subscriber(self, Image, topic_name)
             self.camera_subscribers.append(subscriber)
-        
-        queue_size = 10
+            
         #sincronizacao das imagens
         self.sync = TimeSynchronizer(self.camera_subscribers, 10)
         self.sync.registerCallback(self.camera_callback)
