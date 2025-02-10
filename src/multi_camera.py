@@ -95,7 +95,7 @@ class MultiCamera(Node):
 
     def angulo_centro(self,x,y):
         angle = 0
-        tang = (x - 959)/(1080 - y)
+        tang = (math.sin(x - 959))/(math.cos(1080 - y))
         angle = math.atan(tang)
         return angle
 
