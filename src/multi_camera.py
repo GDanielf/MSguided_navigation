@@ -55,17 +55,18 @@ class MultiCamera(Node):
 
         #joints
         self.velocity_publishers = {
-            "camera_tilt_joint_0": self.create_publisher(Float64MultiArray, 'velocity_controller_0/commands', 10),
-            "camera_tilt_joint_1": self.create_publisher(Float64MultiArray, 'velocity_controller_1/commands', 10),
-            "camera_tilt_joint_2": self.create_publisher(Float64MultiArray, 'velocity_controller_2/commands', 10),
+            "camera_joint_0": self.create_publisher(Float64MultiArray, 'velocity_controller_0/commands', 10),
+            "camera_joint_1": self.create_publisher(Float64MultiArray, 'velocity_controller_1/commands', 10),
+            "camera_joint_2": self.create_publisher(Float64MultiArray, 'velocity_controller_2/commands', 10),
         }
-        self.joint_positions = {}   
-        self.joints_of_interest = [
+        self.tilt_joints = [
             "camera_tilt_joint_0",
-            "head_yaw_joint_0",
             "camera_tilt_joint_1",
-            "head_yaw_joint_1",
             "camera_tilt_joint_2",
+        ]
+        self.yaw_joints = [
+            "head_yaw_joint_0",
+            "head_yaw_joint_1",
             "head_yaw_joint_2"
         ]
         self.target_position = 0.5
@@ -73,7 +74,7 @@ class MultiCamera(Node):
         self.threshold = 0.01
         self.iniciar_posicao = [False, False, False]
         self.joint_positions = {}
-        self.joints_to_control = list(self.velocity_publishers.keys())
+        self.joints_to_control = ["camera_joint_0", "camera_joint_1", "camera_joint_2"]
 
         self.angles = [float('nan')] * 3 
         self.active_cameras = {i: False for i in range(3)}     
@@ -120,7 +121,7 @@ class MultiCamera(Node):
         for i, name in enumerate(msg.name):
             self.joint_positions[name] = msg.position[i]
 
-        for index, joint_name in enumerate(self.joints_to_control):
+        for index, joint_name in enumerate(self.tilt_joints):
             if not self.iniciar_posicao[index]:
                 self.inicializar_posicao_y_joint(joint_name, index)
                 break
@@ -133,13 +134,13 @@ class MultiCamera(Node):
             self.iniciar_posicao[index] = True
             velocity_msg = Float64MultiArray()
             velocity_msg.data = [0.0, 0.0]  
-            self.velocity_publishers[joint_name].publish(velocity_msg)
+            self.velocity_publishers[self.joints_to_control[index]].publish(velocity_msg)
             self.get_logger().info(f"{joint_name} ajustada! [{self.iniciar_posicao}]")
             return 
         velocity = -self.kp * error
         velocity_msg = Float64MultiArray()
         velocity_msg.data = [0.0, velocity]
-        self.velocity_publishers[joint_name].publish(velocity_msg)
+        self.velocity_publishers[self.joints_to_control[index]].publish(velocity_msg)
 
         self.get_logger().info(f"Ajustando {joint_name}: pos {current_pos:.3f} → vel {velocity:.3f}")
 
