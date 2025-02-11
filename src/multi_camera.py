@@ -74,10 +74,15 @@ class MultiCamera(Node):
         ]
         self.initial_target_position = [0.5, 0.5, 0.4]
         self.kp = 1
+        self.kp_cam_yaw = 0.0001
+        self.kp_cam_tilt = 0.0001
         self.threshold = 0.01
+        self.threshold_pixel = 2
         self.iniciar_posicao = [False, False, False]
         self.joint_positions = {}
         self.joints_to_control = ["camera_joint_0", "camera_joint_1", "camera_joint_2"]
+        self.x_centro = 1920 // 2
+        self.y_centro = 1080 // 2
 
         self.angles = [float('nan')] * 3 
         self.active_cameras = {i: False for i in range(3)}     
@@ -135,13 +140,11 @@ class MultiCamera(Node):
         error = current_pos - self.initial_target_position[index]
         if abs(error) < self.threshold:
             self.iniciar_posicao[index] = True
-            velocity_msg = Float64MultiArray()
             velocity_msg.data = [0.0, 0.0]  
             self.velocity_publishers[self.joints_to_control[index]].publish(velocity_msg)
             self.get_logger().info(f"{joint_name} ajustada! [{self.iniciar_posicao}]")
             return 
         velocity = -self.kp * error
-        velocity_msg = Float64MultiArray()
         velocity_msg.data = [0.0, velocity]
         self.velocity_publishers[self.joints_to_control[index]].publish(velocity_msg)
 
@@ -159,6 +162,7 @@ class MultiCamera(Node):
         return math.atan((x - 959)/(1080 - y))
 
     def camera_callback(self, *camera_images):
+        velocity_msg = Float64MultiArray()
         if all(self.iniciar_posicao):
             for camera_id, msg in enumerate(camera_images):
                 # Converte a imagem ROS para OpenCV
@@ -172,14 +176,22 @@ class MultiCamera(Node):
                 else:
                     for prediction in predict[0].predictions:
                         x, y = int(prediction.x), int(prediction.y)
-                        self.angles[camera_id] = self.angulo_centro(x, y)
                         width, height = int(prediction.width), int(prediction.height)
                         top_left = (abs(int(width / 2) - x), abs(int(height / 2) - y))
                         bottom_right = (int(width / 2) + x, int(height / 2) + y)
                         cv2.rectangle(cv_image, top_left, bottom_right, (0, 255, 0), 2)
                         label = f"{prediction.class_name}: {prediction.confidence:.5f}"
                         cv2.putText(cv_image, label, top_left, 
-                                cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)
+                                cv2.FONT_HERSHEY_SIMPLEX, self.font_size, self.font_color, self.font_thickness, cv2.LINE_AA)                        
+                        
+                        erro_x = int(x) - int(self.x_centro)
+                        erro_y = int(y) - int(self.y_centro)
+                        if abs(erro_x) < self.threshold_pixel and abs(erro_y) < self.threshold_pixel:
+                            velocity_msg.data = [0.0, 0.0]
+                            self.velocity_publishers[self.joints_to_control[camera_id]].publish(velocity_msg)
+                        
+                        velocity_msg.data = [float(-self.kp_cam_yaw * erro_x), float(self.kp_cam_tilt * erro_y)]
+                        self.velocity_publishers[self.joints_to_control[camera_id]].publish(velocity_msg)
                 
                 # Apenas exibir se a câmera for ativada
                 if self.is_camera_active(camera_id):
