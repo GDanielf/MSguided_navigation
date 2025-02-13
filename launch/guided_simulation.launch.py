@@ -131,6 +131,15 @@ def generate_launch_description():
         parameters=[{'use_sim_time': True}]
     )    
 
+    husky_odom = Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='husky_odometry_bridge',
+            arguments=['/model/marble_husky_sensor_config_5/odometry@nav_msgs/msg/Odometry@ignition.msgs.Odometry'],
+            output='screen',
+            parameters=[{'use_sim_time': True}]
+        )
+
     # Geração dinâmica dos nós de câmera
     bridge_camera_0 =  Node(
         package='ros_gz_bridge',
@@ -211,6 +220,7 @@ def generate_launch_description():
         bridge_cmd_vel,
         bridge_robot_real_pose,
         bridge_clock,
+        husky_odom,
         bridge_camera_0,
         bridge_camera_1,
         bridge_camera_2,

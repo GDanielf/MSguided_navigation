@@ -73,9 +73,9 @@
         <left_joint>rear_left_wheel_joint</left_joint>
         <right_joint>front_right_wheel_joint</right_joint>
         <right_joint>rear_right_wheel_joint</right_joint>
-        <wheel_separation>0.535</wheel_separation>
-        <wheel_radius>0.165</wheel_radius>
-        <odom_publish_frequency>20</odom_publish_frequency>
+        <wheel_separation>0.55</wheel_separation>
+        <wheel_radius>0.1651</wheel_radius>
+        <odom_publish_frequency>100</odom_publish_frequency>
         <topic>cmd_vel</topic>
       </plugin>
       <link name='base_link'>
@@ -644,7 +644,7 @@
         </axis>
         <pose>8.3266699999999998e-17 0 2.7755599999999997e-17 -3.9704700000000002e-23 1.2560599999999999e-16 -1.05879e-22</pose>
       </joint>
-      <pose>-0.34343755915303176 0.0052771495817150694 0.13228012211418244 -7.5032257075911515e-08 5.9650277954125871e-08 0.024206024365386363</pose>
+      <pose>0 0 0 0 0 0</pose>
       <static>false</static>
       <self_collide>false</self_collide>
       <plugin name='gz::sim::systems::PosePublisher' filename='gz-sim-pose-publisher-system'>

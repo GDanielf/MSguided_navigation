@@ -21,7 +21,7 @@ class SimulationMonitor(Node):
 
     def clock_callback(self, msg):
         current_sim_time = msg.clock
-        #print('Current:', msg.clock, 'Last time: ', self.last_sim_time) 
+        print('Current:', msg.clock, 'Last time: ', self.last_sim_time) 
         if self.last_sim_time is not None:
             if current_sim_time == self.last_sim_time:
                 self.is_simulation_running(False)

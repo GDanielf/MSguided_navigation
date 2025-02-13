@@ -14,7 +14,7 @@ from message_filters import Subscriber, TimeSynchronizer
 from rosgraph_msgs.msg import Clock
 from sensor_msgs.msg import JointState
 from guided_navigation.msg import PoseEstimate
-from scipy.spatial.transform import Rotation as rot
+from scipy.spatial.transform import Rotation
 
 #from guided_navigation.msg import Rectangle
 class MultiCamera(Node):
@@ -87,8 +87,10 @@ class MultiCamera(Node):
         self.threshold = 0.01
         self.threshold_pixel = 2
         self.iniciar_posicao = [False, False, False]
+        self.centralizar_posicao = [False, False, False]
         self.joint_imagem_centralizada = [[0.0, 0.0],[0.0, 0.0],[0.0, 0.0]] #index 0 = camera 0 [yaw,tilt]
         self.joint_positions = {}
+        
         self.joints_to_control = ["camera_joint_0", "camera_joint_1", "camera_joint_2"]
         self.x_centro = 1920 // 2
         self.y_centro = 1080 // 2
@@ -99,6 +101,12 @@ class MultiCamera(Node):
         self.simulation_active = False         
         self.simulation_time = None 
         self.robot_stopped_time = None
+
+        #estabilidade do ponto estimado
+        self.contador_ponto_estavel = 0
+        self.N = 10
+        self.valores_x = np.zeros(self.N)
+        self.valores_y = np.zeros(self.N)
 
         self.subscription_joint = self.create_subscription(
             JointState,
@@ -134,10 +142,7 @@ class MultiCamera(Node):
         self.simulation_active = msg.data
 
     def robot_moving_callback(self, msg):
-        self.robot_moving = msg.data
-        if not msg.data and all(self.iniciar_posicao):  
-            self.robot_stopped_time = self.simulation_time
-            self.publish_camera_angles()            
+        self.robot_moving = msg.data         
 
     def joint_state_callback(self, msg):
         for i, name in enumerate(msg.name):
@@ -147,13 +152,13 @@ class MultiCamera(Node):
             if not self.iniciar_posicao[index]:
                 self.inicializar_posicao_y_joint(joint_name, index)
                 break
-        if(all(self.iniciar_posicao)): # esse recebe o valor do planner
+        if(all(self.iniciar_posicao) and not self.robot_moving and all(self.centralizar_posicao)): # esse recebe o valor do planner
             pontos_estimados = []
             camera_position = [self.camera0_pos, self.camera1_pos, self.camera2_pos]                           
              
-            rot_0 = rot.from_euler('xyz', [self.camera0_rot[0], self.camera0_rot[1] + self.joint_imagem_centralizada[0][1], self.camera0_rot[2] + self.joint_imagem_centralizada[0][0]])
-            rot_1 = rot.from_euler('xyz', [self.camera1_rot[0], self.camera1_rot[1] + self.joint_imagem_centralizada[1][1], self.camera1_rot[2] + self.joint_imagem_centralizada[1][0]])
-            rot_2 = rot.from_euler('xyz', [self.camera2_rot[0], self.camera2_rot[1] + self.joint_imagem_centralizada[2][1], self.camera2_rot[2] + self.joint_imagem_centralizada[2][0]])           
+            rot_0 = Rotation.from_euler('xyz', [self.camera0_rot[0], self.camera0_rot[1] + self.joint_imagem_centralizada[0][1], self.camera0_rot[2] + self.joint_imagem_centralizada[0][0]])
+            rot_1 = Rotation.from_euler('xyz', [self.camera1_rot[0], self.camera1_rot[1] + self.joint_imagem_centralizada[1][1], self.camera1_rot[2] + self.joint_imagem_centralizada[1][0]])
+            rot_2 = Rotation.from_euler('xyz', [self.camera2_rot[0], self.camera2_rot[1] + self.joint_imagem_centralizada[2][1], self.camera2_rot[2] + self.joint_imagem_centralizada[2][0]])           
                 
             camera_rotations = [rot_0.as_euler('xyz')[2], rot_1.as_euler('xyz')[2], rot_2.as_euler('xyz')[2]]
             
@@ -164,8 +169,12 @@ class MultiCamera(Node):
 
             pontos_medio_x, pontos_medio_y = self.pontos_medio(pontos_estimados)
             self.pose_x = float(pontos_medio_x)
-            self.pose_y = float(pontos_medio_y)  
-            self.publish_pose_estimate()        
+            self.pose_y = float(pontos_medio_y)
+            if(self.ponto_estavel(self.pose_x, self.pose_y, 0.01)):
+                self.publish_pose_estimate()
+                self.contador_ponto_estavel = 0 
+                self.valores_x = np.zeros(self.N)
+                self.valores_y = np.zeros(self.N)      
 
     def inicializar_posicao_y_joint(self, joint_name, index):
         velocity_msg = Float64MultiArray()
@@ -182,6 +191,16 @@ class MultiCamera(Node):
         self.velocity_publishers[self.joints_to_control[index]].publish(velocity_msg)
 
         self.get_logger().info(f"Ajustando {joint_name}: pos {current_pos:.3f} → vel {velocity:.3f}")
+
+    def ponto_estavel(self, novo_x, novo_y, tolerancia):
+        self.valores_x[:-1] = self.valores_x[1:]
+        self.valores_x[-1] = novo_x
+        self.valores_y[:-1] = self.valores_y[1:]
+        self.valores_y[-1] = novo_y
+        if(self.contador_ponto_estavel < self.N):
+            self.contador_ponto_estavel += 1
+            return False
+        return  (np.ptp(self.valores_x) < tolerancia) and (np.ptp(self.valores_y) < tolerancia)
  
     def camera_callback(self, *camera_images):
         velocity_msg = Float64MultiArray()
@@ -213,7 +232,7 @@ class MultiCamera(Node):
                             self.velocity_publishers[self.joints_to_control[camera_id]].publish(velocity_msg)
                             self.joint_imagem_centralizada[camera_id] =  [self.joint_positions[self.yaw_joints[camera_id]], 
                                                                     self.joint_positions[self.tilt_joints[camera_id]]]
-                            #print(self.joint_imagem_centralizada)
+                            self.centralizar_posicao[camera_id] = True
                         else:                       
                             #self.joint_imagem_centralizada[camera_id] = [float('nan'), float('nan')]
                             velocity_msg.data = [float(-self.kp_cam_yaw * erro_x), float(self.kp_cam_tilt * erro_y)]

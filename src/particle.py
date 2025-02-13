@@ -33,8 +33,8 @@ class Particle:
         # Robo indo para frente
         new_yaw = (self.yaw + virar + random.gauss(0, self.ruido_virar)) % (2 * pi)  
         dist = random.gauss(0, self.sigma_translacao)
-        new_x = (self.x + dist * cos(new_yaw)) % self.tamanho
-        new_y = (self.y + dist * sin(new_yaw)) % self.tamanho        
+        new_x = (self.x + dist * cos(new_yaw)) 
+        new_y = (self.y + dist * sin(new_yaw))         
         self.x = new_x
         self.y = new_y
         self.yaw = new_yaw

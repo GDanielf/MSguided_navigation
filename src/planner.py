@@ -8,17 +8,14 @@ from geometry_msgs.msg import Pose, Twist, Quaternion
 from visualization_msgs.msg import Marker, MarkerArray
 from guided_navigation.msg import PoseEstimate
 from geometry_msgs.msg import PoseArray
-from scipy.spatial.transform import Rotation
-
-from std_msgs.msg import Int32
+from nav_msgs.msg import Odometry
 from particle import Particle
 import random
 from mapa import Mapa
 import math
-import matplotlib.pyplot as plt
 import numpy as np
-import time
 import copy
+from scipy.spatial.transform import Rotation
 
 class Planner(Node):
     def __init__(self):
@@ -35,18 +32,17 @@ class Planner(Node):
             self.simulation_callback,
             10
         )
-        self.subscription = self.create_subscription(
+        self.subscription_pose_real = self.create_subscription(
             PoseArray,
             '/model/marble_husky_sensor_config_5/pose',
             self.robot_real_pose_callback,
             10
         )
-        #self.cmd_vel_subscriber = self.create_subscription(
-        #    Twist,
-        #    '/cmd_vel',
-        #    self.velocity_callback,
-        #    10
-        #)
+        self.subscription_odom = self.create_subscription(
+            Odometry,
+            '/model/marble_husky_sensor_config_5/odometry',
+            self.odom_callback,
+            10)
         self.robot_mover_publisher = self.create_publisher(Bool, '/robot_moving', 10)
         self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
         self.robot_velocity = 0.0
@@ -57,9 +53,13 @@ class Planner(Node):
             3: "rotacionar_clockwise",
             4: "rotacionar_counter_clockwise",
         }
-        self.stop_duration = 2.0
-        self.rotate_duration = 18
+        self.ponto_antigo = None
+        self.distance_threshold = 0.1
+        self.dist = -10
+        self.stop_duration = 10.0
+        self.reverse_duration = 18
         self.tal = 5.0 
+        self.espera = 25.0
         self.current_timer = None
         self.action_queue = []  # Fila de ações a serem executadas
         #retorno do filtro de particulas
@@ -79,112 +79,144 @@ class Planner(Node):
         #starvars
         self.m = 16
         #definicoes filtro de particula
-        self.particle_number = 10000
-        self.p = []
+        self.particle_number = 1000
+        self.p = []        
+        self.part_ruido_virar = 0.05
+        self.part_sigma_atual = 0.5
+        self.part_sigma_translacao = 2.5
+        for i in range(self.particle_number):
+            #ruido_virar, sigma_atualizacao, sigma_translacao
+            self.p.append(Particle(self.part_ruido_virar, self.part_sigma_atual, self.part_sigma_translacao)) 
+
+        self.variavel_direcao = []
         self.publisher_ponto_est = self.create_publisher(Marker, 'topic_pose_est', 10)
+        self.publisher_ponto_objetivo = self.create_publisher(Marker, 'topic_ponto_obj', 10)        
         self.publisher_real_pose = self.create_publisher(Marker, 'topic_real_pose', 10)
         self.publisher_filto_media = self.create_publisher(Marker, 'topic_filtro_media', 10)
+        self.direcao_obj_publisher = self.create_publisher(Marker, 'topico_obj_publisher', 10)
+        self.publisher_filtro_melhor = self.create_publisher(Marker, 'topic_filtro_melhor', 10)
 
         self.ponto_antigo = None
         self.new_pose_received = False
-        self.direcao = 0
+        self.direcao_comando = 0
+        
+        self.melhor_particula= [0.0, 0.0, 0.0]
+        self.direcao_array = [0,0,0,0,0,0]
+        self.direcao_filtro_melhor = 0
+        self.direcao_filtro_media = 0
         #robo real
-        self.robot_real_pose = None
+        self.robot_real_pose = None 
+        #controle pela odom
+        self.yaw_odom = 0.0
+        self.tolerance = math.radians(2)
+        self.ajuste_fino = 1.57
+        self.kp = 1
+        self.permission_to_rotate = False
+        self.sentido = 0
+        self.target_rotation = 0.0
+
+    def distance(self, pose1, pose2):
+        return math.sqrt((pose1[0] - pose2[0])**2 + (pose1[1] - pose2[1])**2)
 
     def simulation_callback(self, msg):        
-        if(self.start_planner):
+        if(self.start_planner and msg.data):
+            self.publish_ponto_objetivo()
             self.start_planner = False              
             for i in range(self.particle_number):
                 #ruido_virar, sigma_atualizacao, sigma_translacao
-                self.p.append(Particle(0.5, 0.5, 0.5))           
-            self.publish_particles(self.p)   
+                self.p.append(Particle(self.part_ruido_virar, self.part_sigma_atual, self.part_sigma_translacao))           
+            self.publish_particles(self.p)  
+            self.publish_ponto_pose_estimada()  
 
     def robot_real_pose_callback(self, msg):
         if msg.poses:
             self.robot_real_pose = msg.poses[-1]
 
         self.publish_real_robot_pose()
+        
 
     #obtem o ponto final para determinar onde o robo deve ir
     def pose_callback(self, msg):    
         self.ponto_atual = [msg.x, msg.y]
-        self.ponto_antigo = self.ponto_atual
-        #self.publish_ponto_pose_estimada()
-        self.publish_particles(self.p)   
-        #self.get_logger().info(f'Ponto recebido: {self.ponto_atual}')
-        #self.particle_filter(self.particle_number, self.ponto_atual)
-        #qual regiao esta o ponto?
-        regiao_nova_robo = self.mapa.obter_cor_regiao(self.ponto_atual[0], self.ponto_atual[1])        
-        #libera particulas
-        
-        #enquanto o robo nao chegar na regiao objetivo, faca:
-        #E a yaw?
-        print('direcao: ', self.direcao)
-        if(regiao_nova_robo != self.regiao_objetivo):
-            #if(regiao_nova_robo <= 79):
-            if(self.direcao == 0 or self.direcao == 4 or self.direcao == 3 or self.direcao == 2 or self.direcao == 1):                               
-                #mover o robo
-                self.move_forward()             
-                if self.current_timer:
-                    self.current_timer.cancel()            
-                self.current_timer = self.create_timer(self.tal, self.stop)
-                self.contador_de_comando += 1  
-                #filtro de particula
-                self.filtro_de_particulas(0)
-                self.publish_ponto_pose_estimada()
-                self.publish_filtro_media()
-                print('melhor particula: ', self.selecionar_particula(self.p))
-                print('media: ', self.obter_ponto_filtro_media(self.p))
-                print('pose real: ', self.robot_real_pose.position.x, self.robot_real_pose.position.y, self.robot_real_pose.orientation.z)
+        regiao_nova_robo = self.mapa.obter_cor_regiao(self.ponto_atual[0], self.ponto_atual[1])   
+        if(self.ponto_antigo is not None):
+            self.dist = self.distance(self.ponto_atual, self.ponto_antigo)
+                 
+        if(self.ponto_antigo is None or self.dist > self.distance_threshold):
+            print("regiao do robo:", regiao_nova_robo, " regiao objetivo: ", self.regiao_objetivo)            
+            if(regiao_nova_robo != self.regiao_objetivo):
+                print('bagulho doido: ', self.direcao_array)
+                print('comando: ', self.direcao_comando)
+                if(self.direcao_comando == 0 or self.direcao_comando == 4):                                        
+                    #mover o robo                                     
+                    self.move_forward()  
+                    self.predicao(0)
+                    self.publish_rviz()                  
+                    self.contador_de_comando += 1 
+                #vira para esquerda e vai pra frente 
+                elif(self.direcao_comando == 1):
+                    self.permission_to_rotate = True
+                    self.sentido = 1
+                    yaw_antigo = self.yaw_odom 
+                    self.target_rotation = yaw_antigo + self.ajuste_fino * self.sentido
+                    self.predicao((math.pi)/2)
+                    self.publish_rviz()
+                    self.contador_de_comando += 1 
+                #Vira 180 para esquerda e vai para frente
+                elif(self.direcao_comando == 2):
+                    self.permission_to_rotate = True
+                    self.sentido = 2
+                    yaw_antigo = self.yaw_odom 
+                    self.target_rotation = yaw_antigo + self.ajuste_fino * self.sentido
+                    self.predicao(math.pi)
+                    self.publish_rviz()
+                    self.contador_de_comando += 1
+                #vira pra direita e vai pra frente
+                elif(self.direcao_comando == 3):
+                    self.permission_to_rotate = True
+                    self.sentido = -1
+                    yaw_antigo = self.yaw_odom 
+                    self.target_rotation = yaw_antigo + self.ajuste_fino * self.sentido
+                    self.predicao(-(math.pi)/2)
+                    self.publish_rviz()                  
+                    self.contador_de_comando += 1 
+                self.reamostragem()
+                self.publish_rviz()
+                #print("Quantidade de comandos: ", self.contador_de_comando)
             else:
-                #rotacione para esquerda e ande para frente
-                self.rotate_counter_clockwise()
-                if self.current_timer:
-                    self.current_timer.cancel()            
-                self.current_timer = self.create_timer(self.rotate_duration, self.stop)
-                self.filtro_de_particulas(1.57)
-                self.publish_ponto_pose_estimada()
+                print('chegou')
+                self.stop()       
+            self.ponto_antigo = self.ponto_atual
 
-            #if(regiao_nova_robo != self.regiao_antiga and self.regiao_antiga != 500):
-            #    self.stop()
-            #    self.regiao_antiga = regiao_nova_robo
-                    
-
-                #if self.regiao_antiga          
-                
-                
-                #self.plot_particles(self.p)
-                #print(len(self.p))                    
-        else:
-            print('chegou')
-            self.stop()
-            #obter direcao 
-            #rotacionar o robo 
-            self.contador_de_comando += 1 
-
-    def filtro_de_particulas(self, rotacao):
-        #filtro de particula
+    def predicao(self, rotacao):
         # predicao
         for i in range(self.particle_number):
-            self.p[i].move(rotacao)        
-        
+            self.p[i].move(rotacao) 
+
+    def reamostragem(self):
         # atualizacao
         for i in range(self.particle_number):
             self.p[i].measurement_prob(self.ponto_atual)
 
-        #
         p_nova = []
         for i in range(self.particle_number):
             particula = self.selecionar_particula(self.p)
+            particula_escolhida = particula
             particula.x = particula.x + random.gauss(0, 0.5)
             particula.y = particula.y + random.gauss(0, 0.5)
-            particula.yaw = particula.yaw + random.gauss(0, 0.025)
+            particula.yaw = particula.yaw + random.gauss(0, 0.5)
             p_nova.append(copy.deepcopy(particula)) 
 
         self.p = p_nova 
-        for i in range(5):
-            print(self.p[i])
-        self.direcao = self.obter_direcao(self.ponto_atual, self.obter_ponto_filtro_media(self.p)[2], self.ponto_objetivo)
+        #selecionar a melhor 
+        melhor = particula_escolhida
+        self.melhor_particula = [melhor.x, melhor.y, (melhor.yaw) % (2 * np.pi)]
+        self.direcao_filtro_melhor = self.melhor_particula[2]
+        #selecionar media
+        self.direcao_filtro_media = self.obter_ponto_filtro_media(self.p)[2]
+        #usando a melhor
+        self.variavel_direcao = self.obter_direcao(self.ponto_atual, self.direcao_filtro_melhor, self.ponto_objetivo)
+        self.direcao_comando = self.variavel_direcao[0]
     
     #funcoes parciais do filtro de particulas
     def selecionar_particula(self, lista):
@@ -196,43 +228,55 @@ class Planner(Node):
     def obter_ponto_filtro_media(self, lista_particulas):
         x = 0
         y = 0
-        yaw_sin = 0
-        yaw_cos = 0
+        x_yaw = 0
+        y_yaw = 0
         for i in range(len(lista_particulas)):
             x = x + lista_particulas[i].x
             y = y + lista_particulas[i].y
-            yaw_sin = yaw_sin + math.sin(lista_particulas[i].yaw)
-            yaw_cos = yaw_cos + math.cos(lista_particulas[i].yaw)
+            x_yaw = x_yaw + np.cos(lista_particulas[i].yaw)
+            y_yaw = y_yaw + np.sin(lista_particulas[i].yaw)
+        return [x/(len(lista_particulas)), y/(len(lista_particulas)), 
+                (np.arctan2((y_yaw/len(lista_particulas)), (x_yaw/len(lista_particulas)))) % (2* math.pi)]
 
-        return [x/(len(lista_particulas)), y/(len(lista_particulas)), math.atan2(yaw_sin, yaw_cos)]
+    def obter_direcao(self, ponto_estimado, direcao_filtro, ponto_objetivo):        
+        vetor_a = np.array([np.cos(direcao_filtro), np.sin(direcao_filtro)])
+        vetor_b = np.array([ponto_objetivo[0], ponto_objetivo[1]]) - np.array([ponto_estimado[0], ponto_estimado[1]])
+        produto_escalar = np.dot(vetor_a, vetor_b)
+        norma_a = np.linalg.norm(vetor_a)
+        norma_b = np.linalg.norm(vetor_b)
+        cos_theta = produto_escalar / (norma_a * norma_b)
+        theta_objetivo = (np.arccos(cos_theta)) % (2 * math.pi)
 
-    def obter_direcao(self, ponto_estimado, direcao_filtro, ponto_objetivo):
-        #divisao de star vars, admitindo que a yaw do filtro esteja normalizada
-        esquerda = [(self.m * direcao_filtro)/ 8, (3 * self.m * direcao_filtro)/ 8]
-        atras = [(3 * self.m * direcao_filtro)/ 8, (5 * self.m * direcao_filtro)/ 8]
-        direita = [(5 * self.m * direcao_filtro)/ 8, (7 * self.m * direcao_filtro)/ 8]
-        frente = [(7 * self.m * direcao_filtro)/ 8, (self.m * direcao_filtro)/ 8]
+        step = ((2 * math.pi) / self.m)
+        direcao_virar = (direcao_filtro + theta_objetivo )% (2* math.pi)
+        self.publish_direcao_obj(direcao_virar)
 
-        ponto_inicio = np.array([ponto_estimado[0], ponto_estimado[1]])
-        ponto_fim = np.array([ponto_objetivo[0], ponto_objetivo[1]])
-        vetor_objetivo = (ponto_fim - ponto_inicio)/np.linalg.norm(ponto_fim - ponto_inicio)
+        self.direcao_array = [direcao_filtro, theta_objetivo, 
+                              (direcao_filtro + step * (self.m / 8)) % (2* math.pi), 
+                              (direcao_filtro + step * 3 * (self.m / 8)) % (2* math.pi), 
+                              (direcao_filtro + step * 5 * (self.m / 8)) % (2* math.pi), 
+                              (direcao_filtro + step * 7 * (self.m / 8)) % (2* math.pi)]
 
-        theta = (direcao_filtro + np.arccos(np.dot(np.array([np.cos(direcao_filtro), np.sin(direcao_filtro)]), vetor_objetivo))) % 2 * math.pi
         comando = 0
-        if theta >= esquerda[0] and theta < esquerda[1]:
+        #esquerda
+        if (self.direcao_array[2] <= direcao_virar < self.direcao_array[3]):
             comando = 1
-        elif theta >= atras[0] and theta < atras[1]:
+        #atras
+        elif (self.direcao_array[3] <= direcao_virar < self.direcao_array[4]):
             comando = 2
-        elif theta >= direita[0] and theta < direita[1]:
+        #direita
+        elif (self.direcao_array[4] <= direcao_virar < self.direcao_array[5]):
             comando = 3
-        elif theta >= frente[0] and theta < frente[1]:
+        #frente
+        elif (self.direcao_array[5] <= direcao_virar < 2* math.pi or direcao_filtro <= theta_objetivo < self.direcao_array[2]):
             comando = 4
-        return comando
+
+        return comando, direcao_filtro, direcao_virar        
 
     #comandos para enviar para o robo
-    def moving_status(self, status):
+    def moving_status(self):
         msg = Bool()
-        msg.data = status
+        msg.data = self.movement_in_progress
         self.robot_mover_publisher.publish(msg)
 
     def velocity_sender(self, linear, angular):
@@ -256,44 +300,49 @@ class Planner(Node):
         """Processa a próxima ação na fila, se houver uma e não houver outra em andamento."""
         if not self.movement_in_progress and self.action_queue:
             next_action = self.action_queue.pop(0)
-            next_action()         
+            next_action() 
+
+    def odom_callback(self, msg):
+        quat = msg.pose.pose.orientation
+        self.yaw_odom = ((Rotation.from_quat([quat.x, quat.y, quat.z, quat.w])).as_euler('xyz', degrees = False))[2]
+        if(self.permission_to_rotate):
+            if self.sentido == 1:
+                self.get_logger().info(f'Rotacionando no sentido anti-horario')
+            elif self.sentido == -1:
+                self.get_logger().info(f'Rotacionando no sentido horario')
+            else:
+                self.get_logger().info(f'Rotacionando 180')
+            
+            error = self.target_rotation - self.yaw_odom
+            print(error, self.target_rotation, self.yaw_odom)
+            if abs(error) < self.tolerance:
+                self.move_forward()
+                self.permission_to_rotate = False
+            else:           
+                self.velocity_sender(0.0, np.clip(error * 0.5 * self.kp, -0.5, 0.5))  
 
     def stop(self):      
         self.get_logger().info(f'Robo parado')
-        self.velocity_sender(0.0, 0.0)
-        self.movement_in_progress = False
-        self.moving_status(self.movement_in_progress)
+        self.velocity_sender(0.0, 0.0)    
+        self.movement_in_progress = False  
+        self.moving_status()  
 
     def move_forward(self):        
-        self.get_logger().info(f'Movendo o robo para frente')
-        self.velocity_sender(1.0, 0.0)  
-        self.movement_in_progress = True
-        self.moving_status(self.movement_in_progress)
-        
-
-    def move_backward(self):
-        self.get_logger().info(f'Movendo o robo para tras')
-        self.velocity_sender(-1.0, 0.0)
+        self.get_logger().info(f'Movendo o robo para frente')        
+        self.velocity_sender(0.5, 0.0) 
         self.schedule_action(self.stop, self.tal) 
-        self.movement_in_progress = True
-        self.moving_status(self.movement_in_progress)
+        self.movement_in_progress = True  
+        self.moving_status() 
 
-    def rotate_clockwise(self):
-        self.get_logger().info(f'Rotacionando no sentido horario')
-        self.velocity_sender(0.0, -0.5)
-        self.schedule_action(self.stop, self.rotate_duration)
-        self.movement_in_progress = True
-        self.moving_status(self.movement_in_progress)
+    def publish_rviz(self):
+        self.publish_particles(self.p) 
+        self.publish_filtro_media()
+        self.publish_ponto_pose_estimada()
+        self.publish_filtro_melhor() 
 
-    def rotate_counter_clockwise(self):
-        self.get_logger().info(f'Rotacionando no sentido anti-horario')
-        self.velocity_sender(0.0, 0.5)
-        self.schedule_action(self.stop, self.rotate_duration)
-        self.movement_in_progress = True
-        self.moving_status(self.movement_in_progress)
-
-    def publish_ponto_pose_estimada(self):
-        quaternion_euler = Rotation.from_euler('xyz', [0, 0, self.obter_ponto_filtro_media(self.p)[2]]).as_quat()
+    def publish_ponto_pose_estimada(self):            
+        quaternion_euler = self.euler_to_quaternion(0, 0, self.direcao_filtro_melhor)
+        
         quat_msg = Quaternion()
         quat_msg.x = quaternion_euler[0]
         quat_msg.y = quaternion_euler[1]
@@ -325,6 +374,33 @@ class Planner(Node):
         delete_marker = Marker()
         delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
         self.publisher_ponto_est.publish(delete_marker) 
+
+    def publish_ponto_objetivo(self):
+        marker = Marker()
+        marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = "obj_point"
+        marker.id = 0  # Mantenha o mesmo ID para substituir o ponto anterior
+        marker.type = Marker.SPHERE  # Ou Marker.POINTS, mas um único ponto será suficiente
+        marker.action = Marker.ADD 
+        # Adicionar o ponto atualizado
+        marker.pose.position.x = self.ponto_objetivo[0]
+        marker.pose.position.y = self.ponto_objetivo[1]
+        marker.pose.position.z = 1.0
+        # Definindo a cor e tamanho
+        marker.scale.x = 0.6  # Tamanho do ponto
+        marker.scale.y = 0.6
+        marker.scale.z = 0.6
+        marker.color.a = 1.0  # Opacidade total
+        marker.color.r = 0.0  # Cor vermelha
+        marker.color.g = 0.0
+        marker.color.b = 1.0
+            
+        self.publisher_ponto_objetivo.publish(marker)
+        # Apagar o ponto antigo se necessário
+        delete_marker = Marker()
+        delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
+        self.publisher_ponto_objetivo.publish(delete_marker)
 
     def publish_particles(self, points_array):             
         marker_array = MarkerArray()
@@ -391,13 +467,14 @@ class Planner(Node):
         self.publisher_real_pose.publish(delete_marker) 
 
     def publish_filtro_media(self):
-        quaternion_euler_2 = Rotation.from_euler('xyz', [0, 0, self.obter_ponto_filtro_media(self.p)[2]]).as_quat()
+        quaternion_euler_4 = self.euler_to_quaternion(0, 0, self.direcao_filtro_media)
+        
         marker = Marker()
         quat_msg_2 = Quaternion()
-        quat_msg_2.x = quaternion_euler_2[0]
-        quat_msg_2.y = quaternion_euler_2[1]
-        quat_msg_2.z = quaternion_euler_2[2]
-        quat_msg_2.w = quaternion_euler_2[3]
+        quat_msg_2.x = quaternion_euler_4[0]
+        quat_msg_2.y = quaternion_euler_4[1]
+        quat_msg_2.z = quaternion_euler_4[2]
+        quat_msg_2.w = quaternion_euler_4[3]
         marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
         marker.header.stamp = self.get_clock().now().to_msg()
         marker.ns = "filtro_media"
@@ -424,6 +501,84 @@ class Planner(Node):
         delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
         self.publisher_filto_media.publish(delete_marker) 
 
+    def publish_direcao_obj(self, direcao_obj):
+        quaternion_euler_2 = self.euler_to_quaternion(0, 0, direcao_obj)
+        
+        marker = Marker()
+        quat_msg_2 = Quaternion()
+        quat_msg_2.x = quaternion_euler_2[0]
+        quat_msg_2.y = quaternion_euler_2[1]
+        quat_msg_2.z = quaternion_euler_2[2]
+        quat_msg_2.w = quaternion_euler_2[3]
+        marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = "ponto_obj"
+        marker.id = 0  # Mantenha o mesmo ID para substituir o ponto anterior
+        marker.type = Marker.ARROW  # Ou Marker.POINTS, mas um único ponto será suficiente
+        marker.action = Marker.ADD 
+        # Adicionar o ponto atualizado
+        marker.pose.position.x = self.ponto_atual[0]
+        marker.pose.position.y = self.ponto_atual[1]
+        marker.pose.position.z = 1.0
+        marker.pose.orientation = quat_msg_2
+        # Definindo a cor e tamanho
+        marker.scale.x = 1.0  # Tamanho do ponto
+        marker.scale.y = 0.125
+        marker.scale.z = 0.125
+        marker.color.a = 1.0  # Opacidade total
+        marker.color.r = 0.0  # Cor vermelha
+        marker.color.g = 1.0
+        marker.color.b = 1.0
+            
+        self.direcao_obj_publisher.publish(marker)
+        # Apagar o ponto antigo se necessário
+        delete_marker = Marker()
+        delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
+        self.direcao_obj_publisher.publish(delete_marker) 
+
+    def publish_filtro_melhor(self):
+        quaternion_euler_3 = self.euler_to_quaternion(0, 0, self.melhor_particula[2])
+        
+        marker = Marker()
+        quat_msg_2 = Quaternion()
+        quat_msg_2.x = quaternion_euler_3[0]
+        quat_msg_2.y = quaternion_euler_3[1]
+        quat_msg_2.z = quaternion_euler_3[2]
+        quat_msg_2.w = quaternion_euler_3[3]
+        marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = "filtro_melhor"
+        marker.id = 0  # Mantenha o mesmo ID para substituir o ponto anterior
+        marker.type = Marker.ARROW  # Ou Marker.POINTS, mas um único ponto será suficiente
+        marker.action = Marker.ADD 
+        # Adicionar o ponto atualizado
+        marker.pose.position.x = self.melhor_particula[0]
+        marker.pose.position.y = self.melhor_particula[1]
+        marker.pose.position.z = 1.0
+        marker.pose.orientation = quat_msg_2
+        # Definindo a cor e tamanho
+        marker.scale.x = 1.0  # Tamanho do ponto
+        marker.scale.y = 0.125
+        marker.scale.z = 0.125
+        marker.color.a = 1.0  # Opacidade total
+        marker.color.r = 0.5  # Cor vermelha
+        marker.color.g = 1.0
+        marker.color.b = 1.0
+            
+        self.publisher_filtro_melhor.publish(marker)
+        # Apagar o ponto antigo se necessário
+        delete_marker = Marker()
+        delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
+        self.publisher_filtro_melhor.publish(delete_marker) 
+
+        
+    def euler_to_quaternion(self, roll, pitch, yaw):
+        qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+        qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+        qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        return [qx, qy, qz, qw]
+    
 def main(args=None):
     rclpy.init(args=args)
     planner = Planner()
