@@ -54,10 +54,8 @@ class Planner(Node):
             4: "rotacionar_counter_clockwise",
         }
         self.ponto_antigo = None
-        self.distance_threshold = 0.1
+        self.distance_threshold = 0.2
         self.dist = -10
-        self.stop_duration = 10.0
-        self.reverse_duration = 18
         self.tal = 5.0 
         self.espera = 25.0
         self.current_timer = None
@@ -81,7 +79,7 @@ class Planner(Node):
         #definicoes filtro de particula
         self.particle_number = 1000
         self.p = []        
-        self.part_ruido_virar = 0.05
+        self.part_ruido_virar = math.radians(5)
         self.part_sigma_atual = 0.5
         self.part_sigma_translacao = 2.5
         for i in range(self.particle_number):
@@ -109,30 +107,23 @@ class Planner(Node):
         #controle pela odom
         self.yaw_odom = 0.0
         self.tolerance = math.radians(2)
-        self.ajuste_fino = 1.57
+        self.ajuste_fino = (math.pi/2)
         self.kp = 1
         self.permission_to_rotate = False
         self.sentido = 0
         self.target_rotation = 0.0
 
     def distance(self, pose1, pose2):
-        return math.sqrt((pose1[0] - pose2[0])**2 + (pose1[1] - pose2[1])**2)
-
-    def simulation_callback(self, msg):        
-        if(self.start_planner and msg.data):
-            self.publish_ponto_objetivo()
-            self.start_planner = False              
-            for i in range(self.particle_number):
-                #ruido_virar, sigma_atualizacao, sigma_translacao
-                self.p.append(Particle(self.part_ruido_virar, self.part_sigma_atual, self.part_sigma_translacao))           
-            self.publish_particles(self.p)  
-            self.publish_ponto_pose_estimada()  
+        return math.sqrt((pose1[0] - pose2[0])**2 + (pose1[1] - pose2[1])**2)    
 
     def robot_real_pose_callback(self, msg):
         if msg.poses:
             self.robot_real_pose = msg.poses[-1]
 
         self.publish_real_robot_pose()
+
+    def simulation_callback(self, msg):
+        pass
         
 
     #obtem o ponto final para determinar onde o robo deve ir
@@ -157,7 +148,7 @@ class Planner(Node):
                 elif(self.direcao_comando == 1):
                     self.permission_to_rotate = True
                     self.sentido = 1
-                    yaw_antigo = self.yaw_odom 
+                    yaw_antigo = self.yaw_odom % (2 * math.pi)
                     self.target_rotation = yaw_antigo + self.ajuste_fino * self.sentido
                     self.predicao((math.pi)/2)
                     self.publish_rviz()
@@ -166,7 +157,7 @@ class Planner(Node):
                 elif(self.direcao_comando == 2):
                     self.permission_to_rotate = True
                     self.sentido = 2
-                    yaw_antigo = self.yaw_odom 
+                    yaw_antigo = self.yaw_odom % (2 * math.pi)
                     self.target_rotation = yaw_antigo + self.ajuste_fino * self.sentido
                     self.predicao(math.pi)
                     self.publish_rviz()
@@ -175,12 +166,14 @@ class Planner(Node):
                 elif(self.direcao_comando == 3):
                     self.permission_to_rotate = True
                     self.sentido = -1
-                    yaw_antigo = self.yaw_odom 
+                    yaw_antigo = self.yaw_odom % (2 * math.pi)
                     self.target_rotation = yaw_antigo + self.ajuste_fino * self.sentido
                     self.predicao(-(math.pi)/2)
                     self.publish_rviz()                  
                     self.contador_de_comando += 1 
                 self.reamostragem()
+                #teste com filtro 
+                self.direcao_comando = random.choice([1, 2, 3, 4])
                 self.publish_rviz()
                 #print("Quantidade de comandos: ", self.contador_de_comando)
             else:
@@ -204,7 +197,7 @@ class Planner(Node):
             particula_escolhida = particula
             particula.x = particula.x + random.gauss(0, 0.5)
             particula.y = particula.y + random.gauss(0, 0.5)
-            particula.yaw = particula.yaw + random.gauss(0, 0.5)
+            particula.yaw = (particula.yaw + random.gauss(0, 0.5)) % (2 * math.pi)
             p_nova.append(copy.deepcopy(particula)) 
 
         self.p = p_nova 
@@ -215,7 +208,7 @@ class Planner(Node):
         #selecionar media
         self.direcao_filtro_media = self.obter_ponto_filtro_media(self.p)[2]
         #usando a melhor
-        self.variavel_direcao = self.obter_direcao(self.ponto_atual, self.direcao_filtro_melhor, self.ponto_objetivo)
+        self.variavel_direcao = self.obter_direcao(self.ponto_atual, self.direcao_filtro_media, self.ponto_objetivo)
         self.direcao_comando = self.variavel_direcao[0]
     
     #funcoes parciais do filtro de particulas
@@ -313,8 +306,8 @@ class Planner(Node):
             else:
                 self.get_logger().info(f'Rotacionando 180')
             
-            error = self.target_rotation - self.yaw_odom
-            print(error, self.target_rotation, self.yaw_odom)
+            error = self.target_rotation % (2 * math.pi) - self.yaw_odom % (2 * math.pi)
+            print(error, self.target_rotation % (2 * math.pi), self.yaw_odom % (2 * math.pi))
             if abs(error) < self.tolerance:
                 self.move_forward()
                 self.permission_to_rotate = False
@@ -338,10 +331,10 @@ class Planner(Node):
         self.publish_particles(self.p) 
         self.publish_filtro_media()
         self.publish_ponto_pose_estimada()
-        self.publish_filtro_melhor() 
+        #self.publish_filtro_melhor() 
 
     def publish_ponto_pose_estimada(self):            
-        quaternion_euler = self.euler_to_quaternion(0, 0, self.direcao_filtro_melhor)
+        quaternion_euler = self.euler_to_quaternion(0, 0, self.direcao_filtro_media)
         
         quat_msg = Quaternion()
         quat_msg.x = quaternion_euler[0]
