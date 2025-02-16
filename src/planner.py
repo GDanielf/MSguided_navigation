@@ -77,7 +77,7 @@ class Planner(Node):
         #starvars
         self.m = 16
         #definicoes filtro de particula
-        self.particle_number = 1000
+        self.particle_number = 2000
         self.p = []        
         self.part_ruido_virar = math.radians(5)
         self.part_sigma_atual = 0.5
@@ -92,22 +92,19 @@ class Planner(Node):
         self.publisher_real_pose = self.create_publisher(Marker, 'topic_real_pose', 10)
         self.publisher_filto_media = self.create_publisher(Marker, 'topic_filtro_media', 10)
         self.direcao_obj_publisher = self.create_publisher(Marker, 'topico_obj_publisher', 10)
-        self.publisher_filtro_melhor = self.create_publisher(Marker, 'topic_filtro_melhor', 10)
 
         self.ponto_antigo = None
         self.new_pose_received = False
         self.direcao_comando = 0
         
-        self.melhor_particula= [0.0, 0.0, 0.0]
         self.direcao_array = [0,0,0,0,0,0]
-        self.direcao_filtro_melhor = 0
         self.direcao_filtro_media = 0
         #robo real
         self.robot_real_pose = None 
         #controle pela odom
         self.yaw_odom = 0.0
         self.tolerance = math.radians(2)
-        self.ajuste_fino = (math.pi/2)
+        self.ajuste_fino = (math.pi/2) + 0.04
         self.kp = 1
         self.permission_to_rotate = False
         self.sentido = 0
@@ -124,7 +121,35 @@ class Planner(Node):
 
     def simulation_callback(self, msg):
         pass
-        
+
+    def euler_to_quaternion(self, roll, pitch, yaw):
+        qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+        qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+        qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        return [qx, qy, qz, qw]   
+
+    def odom_callback(self, msg):
+        quat = msg.pose.pose.orientation
+        self.yaw_odom = ((Rotation.from_quat([quat.x, quat.y, quat.z, quat.w])).as_euler('xyz', degrees = False))[2]
+        if(self.permission_to_rotate):
+            if self.sentido == 1:
+                self.get_logger().info(f'Rotacionando no sentido anti-horario')
+                vel_angular = self.kp
+            elif self.sentido == -1:
+                self.get_logger().info(f'Rotacionando no sentido horario')
+                vel_angular = self.kp * -1
+            else:
+                self.get_logger().info(f'Rotacionando 180')
+                vel_angular = self.kp * -1
+            
+            error = abs(self.target_rotation % (2 * math.pi) - self.yaw_odom % (2 * math.pi))
+            print(error, self.target_rotation % (2 * math.pi), self.yaw_odom % (2 * math.pi))
+            if abs(error) < self.tolerance:
+                self.move_forward()
+                self.permission_to_rotate = False
+            else:           
+                self.velocity_sender(0.0, error * 0.5 * vel_angular)       
 
     #obtem o ponto final para determinar onde o robo deve ir
     def pose_callback(self, msg):    
@@ -138,8 +163,7 @@ class Planner(Node):
             if(regiao_nova_robo != self.regiao_objetivo):
                 print('bagulho doido: ', self.direcao_array)
                 print('comando: ', self.direcao_comando)
-                if(self.direcao_comando == 0 or self.direcao_comando == 4):                                        
-                    #mover o robo                                     
+                if(self.direcao_comando == 0 or self.direcao_comando == 4):      
                     self.move_forward()  
                     self.predicao(0)
                     self.publish_rviz()                  
@@ -173,7 +197,7 @@ class Planner(Node):
                     self.contador_de_comando += 1 
                 self.reamostragem()
                 #teste com filtro 
-                self.direcao_comando = random.choice([1, 2, 3, 4])
+                self.direcao_comando = 3
                 self.publish_rviz()
                 #print("Quantidade de comandos: ", self.contador_de_comando)
             else:
@@ -194,20 +218,14 @@ class Planner(Node):
         p_nova = []
         for i in range(self.particle_number):
             particula = self.selecionar_particula(self.p)
-            particula_escolhida = particula
             particula.x = particula.x + random.gauss(0, 0.5)
             particula.y = particula.y + random.gauss(0, 0.5)
             particula.yaw = (particula.yaw + random.gauss(0, 0.5)) % (2 * math.pi)
             p_nova.append(copy.deepcopy(particula)) 
 
         self.p = p_nova 
-        #selecionar a melhor 
-        melhor = particula_escolhida
-        self.melhor_particula = [melhor.x, melhor.y, (melhor.yaw) % (2 * np.pi)]
-        self.direcao_filtro_melhor = self.melhor_particula[2]
         #selecionar media
         self.direcao_filtro_media = self.obter_ponto_filtro_media(self.p)[2]
-        #usando a melhor
         self.variavel_direcao = self.obter_direcao(self.ponto_atual, self.direcao_filtro_media, self.ponto_objetivo)
         self.direcao_comando = self.variavel_direcao[0]
     
@@ -295,25 +313,6 @@ class Planner(Node):
             next_action = self.action_queue.pop(0)
             next_action() 
 
-    def odom_callback(self, msg):
-        quat = msg.pose.pose.orientation
-        self.yaw_odom = ((Rotation.from_quat([quat.x, quat.y, quat.z, quat.w])).as_euler('xyz', degrees = False))[2]
-        if(self.permission_to_rotate):
-            if self.sentido == 1:
-                self.get_logger().info(f'Rotacionando no sentido anti-horario')
-            elif self.sentido == -1:
-                self.get_logger().info(f'Rotacionando no sentido horario')
-            else:
-                self.get_logger().info(f'Rotacionando 180')
-            
-            error = self.target_rotation % (2 * math.pi) - self.yaw_odom % (2 * math.pi)
-            print(error, self.target_rotation % (2 * math.pi), self.yaw_odom % (2 * math.pi))
-            if abs(error) < self.tolerance:
-                self.move_forward()
-                self.permission_to_rotate = False
-            else:           
-                self.velocity_sender(0.0, np.clip(error * 0.5 * self.kp, -0.5, 0.5))  
-
     def stop(self):      
         self.get_logger().info(f'Robo parado')
         self.velocity_sender(0.0, 0.0)    
@@ -331,82 +330,69 @@ class Planner(Node):
         self.publish_particles(self.p) 
         self.publish_filtro_media()
         self.publish_ponto_pose_estimada()
-        #self.publish_filtro_melhor() 
 
     def publish_ponto_pose_estimada(self):            
-        quaternion_euler = self.euler_to_quaternion(0, 0, self.direcao_filtro_media)
-        
+        quaternion_euler = self.euler_to_quaternion(0, 0, self.direcao_filtro_media)        
         quat_msg = Quaternion()
         quat_msg.x = quaternion_euler[0]
         quat_msg.y = quaternion_euler[1]
         quat_msg.z = quaternion_euler[2]
         quat_msg.w = quaternion_euler[3]
         marker = Marker()
-        marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
+        marker.header.frame_id = "map"  
         marker.header.stamp = self.get_clock().now().to_msg()
         marker.ns = "single_point"
-        marker.id = 0  # Mantenha o mesmo ID para substituir o ponto anterior
-        marker.type = Marker.ARROW  # Ou Marker.POINTS, mas um único ponto será suficiente
-        marker.action = Marker.ADD 
-        # Adicionar o ponto atualizado
+        marker.id = 0  
+        marker.type = Marker.ARROW 
+        marker.action = Marker.ADD         
         marker.pose.position.x = self.ponto_atual[0]
         marker.pose.position.y = self.ponto_atual[1]
         marker.pose.position.z = 1.0
-        marker.pose.orientation = quat_msg
-        # Definindo a cor e tamanho
-        marker.scale.x = 1.0  # Tamanho do ponto
+        marker.pose.orientation = quat_msg        
+        marker.scale.x = 1.0  
         marker.scale.y = 0.125
         marker.scale.z = 0.125
-        marker.color.a = 1.0  # Opacidade total
-        marker.color.r = 1.0  # Cor vermelha
+        marker.color.a = 1.0  
+        marker.color.r = 1.0  
         marker.color.g = 0.0
-        marker.color.b = 0.0
-            
-        self.publisher_ponto_est.publish(marker)
-        # Apagar o ponto antigo se necessário
+        marker.color.b = 0.0            
+        self.publisher_ponto_est.publish(marker)        
         delete_marker = Marker()
-        delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
+        delete_marker.action = Marker.DELETEALL  
         self.publisher_ponto_est.publish(delete_marker) 
 
     def publish_ponto_objetivo(self):
         marker = Marker()
-        marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
+        marker.header.frame_id = "map"  
         marker.header.stamp = self.get_clock().now().to_msg()
         marker.ns = "obj_point"
-        marker.id = 0  # Mantenha o mesmo ID para substituir o ponto anterior
-        marker.type = Marker.SPHERE  # Ou Marker.POINTS, mas um único ponto será suficiente
-        marker.action = Marker.ADD 
-        # Adicionar o ponto atualizado
+        marker.id = 0  
+        marker.type = Marker.SPHERE 
+        marker.action = Marker.ADD         
         marker.pose.position.x = self.ponto_objetivo[0]
         marker.pose.position.y = self.ponto_objetivo[1]
-        marker.pose.position.z = 1.0
-        # Definindo a cor e tamanho
-        marker.scale.x = 0.6  # Tamanho do ponto
+        marker.pose.position.z = 1.0        
+        marker.scale.x = 0.6  
         marker.scale.y = 0.6
         marker.scale.z = 0.6
-        marker.color.a = 1.0  # Opacidade total
-        marker.color.r = 0.0  # Cor vermelha
+        marker.color.a = 1.0  
+        marker.color.r = 0.0  
         marker.color.g = 0.0
-        marker.color.b = 1.0
-            
-        self.publisher_ponto_objetivo.publish(marker)
-        # Apagar o ponto antigo se necessário
+        marker.color.b = 1.0            
+        self.publisher_ponto_objetivo.publish(marker)        
         delete_marker = Marker()
-        delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
+        delete_marker.action = Marker.DELETEALL  
         self.publisher_ponto_objetivo.publish(delete_marker)
 
     def publish_particles(self, points_array):             
         marker_array = MarkerArray()
-        delete_markers = MarkerArray()
-
-        # Remover marcadores antigos
+        delete_markers = MarkerArray()        
         for old_marker in range(len(self.p)):
             marker = Marker()
             marker.action = Marker.DELETE
             marker.id = old_marker + 1
             delete_markers.markers.append(marker)
         self.publisher_filtro.publish(delete_markers)
-
         i = 1
         for point in points_array:
             marker = Marker()
@@ -418,159 +404,102 @@ class Planner(Node):
             marker.action = Marker.ADD
             marker.pose.position.x = point.x
             marker.pose.position.y = point.y
-            marker.scale.x = 0.1  # Tamanho do ponto
+            marker.scale.x = 0.1  
             marker.scale.y = 0.1
             marker.scale.z = 0.1
-            marker.color.a = 1.0  # Opacidade total
-            marker.color.r = 0.0  # Cor vermelha
+            marker.color.a = 1.0  
+            marker.color.r = 0.0  
             marker.color.g = 1.0
             marker.color.b = 0.0
             i += 1
-
             marker_array.markers.append(marker)
-
         self.publisher_filtro.publish(marker_array)   
 
     def publish_real_robot_pose(self):
         marker = Marker()
-        marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
+        marker.header.frame_id = "map"  
         marker.header.stamp = self.get_clock().now().to_msg()
         marker.ns = "robot_point"
-        marker.id = 0  # Mantenha o mesmo ID para substituir o ponto anterior
-        marker.type = Marker.ARROW  # Ou Marker.POINTS, mas um único ponto será suficiente
-        marker.action = Marker.ADD 
-        # Adicionar o ponto atualizado
+        marker.id = 0  
+        marker.type = Marker.ARROW 
+        marker.action = Marker.ADD         
         marker.pose.position.x = self.robot_real_pose.position.x
         marker.pose.position.y = self.robot_real_pose.position.y
         marker.pose.position.z = 1.0
-        marker.pose.orientation = self.robot_real_pose.orientation
-        # Definindo a cor e tamanho
-        marker.scale.x = 1.0  # Tamanho do ponto
+        marker.pose.orientation = self.robot_real_pose.orientation        
+        marker.scale.x = 1.0  
         marker.scale.y = 0.125
         marker.scale.z = 0.125
-        marker.color.a = 1.0  # Opacidade total
-        marker.color.r = 1.0  # Cor vermelha
+        marker.color.a = 1.0  
+        marker.color.r = 1.0  
         marker.color.g = 0.0
-        marker.color.b = 1.0
-            
-        self.publisher_real_pose.publish(marker)
-        # Apagar o ponto antigo se necessário
+        marker.color.b = 1.0            
+        self.publisher_real_pose.publish(marker)        
         delete_marker = Marker()
-        delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
+        delete_marker.action = Marker.DELETEALL  
         self.publisher_real_pose.publish(delete_marker) 
 
     def publish_filtro_media(self):
-        quaternion_euler_4 = self.euler_to_quaternion(0, 0, self.direcao_filtro_media)
-        
+        quaternion_euler_4 = self.euler_to_quaternion(0, 0, self.direcao_filtro_media)        
         marker = Marker()
         quat_msg_2 = Quaternion()
         quat_msg_2.x = quaternion_euler_4[0]
         quat_msg_2.y = quaternion_euler_4[1]
         quat_msg_2.z = quaternion_euler_4[2]
         quat_msg_2.w = quaternion_euler_4[3]
-        marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
+        marker.header.frame_id = "map"  
         marker.header.stamp = self.get_clock().now().to_msg()
         marker.ns = "filtro_media"
-        marker.id = 0  # Mantenha o mesmo ID para substituir o ponto anterior
-        marker.type = Marker.ARROW  # Ou Marker.POINTS, mas um único ponto será suficiente
-        marker.action = Marker.ADD 
-        # Adicionar o ponto atualizado
+        marker.id = 0  
+        marker.type = Marker.ARROW 
+        marker.action = Marker.ADD         
         marker.pose.position.x = self.obter_ponto_filtro_media(self.p)[0]
         marker.pose.position.y = self.obter_ponto_filtro_media(self.p)[1]
         marker.pose.position.z = 1.0
-        marker.pose.orientation = quat_msg_2
-        # Definindo a cor e tamanho
-        marker.scale.x = 1.0  # Tamanho do ponto
+        marker.pose.orientation = quat_msg_2        
+        marker.scale.x = 1.0  
         marker.scale.y = 0.125
         marker.scale.z = 0.125
-        marker.color.a = 1.0  # Opacidade total
-        marker.color.r = 0.0  # Cor vermelha
+        marker.color.a = 1.0  
+        marker.color.r = 0.0  
         marker.color.g = 1.0
-        marker.color.b = 1.0
-            
-        self.publisher_filto_media.publish(marker)
-        # Apagar o ponto antigo se necessário
+        marker.color.b = 1.0            
+        self.publisher_filto_media.publish(marker)        
         delete_marker = Marker()
-        delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
+        delete_marker.action = Marker.DELETEALL  
         self.publisher_filto_media.publish(delete_marker) 
 
     def publish_direcao_obj(self, direcao_obj):
-        quaternion_euler_2 = self.euler_to_quaternion(0, 0, direcao_obj)
-        
+        quaternion_euler_2 = self.euler_to_quaternion(0, 0, direcao_obj)        
         marker = Marker()
         quat_msg_2 = Quaternion()
         quat_msg_2.x = quaternion_euler_2[0]
         quat_msg_2.y = quaternion_euler_2[1]
         quat_msg_2.z = quaternion_euler_2[2]
         quat_msg_2.w = quaternion_euler_2[3]
-        marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
+        marker.header.frame_id = "map"  
         marker.header.stamp = self.get_clock().now().to_msg()
         marker.ns = "ponto_obj"
-        marker.id = 0  # Mantenha o mesmo ID para substituir o ponto anterior
-        marker.type = Marker.ARROW  # Ou Marker.POINTS, mas um único ponto será suficiente
-        marker.action = Marker.ADD 
-        # Adicionar o ponto atualizado
+        marker.id = 0  
+        marker.type = Marker.ARROW 
+        marker.action = Marker.ADD         
         marker.pose.position.x = self.ponto_atual[0]
         marker.pose.position.y = self.ponto_atual[1]
         marker.pose.position.z = 1.0
-        marker.pose.orientation = quat_msg_2
-        # Definindo a cor e tamanho
-        marker.scale.x = 1.0  # Tamanho do ponto
+        marker.pose.orientation = quat_msg_2        
+        marker.scale.x = 1.0  
         marker.scale.y = 0.125
         marker.scale.z = 0.125
-        marker.color.a = 1.0  # Opacidade total
-        marker.color.r = 0.0  # Cor vermelha
+        marker.color.a = 1.0  
+        marker.color.r = 0.0  
         marker.color.g = 1.0
-        marker.color.b = 1.0
-            
-        self.direcao_obj_publisher.publish(marker)
-        # Apagar o ponto antigo se necessário
+        marker.color.b = 1.0            
+        self.direcao_obj_publisher.publish(marker)        
         delete_marker = Marker()
-        delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
+        delete_marker.action = Marker.DELETEALL  
         self.direcao_obj_publisher.publish(delete_marker) 
-
-    def publish_filtro_melhor(self):
-        quaternion_euler_3 = self.euler_to_quaternion(0, 0, self.melhor_particula[2])
         
-        marker = Marker()
-        quat_msg_2 = Quaternion()
-        quat_msg_2.x = quaternion_euler_3[0]
-        quat_msg_2.y = quaternion_euler_3[1]
-        quat_msg_2.z = quaternion_euler_3[2]
-        quat_msg_2.w = quaternion_euler_3[3]
-        marker.header.frame_id = "map"  # Certifique-se de que o frame_id esteja correto
-        marker.header.stamp = self.get_clock().now().to_msg()
-        marker.ns = "filtro_melhor"
-        marker.id = 0  # Mantenha o mesmo ID para substituir o ponto anterior
-        marker.type = Marker.ARROW  # Ou Marker.POINTS, mas um único ponto será suficiente
-        marker.action = Marker.ADD 
-        # Adicionar o ponto atualizado
-        marker.pose.position.x = self.melhor_particula[0]
-        marker.pose.position.y = self.melhor_particula[1]
-        marker.pose.position.z = 1.0
-        marker.pose.orientation = quat_msg_2
-        # Definindo a cor e tamanho
-        marker.scale.x = 1.0  # Tamanho do ponto
-        marker.scale.y = 0.125
-        marker.scale.z = 0.125
-        marker.color.a = 1.0  # Opacidade total
-        marker.color.r = 0.5  # Cor vermelha
-        marker.color.g = 1.0
-        marker.color.b = 1.0
-            
-        self.publisher_filtro_melhor.publish(marker)
-        # Apagar o ponto antigo se necessário
-        delete_marker = Marker()
-        delete_marker.action = Marker.DELETEALL  # Remove qualquer marcador anterior
-        self.publisher_filtro_melhor.publish(delete_marker) 
-
-        
-    def euler_to_quaternion(self, roll, pitch, yaw):
-        qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
-        qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
-        qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
-        qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
-        return [qx, qy, qz, qw]
+    
     
 def main(args=None):
     rclpy.init(args=args)
