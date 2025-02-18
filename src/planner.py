@@ -2,13 +2,12 @@
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int32
 from std_msgs.msg import Bool
-from geometry_msgs.msg import Pose, Twist, Quaternion
+from geometry_msgs.msg import Twist, Quaternion
 from visualization_msgs.msg import Marker, MarkerArray
 from guided_navigation.msg import PoseEstimate
-from geometry_msgs.msg import PoseArray
-from nav_msgs.msg import Odometry
+from geometry_msgs.msg import PoseArray, PoseStamped
+from nav_msgs.msg import Odometry, Path
 from particle import Particle
 import random
 from mapa import Mapa
@@ -91,10 +90,15 @@ class Planner(Node):
         self.publisher_real_pose = self.create_publisher(Marker, 'topic_real_pose', 10)
         self.publisher_filto_media = self.create_publisher(Marker, 'topic_filtro_media', 10)
         self.direcao_obj_publisher = self.create_publisher(Marker, 'topico_obj_publisher', 10)
+        self.pose_pub = self.create_publisher(PoseStamped, '/robot_pose_stamped', 10)
+        self.path_pub = self.create_publisher(Path, '/path', 10)
+        self.path = Path()
+        self.path.header.frame_id = "map"
 
         self.ponto_antigo = None
         self.new_pose_received = False
         self.comando_direcao = 0
+        self.inicio = True
         
         self.direcao_filtro_media = 0
         #robo real
@@ -152,26 +156,27 @@ class Planner(Node):
         regiao_nova_robo = self.mapa.obter_cor_regiao(self.ponto_atual[0], self.ponto_atual[1])   
         if(self.ponto_antigo is not None):
             self.dist = self.distance(self.ponto_atual, self.ponto_antigo)
-                 
+        #a direcao a ser tomada pelo robo deve ser calculada assim que receber o ponto estimado
         if(self.ponto_antigo is None or self.dist > self.distance_threshold):
+            if(not(self.inicio)):
+                self.reamostragem()
+                self.publish_rviz()
+                dicionario_comandos = self.obter_comando_direcao(self.ponto_objetivo, self.p)
+                probabilidade_comando = self.comando_probabilidade(dicionario_comandos)
+                self.comando_direcao = self.obter_comando_direcao_media(self.direcao_filtro_media, self.ponto_atual, self.ponto_objetivo)
+                print(dicionario_comandos, probabilidade_comando, self.comando_direcao)
             print("regiao do robo:", regiao_nova_robo, " regiao objetivo: ", self.regiao_objetivo)            
             if(regiao_nova_robo != self.regiao_objetivo):
                 #print('bagulho doido: ')
-                print('comando: ', self.comando_direcao)
-                if(self.comando_direcao == 0 or self.comando_direcao == 4):      
-                    self.move_forward()  
-                    self.predicao(0)
-                    self.publish_rviz()                  
-                    self.contador_de_comando += 1 
-                #vira para esquerda e vai pra frente 
-                elif(self.comando_direcao == 1):
+                print('comando: ', self.comando_direcao)                
+                if(self.comando_direcao == 1):
                     self.get_logger().info(f'Rotacionando no sentido anti-horario')
                     self.permission_to_rotate = True
                     self.sentido = 1
                     yaw_antigo = self.yaw_odom % (2 * math.pi)
                     self.target_rotation = yaw_antigo + self.ajuste_fino * self.sentido
                     self.predicao((math.pi)/2)
-                    self.publish_rviz()
+                    #self.publish_rviz()
                     self.contador_de_comando += 1 
                 #Vira 180 para esquerda e vai para frente
                 elif(self.comando_direcao == 2):
@@ -181,7 +186,7 @@ class Planner(Node):
                     yaw_antigo = self.yaw_odom % (2 * math.pi)
                     self.target_rotation = yaw_antigo + self.ajuste_fino * self.sentido
                     self.predicao(math.pi)
-                    self.publish_rviz()
+                    #self.publish_rviz()
                     self.contador_de_comando += 1
                 #vira pra direita e vai pra frente
                 elif(self.comando_direcao == 3):
@@ -191,17 +196,15 @@ class Planner(Node):
                     yaw_antigo = self.yaw_odom % (2 * math.pi)
                     self.target_rotation = yaw_antigo + self.ajuste_fino * self.sentido
                     self.predicao(-(math.pi)/2)
-                    self.publish_rviz()                  
+                    #self.publish_rviz()                  
                     self.contador_de_comando += 1 
-                self.reamostragem()
-                self.publish_rviz()
-                #teste com filtro                 
-                dicionario_comandos = self.obter_comando_direcao(self.ponto_objetivo, self.p)
-                probabilidade_comando = self.comando_probabilidade(dicionario_comandos)
-                self.comando_direcao = self.obter_comando_direcao_media(self.direcao_filtro_media, self.ponto_atual, self.ponto_objetivo)
-                print(dicionario_comandos, probabilidade_comando, self.comando_direcao)
-                
-                #print("Quantidade de comandos: ", self.contador_de_comando)
+                else:      
+                    self.move_forward()  
+                    self.predicao(0)
+                    #self.publish_rviz()                  
+                    self.contador_de_comando += 1 
+                    self.inicio = False
+                #vira para esquerda e vai pra frente 
             else:
                 print('chegou')
                 self.publish_rviz()
@@ -273,8 +276,7 @@ class Planner(Node):
             elif(regioes_espaciais[2] <= theta_obj < regioes_espaciais[3]):
                 comando["3"] += 1
             else:
-                comando["4"] += 1        
-
+                comando["4"] += 1 
         return comando
     
     def obter_comando_direcao_media(self, direcao_filtro, ponto_estimado, lista_ponto_objetivo):
@@ -293,7 +295,6 @@ class Planner(Node):
             comando = 3
         else:
             comando = 4
-
         return comando
     
     def comando_probabilidade(self, dicionario_comando):
@@ -301,7 +302,6 @@ class Planner(Node):
         prob = {key: value / total for key, value in dicionario_comando.items()}
         max_key = max(prob, key=prob.get)
         return int(max_key)
-
 
     #comandos para enviar para o robo
     def moving_status(self):
@@ -433,31 +433,7 @@ class Planner(Node):
             marker.color.a = 1.0            
             i += 1
             marker_array.markers.append(marker)
-        self.publisher_filtro.publish(marker_array)   
-
-    def publish_real_robot_pose(self):
-        marker = Marker()
-        marker.header.frame_id = "map"  
-        marker.header.stamp = self.get_clock().now().to_msg()
-        marker.ns = "robot_point"
-        marker.id = 0  
-        marker.type = Marker.ARROW 
-        marker.action = Marker.ADD         
-        marker.pose.position.x = self.robot_real_pose.position.x
-        marker.pose.position.y = self.robot_real_pose.position.y
-        marker.pose.position.z = 1.0
-        marker.pose.orientation = self.robot_real_pose.orientation        
-        marker.scale.x = 1.0  
-        marker.scale.y = 0.125
-        marker.scale.z = 0.125
-        marker.color.a = 1.0  
-        marker.color.r = 1.0  
-        marker.color.g = 0.0
-        marker.color.b = 1.0            
-        self.publisher_real_pose.publish(marker)        
-        delete_marker = Marker()
-        delete_marker.action = Marker.DELETEALL  
-        self.publisher_real_pose.publish(delete_marker) 
+        self.publisher_filtro.publish(marker_array) 
 
     def publish_filtro_media(self):
         quaternion_euler_4 = self.euler_to_quaternion(0, 0, self.direcao_filtro_media)        
@@ -488,6 +464,41 @@ class Planner(Node):
         delete_marker = Marker()
         delete_marker.action = Marker.DELETEALL  
         self.publisher_filto_media.publish(delete_marker) 
+
+    def publish_real_robot_pose(self):
+        # Criando um Marker para visualizar o robô no RViz2
+        marker = Marker()
+        marker.header.frame_id = "map"  
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = "robot_point"
+        marker.id = 0  
+        marker.type = Marker.ARROW 
+        marker.action = Marker.ADD         
+        marker.pose.position.x = self.robot_real_pose.position.x
+        marker.pose.position.y = self.robot_real_pose.position.y
+        marker.pose.position.z = 1.0
+        marker.pose.orientation = self.robot_real_pose.orientation        
+        marker.scale.x = 1.0  
+        marker.scale.y = 0.125
+        marker.scale.z = 0.125
+        marker.color.a = 1.0  
+        marker.color.r = 1.0  
+        marker.color.g = 0.0
+        marker.color.b = 1.0      
+        self.publisher_real_pose.publish(marker)  
+        delete_marker = Marker()
+        delete_marker.action = Marker.DELETEALL  
+        self.publisher_real_pose.publish(delete_marker) 
+        pose_stamped = PoseStamped()
+        pose_stamped.header.stamp = marker.header.stamp
+        pose_stamped.header.frame_id = marker.header.frame_id
+        pose_stamped.pose = self.robot_real_pose
+        self.path.poses.append(pose_stamped)
+        path_msg = Path()
+        path_msg.header.stamp = marker.header.stamp
+        path_msg.header.frame_id = marker.header.frame_id
+        path_msg.poses = self.path.poses
+        self.path_pub.publish(path_msg)
 
     def publish_direcao_obj(self, direcao_obj):
         quaternion_euler_2 = self.euler_to_quaternion(0, 0, direcao_obj)        

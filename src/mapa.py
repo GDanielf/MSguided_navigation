@@ -222,7 +222,10 @@ if __name__ == "__main__":
     # Teste para verificar a cor de uma posição
     #x, y = 1.7732411925348928, 0.6024850223445085
     #x, y = -9.8464545465, -7.34534535
-    x,y = 5.06, 5.50
+    #x,y = 5.06, 5.50
+    x= 4.960834540951136
+    y= 4.878428883981559
+
     cor = mapa.obter_cor_regiao(round(x,2), round(y,2))
     # Plotar o mapa
     fig, ax = plt.subplots()
