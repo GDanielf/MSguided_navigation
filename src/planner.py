@@ -131,14 +131,11 @@ class Planner(Node):
         quat = msg.pose.pose.orientation
         self.yaw_odom = ((Rotation.from_quat([quat.x, quat.y, quat.z, quat.w])).as_euler('xyz', degrees = False))[2]
         if(self.permission_to_rotate):
-            if self.sentido == 1:
-                self.get_logger().info(f'Rotacionando no sentido anti-horario')
+            if self.sentido == 1:                
                 vel_angular = self.kp
-            elif self.sentido == -1:
-                self.get_logger().info(f'Rotacionando no sentido horario')
+            elif self.sentido == -1:                
                 vel_angular = self.kp * -1
             else:
-                self.get_logger().info(f'Rotacionando 180')
                 vel_angular = self.kp * -1
             
             error = abs(self.target_rotation % (2 * math.pi) - self.yaw_odom % (2 * math.pi))
@@ -168,6 +165,7 @@ class Planner(Node):
                     self.contador_de_comando += 1 
                 #vira para esquerda e vai pra frente 
                 elif(self.comando_direcao == 1):
+                    self.get_logger().info(f'Rotacionando no sentido anti-horario')
                     self.permission_to_rotate = True
                     self.sentido = 1
                     yaw_antigo = self.yaw_odom % (2 * math.pi)
@@ -177,6 +175,7 @@ class Planner(Node):
                     self.contador_de_comando += 1 
                 #Vira 180 para esquerda e vai para frente
                 elif(self.comando_direcao == 2):
+                    self.get_logger().info(f'Rotacionando 180')
                     self.permission_to_rotate = True
                     self.sentido = 2
                     yaw_antigo = self.yaw_odom % (2 * math.pi)
@@ -186,6 +185,7 @@ class Planner(Node):
                     self.contador_de_comando += 1
                 #vira pra direita e vai pra frente
                 elif(self.comando_direcao == 3):
+                    self.get_logger().info(f'Rotacionando no sentido horario')
                     self.permission_to_rotate = True
                     self.sentido = -1
                     yaw_antigo = self.yaw_odom % (2 * math.pi)
@@ -194,13 +194,17 @@ class Planner(Node):
                     self.publish_rviz()                  
                     self.contador_de_comando += 1 
                 self.reamostragem()
-                #teste com filtro 
-                self.comando_direcao = random.choice([1,2,3,4])
-                print(self.obter_comando_direcao(self.ponto_objetivo, self.p))
                 self.publish_rviz()
+                #teste com filtro                 
+                dicionario_comandos = self.obter_comando_direcao(self.ponto_objetivo, self.p)
+                probabilidade_comando = self.comando_probabilidade(dicionario_comandos)
+                self.comando_direcao = self.obter_comando_direcao_media(self.direcao_filtro_media, self.ponto_atual, self.ponto_objetivo)
+                print(dicionario_comandos, probabilidade_comando, self.comando_direcao)
+                
                 #print("Quantidade de comandos: ", self.contador_de_comando)
             else:
                 print('chegou')
+                self.publish_rviz()
                 self.stop()       
             self.ponto_antigo = self.ponto_atual
 
@@ -256,20 +260,48 @@ class Planner(Node):
     def obter_comando_direcao(self, lista_ponto_objetivo, lista_filtro):  
         comando = {"1": 0, "2" : 0, "3": 0, "4": 0}
         for particula in lista_filtro:
-            vetor_part = np.array([np.cos(particula.yaw), np.sin(particula.yaw)])
-            vetor_obj = np.array([lista_ponto_objetivo[0] - particula.x, lista_ponto_objetivo[1] - particula.y])
-            vetor_obj = vetor_obj/np.linalg.norm(vetor_obj)
-            angulo = (np.arccos(np.dot(vetor_part, vetor_obj))) % (2 * np.pi)
-            if (self.regioes_espaciais(particula.yaw)[0] <= angulo < self.regioes_espaciais(particula.yaw)[1]):
+            vetor_part = np.array([particula.x, particula.y, particula.yaw])
+            vetor_obj = np.array([lista_ponto_objetivo[0], lista_ponto_objetivo[1]])
+            delta_x = vetor_obj[0] - vetor_part[0]
+            delta_y = vetor_obj[1] - vetor_part[1]
+            theta_obj = (np.arctan2(delta_y, delta_x)) % (2* np.pi)   
+            regioes_espaciais = self.regioes_espaciais(particula.yaw)
+            if (regioes_espaciais[0] <= theta_obj < regioes_espaciais[1]):
                 comando["1"] += 1
-            elif(self.regioes_espaciais(particula.yaw)[1] <= angulo < self.regioes_espaciais(particula.yaw)[2]):
+            elif(regioes_espaciais[1] <= theta_obj < regioes_espaciais[2]):
                 comando["2"] += 1
-            elif(self.regioes_espaciais(particula.yaw)[2] <= angulo < self.regioes_espaciais(particula.yaw)[3]):
+            elif(regioes_espaciais[2] <= theta_obj < regioes_espaciais[3]):
                 comando["3"] += 1
             else:
-                comando["4"] += 1
+                comando["4"] += 1        
 
         return comando
+    
+    def obter_comando_direcao_media(self, direcao_filtro, ponto_estimado, lista_ponto_objetivo):
+        comando = 0
+        vetor_part = np.array([ponto_estimado[0], ponto_estimado[1], direcao_filtro])
+        vetor_obj = np.array([lista_ponto_objetivo[0], lista_ponto_objetivo[1]])
+        delta_x = vetor_obj[0] - vetor_part[0]
+        delta_y = vetor_obj[1] - vetor_part[1]
+        theta_obj = (np.arctan2(delta_y, delta_x)) % (2* np.pi)   
+        regioes_espaciais = self.regioes_espaciais(direcao_filtro)
+        if (regioes_espaciais[0] <= theta_obj < regioes_espaciais[1]):
+            comando = 1
+        elif(regioes_espaciais[1] <= theta_obj < regioes_espaciais[2]):
+            comando = 2
+        elif(regioes_espaciais[2] <= theta_obj < regioes_espaciais[3]):
+            comando = 3
+        else:
+            comando = 4
+
+        return comando
+    
+    def comando_probabilidade(self, dicionario_comando):
+        total = sum(dicionario_comando.values())
+        prob = {key: value / total for key, value in dicionario_comando.items()}
+        max_key = max(prob, key=prob.get)
+        return int(max_key)
+
 
     #comandos para enviar para o robo
     def moving_status(self):
@@ -480,8 +512,8 @@ class Planner(Node):
         marker.scale.z = 0.125
         marker.color.a = 1.0  
         marker.color.r = 0.0  
-        marker.color.g = 1.0
-        marker.color.b = 1.0            
+        marker.color.g = 0.0
+        marker.color.b = 0.5            
         self.direcao_obj_publisher.publish(marker)        
         delete_marker = Marker()
         delete_marker.action = Marker.DELETEALL  
