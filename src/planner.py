@@ -154,6 +154,7 @@ class Planner(Node):
     def pose_callback(self, msg):    
         self.ponto_atual = [msg.x, msg.y]
         regiao_nova_robo = self.mapa.obter_cor_regiao(self.ponto_atual[0], self.ponto_atual[1])   
+        self.publish_rviz()
         if(self.ponto_antigo is not None):
             self.dist = self.distance(self.ponto_atual, self.ponto_antigo)
         #a direcao a ser tomada pelo robo deve ser calculada assim que receber o ponto estimado
