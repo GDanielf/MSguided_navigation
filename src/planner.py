@@ -6,7 +6,7 @@ from std_msgs.msg import Bool
 from geometry_msgs.msg import Twist, Quaternion
 from visualization_msgs.msg import Marker, MarkerArray
 from guided_navigation.msg import PoseEstimate
-from geometry_msgs.msg import PoseArray, PoseStamped
+from geometry_msgs.msg import PoseArray, PoseStamped, Point
 from nav_msgs.msg import Odometry, Path
 from particle import Particle
 import random
@@ -55,8 +55,7 @@ class Planner(Node):
         self.ponto_antigo = None
         self.distance_threshold = 0.2
         self.dist = -10
-        self.tal = 5.0 
-        self.espera = 25.0
+        self.tal = 3.0 
         self.current_timer = None
         self.action_queue = []  # Fila de ações a serem executadas
         #retorno do filtro de particulas
@@ -64,6 +63,7 @@ class Planner(Node):
         self.mapa = Mapa() 
         self.ponto_objetivo = [5.06, 5.50]
         self.regiao_objetivo = self.mapa.obter_cor_regiao(self.ponto_objetivo[0], self.ponto_objetivo[1]) 
+        self.pontos_regiao_objetivo = self.mapa.get_regiao_por_numero(self.regiao_objetivo)
         self.regiao_antiga = 500
         self.movement_in_progress = True
         self.start_planner = True
@@ -73,12 +73,13 @@ class Planner(Node):
         self.new_pose_received = False
         self.get_logger().info('Planner inicializado. Enviando comandos para o Navigation...')  
         self.publisher_filtro = self.create_publisher(MarkerArray, 'visualization_marker', 10)
+        self.publish_regioes_angles = self.create_publisher(MarkerArray, 'regioes_angles_topic', 10)
         #starvars
         self.m = 16
         #definicoes filtro de particula
         self.particle_number = 1000
         self.p = []        
-        self.part_ruido_virar = math.radians(5)
+        self.part_ruido_virar = 0.05
         self.part_sigma_atual = 0.5
         self.part_sigma_translacao = 0.5
         for i in range(self.particle_number):
@@ -90,6 +91,8 @@ class Planner(Node):
         self.publisher_real_pose = self.create_publisher(Marker, 'topic_real_pose', 10)
         self.publisher_filto_media = self.create_publisher(Marker, 'topic_filtro_media', 10)
         self.direcao_obj_publisher = self.create_publisher(Marker, 'topico_obj_publisher', 10)
+        self.regiao_objetivo_publisher = self.create_publisher(Marker, 'topico_regiao_objetivo', 10)
+    
         self.pose_pub = self.create_publisher(PoseStamped, '/robot_pose_stamped', 10)
         self.path_pub = self.create_publisher(Path, '/path', 10)
         self.path = Path()
@@ -168,7 +171,6 @@ class Planner(Node):
                 print(dicionario_comandos, probabilidade_comando, self.comando_direcao)
             print("regiao do robo:", regiao_nova_robo, " regiao objetivo: ", self.regiao_objetivo)            
             if(regiao_nova_robo != self.regiao_objetivo):
-                #print('bagulho doido: ')
                 print('comando: ', self.comando_direcao)                
                 if(self.comando_direcao == 1):
                     self.get_logger().info(f'Rotacionando no sentido anti-horario')
@@ -215,7 +217,7 @@ class Planner(Node):
     def predicao(self, rotacao):
         # predicao
         for i in range(self.particle_number):
-            self.p[i].move(rotacao, 2.5) 
+            self.p[i].move(rotacao, 1.5) 
 
     def reamostragem(self):
         # atualizacao
@@ -227,7 +229,7 @@ class Planner(Node):
             particula = self.selecionar_particula(self.p)
             particula.x = particula.x + random.gauss(0, 0.5)
             particula.y = particula.y + random.gauss(0, 0.5)
-            particula.yaw = (particula.yaw + random.gauss(0, 0.5)) % (2 * math.pi)
+            particula.yaw = (particula.yaw + random.gauss(0, 0.025)) % (2 * math.pi)
             p_nova.append(copy.deepcopy(particula)) 
 
         self.p = p_nova 
@@ -288,6 +290,7 @@ class Planner(Node):
         delta_y = vetor_obj[1] - vetor_part[1]
         theta_obj = (np.arctan2(delta_y, delta_x)) % (2* np.pi)   
         regioes_espaciais = self.regioes_espaciais(direcao_filtro)
+        self.publish_regioes_espaciais(regioes_espaciais, ponto_estimado)
         if (regioes_espaciais[0] <= theta_obj < regioes_espaciais[1]):
             comando = 1
         elif(regioes_espaciais[1] <= theta_obj < regioes_espaciais[2]):
@@ -351,6 +354,7 @@ class Planner(Node):
         self.publish_filtro_media()
         self.publish_ponto_pose_estimada()
         self.publish_ponto_objetivo()
+        self.publish_regiao_objetivo()
 
     def publish_ponto_pose_estimada(self):       
         marker = Marker()
@@ -398,6 +402,41 @@ class Planner(Node):
         delete_marker.action = Marker.DELETEALL  
         self.publisher_ponto_objetivo.publish(delete_marker)
 
+    def publish_regiao_objetivo(self):
+        xmin, xmax, ymin, ymax = self.pontos_regiao_objetivo
+        # Criando a mensagem do marcador
+        marker = Marker()
+        marker.header.frame_id = "map"  
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = "quadrados"
+        marker.id = 0
+        marker.type = Marker.LINE_STRIP
+        marker.action = Marker.ADD
+        marker.scale.x = 0.1  
+        marker.color.a = 1.0  
+        marker.color.r = 0.0  
+        marker.color.g = 0.0
+        marker.color.b = 1.0  
+        
+        # Definição dos pontos do quadrado
+        pontos = [
+            (xmin, ymin),
+            (xmax, ymin),
+            (xmax, ymax),
+            (xmin, ymax),
+            (xmin, ymin)  # Fechando o quadrado
+        ]
+
+        for x, y in pontos:
+            p = Point()
+            p.x = float(x)
+            p.y = float(y)
+            p.z = 0.0
+            marker.points.append(p)
+
+        # Publica no tópico visualization_marker
+        self.regiao_objetivo_publisher.publish(marker)
+
     def publish_particles(self, points_array):             
         marker_array = MarkerArray()
         delete_markers = MarkerArray()        
@@ -435,6 +474,44 @@ class Planner(Node):
             i += 1
             marker_array.markers.append(marker)
         self.publisher_filtro.publish(marker_array) 
+
+    def publish_regioes_espaciais(self, regioes, ponto_desejado):             
+        marker_array = MarkerArray()
+        delete_markers = MarkerArray()        
+        for old_marker in range(len(regioes)):
+            marker = Marker()
+            marker.action = Marker.DELETE
+            marker.id = old_marker + 1
+            delete_markers.markers.append(marker)
+        self.publish_regioes_angles.publish(delete_markers)
+        i = 1
+        for angles in regioes:
+            quaternion = self.euler_to_quaternion(0, 0, angles) 
+            marker = Marker()
+            quat = Quaternion()
+            quat.x = quaternion[0]
+            quat.y = quaternion[1]
+            quat.z = quaternion[2]
+            quat.w = quaternion[3]            
+            marker.header.frame_id = "map"
+            marker.header.stamp = self.get_clock().now().to_msg()      
+            marker.ns = "filtro_points"
+            marker.id = i
+            marker.type = Marker.ARROW
+            marker.action = Marker.ADD
+            marker.pose.position.x = ponto_desejado[0]
+            marker.pose.position.y = ponto_desejado[1]
+            marker.pose.orientation = quat
+            marker.scale.x = 1.0  
+            marker.scale.y = 0.125
+            marker.scale.z = 0.125
+            marker.color.r = 0.25 
+            marker.color.g = 0.25
+            marker.color.b = 0.5 
+            marker.color.a = 1.0            
+            i += 1
+            marker_array.markers.append(marker)
+        self.publish_regioes_angles.publish(marker_array) 
 
     def publish_filtro_media(self):
         quaternion_euler_4 = self.euler_to_quaternion(0, 0, self.direcao_filtro_media)        

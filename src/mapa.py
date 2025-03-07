@@ -154,20 +154,7 @@ class Mapa:
                     cor = 'verde'  # Região central
                 grade[(round(i, 2), round(j, 2))] = cor
         return grade
-
-    def verifica_ponto_dentro(self, ponto):
-        """
-        Verifica se um ponto (x, y) está dentro do polígono definido pelos limites do mapa.
-        """
-        path = mpath.Path(self.pontos_mapa)
-        return path.contains_point(ponto)
-
-    def verifica_ponto_dentro_filtro(self, ponto):
-        """
-        Verifica se um ponto (x, y) está dentro do polígono definido pelos limites do mapa.
-        """
-        path = mpath.Path(self.pontos_mapa)
-        return path.contains_point((ponto.x, ponto.y))
+    
 
     def obter_cor_regiao(self, x, y, tolerancia=1e-6):
         """
@@ -189,7 +176,13 @@ class Mapa:
                 return regiao
         #print(f"Ponto ({x}, {y}) não encontrado em nenhuma região.")
         return 500
-
+    
+    def get_regiao_por_numero(self, numero):
+        for key, value in self.regioes.items():
+            if value == numero:
+                return key
+        return None  
+    
     def desenhar_mapa(self, ax):
         """
         Desenha o mapa representado pelas linhas conectando os pontos no gráfico fornecido.
@@ -223,10 +216,8 @@ if __name__ == "__main__":
     #x, y = 1.7732411925348928, 0.6024850223445085
     #x, y = -9.8464545465, -7.34534535
     #x,y = 5.06, 5.50
-    x = 5.2280323297810165
-    y = 5.00060878148934
-
-
+    x = 4.02836348798821 
+    y = 4.660464369307391
 
     cor = mapa.obter_cor_regiao(round(x,2), round(y,2))
     # Plotar o mapa
