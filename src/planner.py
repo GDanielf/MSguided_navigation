@@ -163,12 +163,14 @@ class Planner(Node):
         #a direcao a ser tomada pelo robo deve ser calculada assim que receber o ponto estimado
         if(self.ponto_antigo is None or self.dist > self.distance_threshold):
             if(not(self.inicio)):
-                self.reamostragem()
+                self.reamostragem()                
+                self.publish_filtro_media()
                 self.publish_rviz()
                 dicionario_comandos = self.obter_comando_direcao(self.ponto_objetivo, self.p)
                 probabilidade_comando = self.comando_probabilidade(dicionario_comandos)
-                self.comando_direcao = self.obter_comando_direcao_media(self.direcao_filtro_media, self.ponto_atual, self.ponto_objetivo)
-                print(dicionario_comandos, probabilidade_comando, self.comando_direcao)
+                media_comando = self.obter_comando_direcao_media(self.direcao_filtro_media, self.ponto_atual, self.ponto_objetivo)
+                self.comando_direcao = probabilidade_comando
+                print(dicionario_comandos, probabilidade_comando, media_comando)
             print("regiao do robo:", regiao_nova_robo, " regiao objetivo: ", self.regiao_objetivo)            
             if(regiao_nova_robo != self.regiao_objetivo):
                 print('comando: ', self.comando_direcao)                
@@ -229,12 +231,12 @@ class Planner(Node):
             particula = self.selecionar_particula(self.p)
             particula.x = particula.x + random.gauss(0, 0.5)
             particula.y = particula.y + random.gauss(0, 0.5)
-            particula.yaw = (particula.yaw + random.gauss(0, 0.025)) % (2 * math.pi)
+            particula.yaw = (particula.yaw + random.gauss(0, 0.25)) % (2 * math.pi)
             p_nova.append(copy.deepcopy(particula)) 
 
         self.p = p_nova 
-        #selecionar media
         self.direcao_filtro_media = self.obter_ponto_filtro_media(self.p)[2]
+        #selecionar media        
     
     #funcoes parciais do filtro de particulas
     def selecionar_particula(self, lista):
@@ -272,14 +274,45 @@ class Planner(Node):
             delta_y = vetor_obj[1] - vetor_part[1]
             theta_obj = (np.arctan2(delta_y, delta_x)) % (2* np.pi)   
             regioes_espaciais = self.regioes_espaciais(particula.yaw)
-            if (regioes_espaciais[0] <= theta_obj < regioes_espaciais[1]):
-                comando["1"] += 1
-            elif(regioes_espaciais[1] <= theta_obj < regioes_espaciais[2]):
-                comando["2"] += 1
-            elif(regioes_espaciais[2] <= theta_obj < regioes_espaciais[3]):
-                comando["3"] += 1
-            else:
-                comando["4"] += 1 
+            maior_valor = max(regioes_espaciais)
+            indice_maior = regioes_espaciais.index(maior_valor)
+            if indice_maior == 0:
+                if(regioes_espaciais[0] <= theta_obj < 2*math.pi) or (0 <= theta_obj < regioes_espaciais[1]):
+                    comando["1"] += 1
+                elif((regioes_espaciais[1] <= theta_obj < regioes_espaciais[2])):
+                    comando["2"] += 1
+                elif((regioes_espaciais[2] <= theta_obj < regioes_espaciais[3])):
+                    comando["3"] += 1
+                elif((regioes_espaciais[3] <= theta_obj < regioes_espaciais[0])):
+                    comando["4"] += 1
+            elif indice_maior == 1:
+                if((regioes_espaciais[0] <= theta_obj < regioes_espaciais[1])):
+                    comando["1"] += 1
+                elif(regioes_espaciais[1] <= theta_obj < 2*math.pi) or (0 <= theta_obj < regioes_espaciais[2]):
+                    comando["2"] += 1
+                elif((regioes_espaciais[2] <= theta_obj < regioes_espaciais[3])):
+                    comando["3"] += 1
+                elif((regioes_espaciais[3] <= theta_obj < regioes_espaciais[0])):
+                    comando["4"] += 1
+            elif indice_maior == 2:
+                if((regioes_espaciais[0] <= theta_obj < regioes_espaciais[1])):
+                    comando["1"] += 1
+                elif((regioes_espaciais[1] <= theta_obj < regioes_espaciais[2])):
+                    comando["2"] += 1
+                elif(regioes_espaciais[2] <= theta_obj < 2*math.pi) or (0 <= theta_obj < regioes_espaciais[3]):
+                    comando["3"] += 1
+                elif((regioes_espaciais[3] <= theta_obj < regioes_espaciais[0])):
+                    comando["4"] += 1
+            elif indice_maior == 3:
+                if((regioes_espaciais[0] <= theta_obj < regioes_espaciais[1])):
+                    comando["1"] += 1
+                elif((regioes_espaciais[1] <= theta_obj < regioes_espaciais[2])):
+                    comando["2"] += 1
+                elif((regioes_espaciais[2] <= theta_obj < regioes_espaciais[3])):
+                    comando["3"] += 1
+                elif(regioes_espaciais[3] <= theta_obj < 2*math.pi) or (0 <= theta_obj < regioes_espaciais[0]):
+                    comando["4"] += 1
+            
         return comando
     
     def obter_comando_direcao_media(self, direcao_filtro, ponto_estimado, lista_ponto_objetivo):
@@ -290,15 +323,46 @@ class Planner(Node):
         delta_y = vetor_obj[1] - vetor_part[1]
         theta_obj = (np.arctan2(delta_y, delta_x)) % (2* np.pi)   
         regioes_espaciais = self.regioes_espaciais(direcao_filtro)
+        print(theta_obj, regioes_espaciais)
         self.publish_regioes_espaciais(regioes_espaciais, ponto_estimado)
-        if (regioes_espaciais[0] <= theta_obj < regioes_espaciais[1]):
-            comando = 1
-        elif(regioes_espaciais[1] <= theta_obj < regioes_espaciais[2]):
-            comando = 2
-        elif(regioes_espaciais[2] <= theta_obj < regioes_espaciais[3]):
-            comando = 3
-        else:
-            comando = 4
+        maior_valor = max(regioes_espaciais)
+        indice_maior = regioes_espaciais.index(maior_valor)
+        if indice_maior == 0:
+            if(regioes_espaciais[0] <= theta_obj < 2*math.pi) or (0 <= theta_obj < regioes_espaciais[1]):
+                comando = 1
+            elif((regioes_espaciais[1] <= theta_obj < regioes_espaciais[2])):
+                comando = 2
+            elif((regioes_espaciais[2] <= theta_obj < regioes_espaciais[3])):
+                comando = 3
+            elif((regioes_espaciais[3] <= theta_obj < regioes_espaciais[0])):
+                comando = 4
+        elif indice_maior == 1:
+            if((regioes_espaciais[0] <= theta_obj < regioes_espaciais[1])):
+                comando = 1
+            elif(regioes_espaciais[1] <= theta_obj < 2*math.pi) or (0 <= theta_obj < regioes_espaciais[2]):
+                comando = 2
+            elif((regioes_espaciais[2] <= theta_obj < regioes_espaciais[3])):
+                comando = 3
+            elif((regioes_espaciais[3] <= theta_obj < regioes_espaciais[0])):
+                comando = 4
+        elif indice_maior == 2:
+            if((regioes_espaciais[0] <= theta_obj < regioes_espaciais[1])):
+                comando = 1
+            elif((regioes_espaciais[1] <= theta_obj < regioes_espaciais[2])):
+                comando = 2
+            elif(regioes_espaciais[2] <= theta_obj < 2*math.pi) or (0 <= theta_obj < regioes_espaciais[3]):
+                comando = 3
+            elif((regioes_espaciais[3] <= theta_obj < regioes_espaciais[0])):
+                comando = 4
+        elif indice_maior == 3:
+            if((regioes_espaciais[0] <= theta_obj < regioes_espaciais[1])):
+                comando = 1
+            elif((regioes_espaciais[1] <= theta_obj < regioes_espaciais[2])):
+                comando = 2
+            elif((regioes_espaciais[2] <= theta_obj < regioes_espaciais[3])):
+                comando = 3
+            elif(regioes_espaciais[3] <= theta_obj < 2*math.pi) or (0 <= theta_obj < regioes_espaciais[0]):
+                comando = 4
         return comando
     
     def comando_probabilidade(self, dicionario_comando):
@@ -350,8 +414,7 @@ class Planner(Node):
         self.moving_status() 
 
     def publish_rviz(self):
-        self.publish_particles(self.p) 
-        self.publish_filtro_media()
+        self.publish_particles(self.p)         
         self.publish_ponto_pose_estimada()
         self.publish_ponto_objetivo()
         self.publish_regiao_objetivo()
@@ -418,23 +481,19 @@ class Planner(Node):
         marker.color.g = 0.0
         marker.color.b = 1.0  
         
-        # Definição dos pontos do quadrado
         pontos = [
             (xmin, ymin),
             (xmax, ymin),
             (xmax, ymax),
             (xmin, ymax),
-            (xmin, ymin)  # Fechando o quadrado
+            (xmin, ymin) 
         ]
-
         for x, y in pontos:
             p = Point()
             p.x = float(x)
             p.y = float(y)
             p.z = 0.0
             marker.points.append(p)
-
-        # Publica no tópico visualization_marker
         self.regiao_objetivo_publisher.publish(marker)
 
     def publish_particles(self, points_array):             

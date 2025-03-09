@@ -13,7 +13,6 @@ Panels:
         - /MarkerArray1
         - /Marker3
         - /Marker7
-        - /Path1
         - /Path1/Topic1
       Splitter Ratio: 0.5
     Tree Height: 746
@@ -219,6 +218,18 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /topico_regiao_objetivo
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MarkerArray
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /regioes_angles_topic
       Value: true
   Enabled: true
   Global Options:
