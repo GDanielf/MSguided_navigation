@@ -162,7 +162,7 @@ class MultiCamera(Node):
                 
             camera_rotations = [rot_0.as_euler('xyz')[2], rot_1.as_euler('xyz')[2], rot_2.as_euler('xyz')[2]]
             
-            print(camera_rotations)
+            #print(camera_rotations)
             for i in range(3):
                 for j in range(i + 1, 3):
                     pontos_estimados.append(self.estimate_pose(camera_position[i], camera_position[j], camera_rotations[i], camera_rotations[j])) 
@@ -174,7 +174,8 @@ class MultiCamera(Node):
                 self.publish_pose_estimate()
                 self.contador_ponto_estavel = 0 
                 self.valores_x = np.zeros(self.N)
-                self.valores_y = np.zeros(self.N)      
+                self.valores_y = np.zeros(self.N)
+                self.get_logger().info(f"Ponto estimado: [{self.pose_x}, {self.pose_y}]")      
 
     def inicializar_posicao_y_joint(self, joint_name, index):
         velocity_msg = Float64MultiArray()
