@@ -61,7 +61,7 @@ class Planner(Node):
         #retorno do filtro de particulas
         self.ponto_final = [0.0, 0.0, 0.0]   
         self.mapa = Mapa() 
-        self.ponto_objetivo = [5.06, 5.50]
+        self.ponto_objetivo = [round(random.uniform(-10, 10), 2), round(random.uniform(-7.5, 7.5), 2)]
         self.regiao_objetivo = self.mapa.obter_cor_regiao(self.ponto_objetivo[0], self.ponto_objetivo[1]) 
         self.pontos_regiao_objetivo = self.mapa.get_regiao_por_numero(self.regiao_objetivo)
         self.regiao_antiga = 500
