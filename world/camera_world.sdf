@@ -652,6 +652,11 @@
         <publish_nested_model_pose>true</publish_nested_model_pose>
       </plugin>
     </model> 
+    <include>
+      <uri>file:///home/daniel/ros2_ws/src/guided_navigation/models/room</uri>
+      <name>urban_room_2way</name>
+      <pose>0 0 0 0 -0 0</pose>
+    </include>
     <light name='sun' type='directional'>
       <pose>0 0 10 0 0 0</pose>
       <cast_shadows>true</cast_shadows>

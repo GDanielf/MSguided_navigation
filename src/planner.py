@@ -93,7 +93,6 @@ class Planner(Node):
         self.direcao_obj_publisher = self.create_publisher(Marker, 'topico_obj_publisher', 10)
         self.regiao_objetivo_publisher = self.create_publisher(Marker, 'topico_regiao_objetivo', 10)
     
-        self.pose_pub = self.create_publisher(PoseStamped, '/robot_pose_stamped', 10)
         self.path_pub = self.create_publisher(Path, '/path', 10)
         self.path = Path()
         self.path.header.frame_id = "map"

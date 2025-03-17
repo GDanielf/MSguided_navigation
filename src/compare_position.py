@@ -2,10 +2,14 @@
 
 import rclpy
 from rclpy.node import Node
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import Odometry, Path
 from guided_navigation.msg import PoseEstimate
 from geometry_msgs.msg import PoseArray
 import math
+from visualization_msgs.msg import Marker, MarkerArray
+from geometry_msgs.msg import PoseArray, PoseStamped, Point
+from std_msgs.msg import Bool, Float64
+import time
 
 
 class ComparePosition(Node):
@@ -32,15 +36,40 @@ class ComparePosition(Node):
         )
 
         self.timer = self.create_timer(0.1, self.compare_positions)  # A cada 0.1s (10 Hz)
-        
+        self.path_pub = self.create_publisher(Path, '/path', 10)
+        self.path = Path()
+        self.pub_real_rqt = self.create_publisher(Point, "/rqt_real_position", 10)
+        self.pub_est_rqt = self.create_publisher(Point, "/rqt_estimated_position", 10)    
+        self.pub_erro_rqt = self.create_publisher(Float64, "/rqt_erro", 10)      
+
+        self.file = open("pose_data.txt", "a")  # "a" para adicionar sem sobrescrever
+
+        # Variáveis para armazenar os valores recebidos
+        self.real_pose = None
+        self.estimated_pose = None
+        self.error_value = None
 
     def pose_callback(self, msg):
         if msg.poses:
             self.last_pose = msg.poses[-1]
+            rqt_point = Point()
+            rqt_point.x = self.last_pose.position.x
+            rqt_point.y = self.last_pose.position.y
+            rqt_point.z = 0.0
+            self.pub_real_rqt.publish(rqt_point)
+            self.real_pose = (rqt_point.x, rqt_point.y)
+            self.log_data()
 
     def triangulation_callback(self, msg):
         self.triangulation_position[0] = msg.x
         self.triangulation_position[1] = msg.y
+        point_msg = Point()
+        point_msg.x = float(self.triangulation_position[0])
+        point_msg.y = float(self.triangulation_position[1])
+        point_msg.z = 0.0
+        self.pub_est_rqt.publish(point_msg)
+        self.estimated_pose = (point_msg.x, point_msg.y)
+        self.log_data()
         self.compare_positions()
 
     def distance(self, x1, y1, x2, y2):
@@ -56,15 +85,47 @@ class ComparePosition(Node):
             self.get_logger().info(f'Posição Real: x={self.last_pose.position.x}, y={self.last_pose.position.y}')
             self.get_logger().info(f'Posição Estimada: x={self.triangulation_position[0]}, y={self.triangulation_position[1]}')
             self.get_logger().info(f'Diferenças: dx={x_diff}, dy={y_diff}')
-            self.get_logger().info(f'ERRO = {erro}')
+            self.get_logger().info(f'ERRO = {erro}') 
+
+    def log_data(self):
+        """ Salva os dados no TXT se todas as informações estiverem disponíveis """
+        if self.real_pose is None or self.estimated_pose is None or self.error_value is None:
+            return  # Aguarda até ter todos os valores
+
+        # Tempo atual
+        timestamp = time.time()
+
+        # Extrai valores
+        x_real, y_real = self.real_pose
+        x_est, y_est = self.estimated_pose
+
+        # Formata a linha do arquivo
+        log_line = f"{timestamp:.4f}, {x_real:.4f}, {y_real:.4f}, {x_est:.4f}, {y_est:.4f}\n"
+
+        # Escreve no arquivo
+        self.file.write(log_line)
+        self.file.flush()  # Garante que o dado seja salvo imediatamente
+
+        # Log no terminal (opcional)
+        self.get_logger().info(f"Log: {log_line.strip()}")
+
+        # Reseta valores para evitar duplicação
+        self.real_pose = None
+        self.estimated_pose = None
+
+    def destroy_node(self):
+        self.file.close()  # Fecha o arquivo ao encerrar o nó
+        super().destroy_node()
 
 
 def main(args=None):
-    rclpy.init(args=args)
-    compare_position = ComparePosition()
-    rclpy.spin(compare_position)
-    compare_position.destroy_node()
+    rclpy.init(args=args)    
+    node = ComparePosition()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    node.destroy_node()
     rclpy.shutdown()
-
 if __name__ == '__main__':
     main()
