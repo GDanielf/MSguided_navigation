@@ -177,6 +177,13 @@ class Mapa:
         #print(f"Ponto ({x}, {y}) não encontrado em nenhuma região.")
         return 500
     
+    def obter_centro_regiao(self,regiao):
+        chave = next(key for key, val in self.regioes.items() if val == regiao)
+        x_min, x_max, y_min, y_max = chave
+        centro_x = round((x_min + x_max) / 2, 2)
+        centro_y = round((y_min + y_max) / 2, 2)
+        return (centro_x, centro_y)
+    
     def get_regiao_por_numero(self, numero):
         for key, value in self.regioes.items():
             if value == numero:

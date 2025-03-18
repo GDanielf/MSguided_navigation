@@ -55,3 +55,9 @@ log/
 install/
 
 models/room/model.sdf
+
+*.db3
+
+src/data_20250317_180446/metadata.yaml
+
+src/data_20250317_180446/rosbag_output.txt

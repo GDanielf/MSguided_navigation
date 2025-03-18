@@ -61,7 +61,9 @@ class Planner(Node):
         #retorno do filtro de particulas
         self.ponto_final = [0.0, 0.0, 0.0]   
         self.mapa = Mapa() 
+        #teste com ponto q deu ruim (robo virando no comeco)
         self.ponto_objetivo = [round(random.uniform(-10, 10), 2), round(random.uniform(-7.5, 7.5), 2)]
+        #self.ponto_objetivo = [-9.23, 4.55]
         self.regiao_objetivo = self.mapa.obter_cor_regiao(self.ponto_objetivo[0], self.ponto_objetivo[1]) 
         self.pontos_regiao_objetivo = self.mapa.get_regiao_por_numero(self.regiao_objetivo)
         self.regiao_antiga = 500
@@ -71,7 +73,7 @@ class Planner(Node):
         self.ponto_atual = [0.0, 0.0]
         self.ultimo_ponto_processado = None 
         self.new_pose_received = False
-        self.get_logger().info('Planner inicializado. Enviando comandos para o Navigation...')  
+        self.get_logger().info(f'Planner inicializado. Ponto objetivo: {self.ponto_objetivo}')  
         self.publisher_filtro = self.create_publisher(MarkerArray, 'visualization_marker', 10)
         self.publish_regioes_angles = self.create_publisher(MarkerArray, 'regioes_angles_topic', 10)
         #starvars
@@ -634,38 +636,7 @@ class Planner(Node):
         path_msg.header.stamp = marker.header.stamp
         path_msg.header.frame_id = marker.header.frame_id
         path_msg.poses = self.path.poses
-        self.path_pub.publish(path_msg)
-
-    def publish_direcao_obj(self, direcao_obj):
-        quaternion_euler_2 = self.euler_to_quaternion(0, 0, direcao_obj)        
-        marker = Marker()
-        quat_msg_2 = Quaternion()
-        quat_msg_2.x = quaternion_euler_2[0]
-        quat_msg_2.y = quaternion_euler_2[1]
-        quat_msg_2.z = quaternion_euler_2[2]
-        quat_msg_2.w = quaternion_euler_2[3]
-        marker.header.frame_id = "map"  
-        marker.header.stamp = self.get_clock().now().to_msg()
-        marker.ns = "ponto_obj"
-        marker.id = 0  
-        marker.type = Marker.ARROW 
-        marker.action = Marker.ADD         
-        marker.pose.position.x = self.ponto_atual[0]
-        marker.pose.position.y = self.ponto_atual[1]
-        marker.pose.position.z = 1.0
-        marker.pose.orientation = quat_msg_2        
-        marker.scale.x = 1.0  
-        marker.scale.y = 0.125
-        marker.scale.z = 0.125
-        marker.color.a = 1.0  
-        marker.color.r = 0.0  
-        marker.color.g = 0.0
-        marker.color.b = 0.5            
-        self.direcao_obj_publisher.publish(marker)        
-        delete_marker = Marker()
-        delete_marker.action = Marker.DELETEALL  
-        self.direcao_obj_publisher.publish(delete_marker) 
-        
+        self.path_pub.publish(path_msg)        
     
     
 def main(args=None):
