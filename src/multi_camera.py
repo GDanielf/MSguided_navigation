@@ -15,6 +15,9 @@ from rosgraph_msgs.msg import Clock
 from sensor_msgs.msg import JointState
 from guided_navigation.msg import PoseEstimate
 from scipy.spatial.transform import Rotation
+from visualization_msgs.msg import Marker, MarkerArray
+from geometry_msgs.msg import Quaternion
+
 
 #from guided_navigation.msg import Rectangle
 class MultiCamera(Node):
@@ -128,6 +131,10 @@ class MultiCamera(Node):
         
         # Criar o servidor de serviço para ativar/desativar câmeras
         self.srv = self.create_service(SetCameraActive, 'set_camera_active', self.set_camera_active)
+
+        #rviz
+        self.publisher_camera_robot = self.create_publisher(MarkerArray, 'rviz_camera', 10)
+
         
     def clock_callback(self, msg):
         self.simulation_time = msg.clock
@@ -143,6 +150,13 @@ class MultiCamera(Node):
 
     def robot_moving_callback(self, msg):
         self.robot_moving = msg.data         
+
+    def euler_to_quaternion(self, roll, pitch, yaw):
+        qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+        qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+        qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        return [qx, qy, qz, qw]   
 
     def joint_state_callback(self, msg):
         for i, name in enumerate(msg.name):
@@ -161,6 +175,7 @@ class MultiCamera(Node):
             rot_2 = Rotation.from_euler('xyz', [self.camera2_rot[0], self.camera2_rot[1] + self.joint_imagem_centralizada[2][1], self.camera2_rot[2] + self.joint_imagem_centralizada[2][0]])           
                 
             camera_rotations = [rot_0.as_euler('xyz')[2], rot_1.as_euler('xyz')[2], rot_2.as_euler('xyz')[2]]
+            self.publish_camera_arrows(camera_position, camera_rotations)
             
             #print(camera_rotations)
             for i in range(3):
@@ -326,6 +341,53 @@ class MultiCamera(Node):
             print(f"Câmera {camera_id} desativada.")
         else:
             print(f"Câmera {camera_id} não existe.")
+
+    def publish_camera_arrows(self, camera_positions, camera_rotations):
+        marker_array = MarkerArray()
+        delete_markers = MarkerArray()
+
+        # Remove marcadores antigos
+        for i in range(len(camera_positions)):
+            marker = Marker()
+            marker.action = Marker.DELETE
+            marker.id = i + 1
+            delete_markers.markers.append(marker)
+        self.publisher_camera_robot.publish(delete_markers)
+
+        for i, (pos, angle) in enumerate(zip(camera_positions, camera_rotations), start=1):
+            quaternion = self.euler_to_quaternion(0, 0, angle)
+
+            marker = Marker()
+            quat = Quaternion()
+            quat.x = quaternion[0]
+            quat.y = quaternion[1]
+            quat.z = quaternion[2]
+            quat.w = quaternion[3]            
+
+            marker.header.frame_id = "map"
+            marker.header.stamp = self.get_clock().now().to_msg()      
+            marker.ns = "camera_vectors"
+            marker.id = i
+            marker.type = Marker.ARROW
+            marker.action = Marker.ADD
+
+            marker.pose.position.x = pos[0]
+            marker.pose.position.y = pos[1]
+            marker.pose.position.z = 0.0
+            marker.pose.orientation = quat
+
+            # Configurações visuais da flecha
+            marker.scale.x = 2.0   # comprimento da seta
+            marker.scale.y = 0.2
+            marker.scale.z = 0.2
+
+            marker.color.r = 0.0
+            marker.color.g = 0.6
+            marker.color.b = 1.0
+            marker.color.a = 1.0
+
+            marker_array.markers.append(marker)
+        self.publisher_camera_robot.publish(marker_array)
 
 
 def main(args=None):

@@ -644,7 +644,7 @@
         </axis>
         <pose>8.3266699999999998e-17 0 2.7755599999999997e-17 -3.9704700000000002e-23 1.2560599999999999e-16 -1.05879e-22</pose>
       </joint>
-      <pose>0 0 0 0 0 0</pose>
+      <pose>0 0 0.1323 0 0 0</pose>
       <static>false</static>
       <self_collide>false</self_collide>
       <plugin name='gz::sim::systems::PosePublisher' filename='gz-sim-pose-publisher-system'>

@@ -59,7 +59,7 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        {}
+        single_point: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -92,7 +92,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        {}
+        filtro_points: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -117,7 +117,7 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        {}
+        filtro_media: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -143,7 +143,7 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        {}
+        obj_point: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -156,7 +156,7 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        {}
+        obj_point: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -210,7 +210,7 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        {}
+        quadrados: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -223,13 +223,38 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        {}
+        filtro_points: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /regioes_angles_topic
+      Value: true
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: Marker
+      Namespaces:
+        centro_point: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /topic_centro_obj
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MarkerArray
+      Namespaces:
+        camera_vectors: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /rviz_camera
       Value: true
   Enabled: true
   Global Options:
@@ -277,16 +302,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 18.472370147705078
+      Distance: 33.42219161987305
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.2701772451400757
-        Y: -0.4872281551361084
-        Z: -0.6983758211135864
+        X: 0.3177650570869446
+        Y: -0.178681880235672
+        Z: -0.6841223239898682
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

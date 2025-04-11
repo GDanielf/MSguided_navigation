@@ -178,11 +178,13 @@ class Mapa:
         return 500
     
     def obter_centro_regiao(self,regiao):
-        chave = next(key for key, val in self.regioes.items() if val == regiao)
-        x_min, x_max, y_min, y_max = chave
-        centro_x = round((x_min + x_max) / 2, 2)
-        centro_y = round((y_min + y_max) / 2, 2)
-        return (centro_x, centro_y)
+        for key, val in self.regioes.items():
+            if val == regiao:                
+                x_min, x_max, y_min, y_max = key
+                centro_x = round((x_min + x_max) / 2, 2)
+                centro_y = round((y_min + y_max) / 2, 2)
+                return (centro_x, centro_y)
+        return None
     
     def get_regiao_por_numero(self, numero):
         for key, value in self.regioes.items():
@@ -223,10 +225,11 @@ if __name__ == "__main__":
     #x, y = 1.7732411925348928, 0.6024850223445085
     #x, y = -9.8464545465, -7.34534535
     #x,y = 5.06, 5.50
-    x = 4.02836348798821 
-    y = 4.660464369307391
+    x = -2.5063874676170657 
+    y = 2.5992497210272636
 
     cor = mapa.obter_cor_regiao(round(x,2), round(y,2))
+    x,y = mapa.obter_centro_regiao(cor)
     # Plotar o mapa
     fig, ax = plt.subplots()
     ax.plot(x, y, 'o', color='blue', label=f'Ponto ({x}, {y})')

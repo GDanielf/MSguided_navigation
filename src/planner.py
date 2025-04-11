@@ -15,6 +15,7 @@ import math
 import numpy as np
 import copy
 from scipy.spatial.transform import Rotation
+from rclpy.clock import Clock
 
 class Planner(Node):
     def __init__(self):
@@ -62,10 +63,11 @@ class Planner(Node):
         self.ponto_final = [0.0, 0.0, 0.0]   
         self.mapa = Mapa() 
         #teste com ponto q deu ruim (robo virando no comeco)
-        self.ponto_objetivo = [round(random.uniform(-10, 10), 2), round(random.uniform(-7.5, 7.5), 2)]
-        #self.ponto_objetivo = [-9.23, 4.55]
+        #self.ponto_objetivo = [round(random.uniform(-10, 10), 2), round(random.uniform(-7.5, 7.5), 2)]        
+        self.ponto_objetivo = [-3.0, -0.0]
         self.regiao_objetivo = self.mapa.obter_cor_regiao(self.ponto_objetivo[0], self.ponto_objetivo[1]) 
         self.pontos_regiao_objetivo = self.mapa.get_regiao_por_numero(self.regiao_objetivo)
+        self.centro_objetivo = self.mapa.obter_centro_regiao(self.regiao_objetivo)
         self.regiao_antiga = 500
         self.movement_in_progress = True
         self.start_planner = True
@@ -73,12 +75,13 @@ class Planner(Node):
         self.ponto_atual = [0.0, 0.0]
         self.ultimo_ponto_processado = None 
         self.new_pose_received = False
-        self.get_logger().info(f'Planner inicializado. Ponto objetivo: {self.ponto_objetivo}')  
+        self.get_logger().info(f'Planner inicializado. Ponto objetivo: {self.ponto_objetivo}, centro: {self.centro_objetivo}')  
         self.publisher_filtro = self.create_publisher(MarkerArray, 'visualization_marker', 10)
         self.publish_regioes_angles = self.create_publisher(MarkerArray, 'regioes_angles_topic', 10)
         #starvars
         self.m = 16
         #definicoes filtro de particula
+        self.frente = 0.6
         self.particle_number = 1000
         self.p = []        
         self.part_ruido_virar = 0.05
@@ -89,7 +92,8 @@ class Planner(Node):
             self.p.append(Particle(self.part_ruido_virar, self.part_sigma_atual, self.part_sigma_translacao)) 
 
         self.publisher_ponto_est = self.create_publisher(Marker, 'topic_pose_est', 10)
-        self.publisher_ponto_objetivo = self.create_publisher(Marker, 'topic_ponto_obj', 10)        
+        self.publisher_ponto_objetivo = self.create_publisher(Marker, 'topic_ponto_obj', 10)  
+        self.publisher_centro_objetivo = self.create_publisher(Marker, 'topic_centro_obj', 10)
         self.publisher_real_pose = self.create_publisher(Marker, 'topic_real_pose', 10)
         self.publisher_filto_media = self.create_publisher(Marker, 'topic_filtro_media', 10)
         self.direcao_obj_publisher = self.create_publisher(Marker, 'topico_obj_publisher', 10)
@@ -167,9 +171,10 @@ class Planner(Node):
                 self.reamostragem()                
                 self.publish_filtro_media()
                 self.publish_rviz()
-                dicionario_comandos = self.obter_comando_direcao(self.ponto_objetivo, self.p)
+                dicionario_comandos = self.obter_comando_direcao(self.centro_objetivo, self.p)
                 probabilidade_comando = self.comando_probabilidade(dicionario_comandos)
-                media_comando = self.obter_comando_direcao_media(self.direcao_filtro_media, self.ponto_atual, self.ponto_objetivo)
+                media_comando = self.obter_comando_direcao_media(self.direcao_filtro_media, self.ponto_atual, self.centro_objetivo)                
+                
                 self.comando_direcao = probabilidade_comando
                 print(dicionario_comandos, probabilidade_comando, media_comando)
             print("regiao do robo:", regiao_nova_robo, " regiao objetivo: ", self.regiao_objetivo)            
@@ -220,7 +225,7 @@ class Planner(Node):
     def predicao(self, rotacao):
         # predicao
         for i in range(self.particle_number):
-            self.p[i].move(rotacao, 1.5) 
+            self.p[i].move(rotacao, self.frente) 
 
     def reamostragem(self):
         # atualizacao
@@ -419,6 +424,7 @@ class Planner(Node):
         self.publish_ponto_pose_estimada()
         self.publish_ponto_objetivo()
         self.publish_regiao_objetivo()
+        self.publish_centro_objetivo()
 
     def publish_ponto_pose_estimada(self):       
         marker = Marker()
@@ -465,6 +471,29 @@ class Planner(Node):
         delete_marker = Marker()
         delete_marker.action = Marker.DELETEALL  
         self.publisher_ponto_objetivo.publish(delete_marker)
+
+    def publish_centro_objetivo(self):
+        marker = Marker()
+        marker.header.frame_id = "map"  
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = "centro_point"
+        marker.id = 0  
+        marker.type = Marker.SPHERE 
+        marker.action = Marker.ADD         
+        marker.pose.position.x = self.centro_objetivo[0]
+        marker.pose.position.y = self.centro_objetivo[1]
+        marker.pose.position.z = 1.0        
+        marker.scale.x = 0.6  
+        marker.scale.y = 0.6
+        marker.scale.z = 0.6
+        marker.color.a = 1.0  
+        marker.color.r = 0.5  
+        marker.color.g = 0.0
+        marker.color.b = 1.0            
+        self.publisher_centro_objetivo.publish(marker)        
+        delete_marker = Marker()
+        delete_marker.action = Marker.DELETEALL  
+        self.publisher_centro_objetivo.publish(delete_marker)
 
     def publish_regiao_objetivo(self):
         xmin, xmax, ymin, ymax = self.pontos_regiao_objetivo
