@@ -64,7 +64,7 @@ class Planner(Node):
         self.mapa = Mapa() 
         #teste com ponto q deu ruim (robo virando no comeco)
         #self.ponto_objetivo = [round(random.uniform(-10, 10), 2), round(random.uniform(-7.5, 7.5), 2)]        
-        self.ponto_objetivo = [-3.0, -0.0]
+        self.ponto_objetivo = [-3.0, -2.5]
         self.regiao_objetivo = self.mapa.obter_cor_regiao(self.ponto_objetivo[0], self.ponto_objetivo[1]) 
         self.pontos_regiao_objetivo = self.mapa.get_regiao_por_numero(self.regiao_objetivo)
         self.centro_objetivo = self.mapa.obter_centro_regiao(self.regiao_objetivo)
@@ -82,9 +82,9 @@ class Planner(Node):
         self.m = 16
         #definicoes filtro de particula
         self.frente = 0.6
-        self.particle_number = 1000
+        self.particle_number = 500
         self.p = []        
-        self.part_ruido_virar = 0.05
+        self.part_ruido_virar = 0.15
         self.part_sigma_atual = 0.5
         self.part_sigma_translacao = 0.5
         for i in range(self.particle_number):
@@ -148,7 +148,7 @@ class Planner(Node):
             elif self.sentido == -1:                
                 vel_angular = self.kp * -1
             else:
-                vel_angular = self.kp * -1
+                vel_angular = self.kp * 1
             
             error = abs(self.target_rotation % (2 * math.pi) - self.yaw_odom % (2 * math.pi))
             #print(error, self.target_rotation % (2 * math.pi), self.yaw_odom % (2 * math.pi))
@@ -235,9 +235,9 @@ class Planner(Node):
         p_nova = []
         for i in range(self.particle_number):
             particula = self.selecionar_particula(self.p)
-            particula.x = particula.x + random.gauss(0, 0.5)
-            particula.y = particula.y + random.gauss(0, 0.5)
-            particula.yaw = (particula.yaw + random.gauss(0, 0.25)) % (2 * math.pi)
+            particula.x = particula.x + random.gauss(0, 0.25)
+            particula.y = particula.y + random.gauss(0, 0.25)
+            particula.yaw = (particula.yaw + random.gauss(0, 0.15)) % (2 * math.pi)
             p_nova.append(copy.deepcopy(particula)) 
 
         self.p = p_nova 

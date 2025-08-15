@@ -277,12 +277,8 @@ class MultiCamera(Node):
         detection_vector1 = np.array([np.cos(angle1), np.sin(angle1)])
         detection_vector2 = np.array([np.cos(angle2), np.sin(angle2)])
         # Ângulo entre o vetor de detecção da câmera e o vetor distância
-        angle_internal1 = np.arccos(
-            np.dot(detection_vector1, distance_vector) / (np.linalg.norm(detection_vector1) * d12)
-        )
-        angle_internal2 = np.arccos(
-            np.dot(detection_vector2, -distance_vector) / (np.linalg.norm(detection_vector2) * d12)
-        )
+        angle_internal1 = np.arccos(np.dot(detection_vector1, distance_vector) / d12)
+        angle_internal2 = np.arccos(np.dot(detection_vector2, -distance_vector) / d12)
         angle3 = np.pi - angle_internal1 - angle_internal2
 
         sin_angle1 = np.sin(angle_internal1)
