@@ -57,6 +57,9 @@ class Planner(Node):
         self.distance_threshold = 0.2
         self.dist = -10
         self.tal = 3.0 
+        self.start_pos = None
+        self.current_pos = None 
+        self.target_distance = 0.5
         self.current_timer = None
         self.action_queue = []  # Fila de ações a serem executadas
         #retorno do filtro de particulas
@@ -64,12 +67,13 @@ class Planner(Node):
         self.mapa = Mapa() 
         #teste com ponto q deu ruim (robo virando no comeco)
         #self.ponto_objetivo = [round(random.uniform(-10, 10), 2), round(random.uniform(-7.5, 7.5), 2)]        
-        self.ponto_objetivo = [-3.0, -2.5]
+        self.ponto_objetivo = [9.0, 7.5]
         self.regiao_objetivo = self.mapa.obter_cor_regiao(self.ponto_objetivo[0], self.ponto_objetivo[1]) 
         self.pontos_regiao_objetivo = self.mapa.get_regiao_por_numero(self.regiao_objetivo)
         self.centro_objetivo = self.mapa.obter_centro_regiao(self.regiao_objetivo)
         self.regiao_antiga = 500
         self.movement_in_progress = True
+        self.move_forward_flag = False
         self.start_planner = True
         self.contador_de_comando = 0
         self.ponto_atual = [0.0, 0.0]
@@ -81,7 +85,7 @@ class Planner(Node):
         #starvars
         self.m = 16
         #definicoes filtro de particula
-        self.frente = 0.6
+        self.frente = 0.5
         self.particle_number = 500
         self.p = []        
         self.part_ruido_virar = 0.15
@@ -120,6 +124,12 @@ class Planner(Node):
         self.sentido = 0
         self.target_rotation = 0.0
 
+        #starvars
+        self.step = 2 * math.pi / self.m
+        self.intervalo = [(i*self.step, (i+1)*self.step) for i in range(self.m)]
+        self.st_regioes_espaciais = [int((self.m / 8)), int(3 * (self.m / 8)), int(5 * (self.m / 8)), int(7 * (self.m / 8))]
+
+
     def distance(self, pose1, pose2):
         return math.sqrt((pose1[0] - pose2[0])**2 + (pose1[1] - pose2[1])**2)    
 
@@ -141,6 +151,8 @@ class Planner(Node):
 
     def odom_callback(self, msg):
         quat = msg.pose.pose.orientation
+        x = msg.pose.pose.position.x
+        y = msg.pose.pose.position.y
         self.yaw_odom = ((Rotation.from_quat([quat.x, quat.y, quat.z, quat.w])).as_euler('xyz', degrees = False))[2]
         if(self.permission_to_rotate):
             if self.sentido == 1:                
@@ -153,10 +165,23 @@ class Planner(Node):
             error = abs(self.target_rotation % (2 * math.pi) - self.yaw_odom % (2 * math.pi))
             #print(error, self.target_rotation % (2 * math.pi), self.yaw_odom % (2 * math.pi))
             if abs(error) < self.tolerance:
-                self.move_forward()
+                self.move_forward_flag = True
+                self.start_pos = None
                 self.permission_to_rotate = False
             else:           
-                self.velocity_sender(0.0, error * 0.5 * vel_angular)       
+                self.velocity_sender(0.0, error * 0.5 * vel_angular)  
+        if self.move_forward_flag:
+            if self.start_pos is None:   
+                self.start_pos = (x, y)
+            self.current_pos = (x, y)
+            dx = self.current_pos[0] - self.start_pos[0]
+            dy = self.current_pos[1] - self.start_pos[1]
+            dist = math.sqrt(dx**2 + dy**2)
+            #print(dist)
+            if dist < self.target_distance:
+                self.move_forward()
+            else:
+                self.stop()
 
     #obtem o ponto final para determinar onde o robo deve ir
     def pose_callback(self, msg):    
@@ -171,12 +196,12 @@ class Planner(Node):
                 self.reamostragem()                
                 self.publish_filtro_media()
                 self.publish_rviz()
-                dicionario_comandos = self.obter_comando_direcao(self.centro_objetivo, self.p)
+                #dicionario_comandos = self.obter_comando_direcao(self.centro_objetivo, self.p)
+                dicionario_comandos = self.comando_starvars(self.centro_objetivo, self.p)
                 probabilidade_comando = self.comando_probabilidade(dicionario_comandos)
-                media_comando = self.obter_comando_direcao_media(self.direcao_filtro_media, self.ponto_atual, self.centro_objetivo)                
-                
+                #media_comando = self.obter_comando_direcao_media(self.direcao_filtro_media, self.ponto_atual, self.centro_objetivo)
                 self.comando_direcao = probabilidade_comando
-                print(dicionario_comandos, probabilidade_comando, media_comando)
+                #print(dicionario_comandos, probabilidade_comando, media_comando)
             print("regiao do robo:", regiao_nova_robo, " regiao objetivo: ", self.regiao_objetivo)            
             if(regiao_nova_robo != self.regiao_objetivo):
                 print('comando: ', self.comando_direcao)                
@@ -210,7 +235,7 @@ class Planner(Node):
                     #self.publish_rviz()                  
                     self.contador_de_comando += 1 
                 else:      
-                    self.move_forward()  
+                    self.move_forward_flag = True 
                     self.predicao(0)
                     #self.publish_rviz()                  
                     self.contador_de_comando += 1 
@@ -238,6 +263,8 @@ class Planner(Node):
             particula.x = particula.x + random.gauss(0, 0.25)
             particula.y = particula.y + random.gauss(0, 0.25)
             particula.yaw = (particula.yaw + random.gauss(0, 0.15)) % (2 * math.pi)
+            #travar a particula aqui
+            particula.yaw = self.travar_particula(particula.yaw)
             p_nova.append(copy.deepcopy(particula)) 
 
         self.p = p_nova 
@@ -262,6 +289,50 @@ class Planner(Node):
             y_yaw = y_yaw + np.sin(lista_particulas[i].yaw)
         return [x/(len(lista_particulas)), y/(len(lista_particulas)), 
                 (np.arctan2((y_yaw/len(lista_particulas)), (x_yaw/len(lista_particulas)))) % (2* math.pi)]
+    
+    def travar_particula(self, direcao): 
+        direcao = direcao % (2*math.pi)
+        regiao = int(direcao // self.step)
+        start = regiao * self.step
+        end = (regiao + 1) * self.step
+        mid = (start + end) / 2
+        if direcao < mid:
+            direcao = start
+        else:
+            direcao = end 
+
+        return direcao
+
+    def comando_starvars(self, lista_ponto_objetivo, lista_filtro):
+        comando = {"1": 0, "2" : 0, "3": 0, "4": 0}
+        for particula in lista_filtro:
+            vetor_part = np.array([particula.x, particula.y, particula.yaw])
+            vetor_obj = np.array([lista_ponto_objetivo[0], lista_ponto_objetivo[1]])
+            delta_x = vetor_obj[0] - vetor_part[0]
+            delta_y = vetor_obj[1] - vetor_part[1]
+            theta_obj = (np.arctan2(delta_y, delta_x)) % (2* np.pi)  
+            regiao = int(particula.yaw // self.step)
+            regiao_obj = None
+            rotated = {}
+            for i in range(self.m):
+                new_idx = i
+                old_idx = (regiao + i) % self.m
+                rotated[new_idx] = self.intervalo[old_idx]
+            for idx, (start, end) in rotated.items():
+                if start <= theta_obj < end or (start > end and (theta_obj >= start or theta_obj < end)):
+                    regiao_obj = idx
+            if(regiao_obj >= self.st_regioes_espaciais[0] and regiao_obj < self.st_regioes_espaciais[1]):
+                comando["1"] += 1
+            elif(regiao_obj >= self.st_regioes_espaciais[1] and regiao_obj < self.st_regioes_espaciais[2]):
+                comando["2"] += 1
+            elif(regiao_obj >= self.st_regioes_espaciais[2] and regiao_obj < self.st_regioes_espaciais[3]):
+                comando["3"] += 1
+            elif regiao_obj >= self.st_regioes_espaciais[3] or regiao_obj < self.st_regioes_espaciais[0]:
+                comando["4"] += 1
+        print(comando)
+        return comando
+
+
 
     def regioes_espaciais(self, direcao):
         step = ((2 * math.pi) / self.m)  
@@ -329,7 +400,7 @@ class Planner(Node):
         delta_y = vetor_obj[1] - vetor_part[1]
         theta_obj = (np.arctan2(delta_y, delta_x)) % (2* np.pi)   
         regioes_espaciais = self.regioes_espaciais(direcao_filtro)
-        print(theta_obj, regioes_espaciais)
+        #print(theta_obj, regioes_espaciais)
         self.publish_regioes_espaciais(regioes_espaciais, ponto_estimado)
         maior_valor = max(regioes_espaciais)
         indice_maior = regioes_espaciais.index(maior_valor)
@@ -410,14 +481,17 @@ class Planner(Node):
         self.get_logger().info(f'Robo parado')
         self.velocity_sender(0.0, 0.0)    
         self.movement_in_progress = False  
+        self.move_forward_flag = False
+        self.start_pos = None
         self.moving_status()  
 
-    def move_forward(self):        
-        self.get_logger().info(f'Movendo o robo para frente')        
-        self.velocity_sender(0.5, 0.0) 
-        self.schedule_action(self.stop, self.tal) 
-        self.movement_in_progress = True  
-        self.moving_status() 
+    def move_forward(self):
+        if not self.movement_in_progress:
+            self.get_logger().info('Movendo o robo para frente')
+        self.movement_in_progress = True
+        self.velocity_sender(0.5, 0.0)
+        #self.schedule_action(self.stop, self.tal) 
+        self.moving_status()
 
     def publish_rviz(self):
         self.publish_particles(self.p)         

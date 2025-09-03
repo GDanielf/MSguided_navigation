@@ -26,9 +26,9 @@ class MultiCamera(Node):
         self.bridge = CvBridge()        
 
         #configuracao da caixa delimitador de deteccao
-        self.font_size = 1.5
+        self.font_size = 2.5
         self.font_color = (0, 0, 255)
-        self.font_thickness = 2
+        self.font_thickness = 3
         self.image_width = 640
         self.image_height = 480
 
